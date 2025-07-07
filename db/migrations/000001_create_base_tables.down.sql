@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS employees;
+
+DROP TABLE IF EXISTS users;
+
+DROP TABLE IF EXISTS availability;
+
+DROP TABLE IF EXISTS bookings;
+
+DROP TABLE IF EXISTS booking_types;

@@ -1,0 +1,167 @@
+
+{
+  "tests": [
+    {
+      "resource": "user",
+      "method": "POST",
+      "payload": {
+        "name": "Alice",
+        "surname": "Doe",
+        "email": "alice@example.com"
+      }
+    },
+    {
+      "resource": "employee",
+      "method": "POST",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "booking_type",
+      "method": "POST",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "availability",
+      "method": "POST",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "booking",
+      "method": "POST",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "user",
+      "method": "PUT",
+      "payload": {
+        "name": "Alice",
+        "surname": "Doe",
+        "email": "alice@example.com"
+      }
+    },
+    {
+      "resource": "employee",
+      "method": "PUT",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "booking_type",
+      "method": "PUT",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "availability",
+      "method": "PUT",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "booking",
+      "method": "PUT",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "user",
+      "method": "PUT",
+      "payload": {
+        "name": "Alice",
+        "surname": "Doe",
+        "email": "alice.updated@example.com"
+      }
+    },
+    {
+      "resource": "employee",
+      "method": "PUT",
+      "payload": {
+        "name": "Alice",
+        "surname": "Doe",
+        "email": "alice.updated@example.com"
+      }
+    },
+    {
+      "resource": "",
+      "method": "PUT",
+      "payload": {
+        "name": "Alice",
+        "surname": "Doe",
+        "email": "alice.updated@example.com"
+      }
+    },
+    {
+      "resource": "user",
+      "method": "GET"
+    },
+    {
+      "resource": "user",
+      "method": "DELETE"
+    },
+    {
+      "resource": "employee",
+      "method": "POST",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Manager"
+      }
+    },
+    {
+      "resource": "employee",
+      "method": "PUT",
+      "payload": {
+        "name": "John",
+        "surname": "Smith",
+        "email": "john.smith@company.com",
+        "title": "Senior Manager"
+      }
+    },
+    {
+      "resource": "employee",
+      "method": "GET"
+    },
+    {
+      "resource": "employee",
+      "method": "DELETE"
+    }
+  ]
+}
+

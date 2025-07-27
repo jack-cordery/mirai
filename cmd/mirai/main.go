@@ -9,6 +9,6 @@ import (
 
 func main() {
 	db := os.Getenv("DATABASE_URL")
-	fmt.Printf("serving to 8000 using dbUrl: %s", db)
+	fmt.Printf("serving to 8000 using dbUrl: %s\n", db)
 	internal.SetupServer()
 }

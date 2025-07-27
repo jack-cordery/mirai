@@ -7,7 +7,234 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createAvailabilitySlot = `-- name: CreateAvailabilitySlot :one
+INSERT INTO
+  availability (
+    employee_id,
+    datetime,
+    duration_units,
+    duration_minutes,
+    type_id
+  )
+VALUES
+  ($1, $2, $3, $4, $5)
+RETURNING
+  id
+`
+
+type CreateAvailabilitySlotParams struct {
+	EmployeeID      int32            `json:"employee_id"`
+	Datetime        pgtype.Timestamp `json:"datetime"`
+	DurationUnits   int32            `json:"duration_units"`
+	DurationMinutes int32            `json:"duration_minutes"`
+	TypeID          int32            `json:"type_id"`
+}
+
+func (q *Queries) CreateAvailabilitySlot(ctx context.Context, arg CreateAvailabilitySlotParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createAvailabilitySlot,
+		arg.EmployeeID,
+		arg.Datetime,
+		arg.DurationUnits,
+		arg.DurationMinutes,
+		arg.TypeID,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createBooking = `-- name: CreateBooking :one
+INSERT INTO
+  bookings (
+    user_id,
+    availability_slot,
+    type_id,
+    paid,
+    cost,
+    notes
+  )
+VALUES
+  ($1, $2, $3, $4, $5, $6)
+RETURNING
+  id
+`
+
+type CreateBookingParams struct {
+	UserID           int32       `json:"user_id"`
+	AvailabilitySlot int32       `json:"availability_slot"`
+	TypeID           int32       `json:"type_id"`
+	Paid             bool        `json:"paid"`
+	Cost             int32       `json:"cost"`
+	Notes            pgtype.Text `json:"notes"`
+}
+
+func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createBooking,
+		arg.UserID,
+		arg.AvailabilitySlot,
+		arg.TypeID,
+		arg.Paid,
+		arg.Cost,
+		arg.Notes,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createBookingType = `-- name: CreateBookingType :one
+INSERT INTO
+  booking_types (title, description, fixed, cost)
+VALUES
+  ($1, $2, $3, $4)
+RETURNING
+  id
+`
+
+type CreateBookingTypeParams struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Fixed       bool   `json:"fixed"`
+	Cost        int32  `json:"cost"`
+}
+
+func (q *Queries) CreateBookingType(ctx context.Context, arg CreateBookingTypeParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createBookingType,
+		arg.Title,
+		arg.Description,
+		arg.Fixed,
+		arg.Cost,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createEmployee = `-- name: CreateEmployee :one
+INSERT INTO
+  employees (name, surname, email, title, description)
+VALUES
+  ($1, $2, $3, $4, $5)
+RETURNING
+  id
+`
+
+type CreateEmployeeParams struct {
+	Name        string `json:"name"`
+	Surname     string `json:"surname"`
+	Email       string `json:"email"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createEmployee,
+		arg.Name,
+		arg.Surname,
+		arg.Email,
+		arg.Title,
+		arg.Description,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO
+  users (name, surname, email)
+VALUES
+  ($1, $2, $3)
+RETURNING
+  id
+`
+
+type CreateUserParams struct {
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+	Email   string `json:"email"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Surname, arg.Email)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const deleteAvailabilitySlot = `-- name: DeleteAvailabilitySlot :one
+DELETE FROM availability
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+func (q *Queries) DeleteAvailabilitySlot(ctx context.Context, id int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteAvailabilitySlot, id)
+	err := row.Scan(&id)
+	return id, err
+}
+
+const deleteBooking = `-- name: DeleteBooking :one
+DELETE FROM bookings
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+func (q *Queries) DeleteBooking(ctx context.Context, id int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteBooking, id)
+	err := row.Scan(&id)
+	return id, err
+}
+
+const deleteBookingType = `-- name: DeleteBookingType :one
+DELETE FROM booking_types
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+func (q *Queries) DeleteBookingType(ctx context.Context, id int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteBookingType, id)
+	err := row.Scan(&id)
+	return id, err
+}
+
+const deleteEmployee = `-- name: DeleteEmployee :one
+DELETE FROM employees
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+func (q *Queries) DeleteEmployee(ctx context.Context, id int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteEmployee, id)
+	err := row.Scan(&id)
+	return id, err
+}
+
+const deleteUser = `-- name: DeleteUser :one
+DELETE FROM users
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteUser, id)
+	err := row.Scan(&id)
+	return id, err
+}
 
 const getAllBookings = `-- name: GetAllBookings :many
 SELECT
@@ -44,4 +271,390 @@ func (q *Queries) GetAllBookings(ctx context.Context) ([]Booking, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getAvailabilitySlotById = `-- name: GetAvailabilitySlotById :one
+SELECT
+  id, employee_id, datetime, duration_units, duration_minutes, type_id, created_at, last_edited
+FROM
+  availability
+WHERE
+  id = $1
+LIMIT
+  1
+`
+
+func (q *Queries) GetAvailabilitySlotById(ctx context.Context, id int32) (Availability, error) {
+	row := q.db.QueryRow(ctx, getAvailabilitySlotById, id)
+	var i Availability
+	err := row.Scan(
+		&i.ID,
+		&i.EmployeeID,
+		&i.Datetime,
+		&i.DurationUnits,
+		&i.DurationMinutes,
+		&i.TypeID,
+		&i.CreatedAt,
+		&i.LastEdited,
+	)
+	return i, err
+}
+
+const getBookingById = `-- name: GetBookingById :one
+SELECT
+  id, user_id, availability_slot, type_id, paid, cost, notes, created_at, last_edited
+FROM
+  bookings
+WHERE
+  id = $1
+LIMIT
+  1
+`
+
+func (q *Queries) GetBookingById(ctx context.Context, id int32) (Booking, error) {
+	row := q.db.QueryRow(ctx, getBookingById, id)
+	var i Booking
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.AvailabilitySlot,
+		&i.TypeID,
+		&i.Paid,
+		&i.Cost,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.LastEdited,
+	)
+	return i, err
+}
+
+const getBookingTypeById = `-- name: GetBookingTypeById :one
+SELECT
+  id, title, description, fixed, cost, created_at, last_edited
+FROM
+  booking_types
+WHERE
+  id = $1
+LIMIT
+  1
+`
+
+func (q *Queries) GetBookingTypeById(ctx context.Context, id int32) (BookingType, error) {
+	row := q.db.QueryRow(ctx, getBookingTypeById, id)
+	var i BookingType
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.Fixed,
+		&i.Cost,
+		&i.CreatedAt,
+		&i.LastEdited,
+	)
+	return i, err
+}
+
+const getCostAndAvailability = `-- name: GetCostAndAvailability :one
+WITH
+  vals AS (
+    SELECT
+      (
+        SELECT
+          fixed
+        FROM
+          booking_types
+        WHERE
+          booking_types.id = $1
+      ) AS fixed,
+      (
+        SELECT
+          cost
+        FROM
+          booking_types
+        WHERE
+          booking_types.id = $1
+      ) AS cost,
+      (
+        SELECT
+          duration_units
+        FROM
+          availability
+        WHERE
+          availability.id = $2
+      ) AS duration_units
+  )
+SELECT
+  fixed,
+  cost,
+  duration_units
+FROM
+  vals
+WHERE
+  fixed IS NOT NULL
+  AND cost IS NOT NULL
+  AND duration_units IS NOT NULL
+`
+
+type GetCostAndAvailabilityParams struct {
+	ID   int32 `json:"id"`
+	ID_2 int32 `json:"id_2"`
+}
+
+type GetCostAndAvailabilityRow struct {
+	Fixed         bool  `json:"fixed"`
+	Cost          int32 `json:"cost"`
+	DurationUnits int32 `json:"duration_units"`
+}
+
+func (q *Queries) GetCostAndAvailability(ctx context.Context, arg GetCostAndAvailabilityParams) (GetCostAndAvailabilityRow, error) {
+	row := q.db.QueryRow(ctx, getCostAndAvailability, arg.ID, arg.ID_2)
+	var i GetCostAndAvailabilityRow
+	err := row.Scan(&i.Fixed, &i.Cost, &i.DurationUnits)
+	return i, err
+}
+
+const getEmployeeById = `-- name: GetEmployeeById :one
+SELECT
+  id, name, surname, email, title, description, created_at, last_login
+FROM
+  employees
+WHERE
+  id = $1
+LIMIT
+  1
+`
+
+func (q *Queries) GetEmployeeById(ctx context.Context, id int32) (Employee, error) {
+	row := q.db.QueryRow(ctx, getEmployeeById, id)
+	var i Employee
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Surname,
+		&i.Email,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.LastLogin,
+	)
+	return i, err
+}
+
+const getUserById = `-- name: GetUserById :one
+SELECT
+  id, name, surname, email, created_at, last_login
+FROM
+  users
+WHERE
+  id = $1
+LIMIT
+  1
+`
+
+func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
+	row := q.db.QueryRow(ctx, getUserById, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Surname,
+		&i.Email,
+		&i.CreatedAt,
+		&i.LastLogin,
+	)
+	return i, err
+}
+
+const updateAvailabilitySlot = `-- name: UpdateAvailabilitySlot :one
+UPDATE availability
+SET
+  id = $1,
+  employee_id = $2,
+  datetime = $3,
+  duration_units = $4,
+  duration_minutes = $5,
+  type_id = $6,
+  created_at = DEFAULT,
+  last_edited = DEFAULT
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+type UpdateAvailabilitySlotParams struct {
+	ID              int32            `json:"id"`
+	EmployeeID      int32            `json:"employee_id"`
+	Datetime        pgtype.Timestamp `json:"datetime"`
+	DurationUnits   int32            `json:"duration_units"`
+	DurationMinutes int32            `json:"duration_minutes"`
+	TypeID          int32            `json:"type_id"`
+}
+
+func (q *Queries) UpdateAvailabilitySlot(ctx context.Context, arg UpdateAvailabilitySlotParams) (int32, error) {
+	row := q.db.QueryRow(ctx, updateAvailabilitySlot,
+		arg.ID,
+		arg.EmployeeID,
+		arg.Datetime,
+		arg.DurationUnits,
+		arg.DurationMinutes,
+		arg.TypeID,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const updateBooking = `-- name: UpdateBooking :one
+UPDATE bookings
+SET
+  id = $1,
+  user_id = $2,
+  availability_slot = $3,
+  type_id = $4,
+  paid = $5,
+  cost = $6,
+  notes = $7,
+  created_at = DEFAULT,
+  last_edited = DEFAULT
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+type UpdateBookingParams struct {
+	ID               int32       `json:"id"`
+	UserID           int32       `json:"user_id"`
+	AvailabilitySlot int32       `json:"availability_slot"`
+	TypeID           int32       `json:"type_id"`
+	Paid             bool        `json:"paid"`
+	Cost             int32       `json:"cost"`
+	Notes            pgtype.Text `json:"notes"`
+}
+
+func (q *Queries) UpdateBooking(ctx context.Context, arg UpdateBookingParams) (int32, error) {
+	row := q.db.QueryRow(ctx, updateBooking,
+		arg.ID,
+		arg.UserID,
+		arg.AvailabilitySlot,
+		arg.TypeID,
+		arg.Paid,
+		arg.Cost,
+		arg.Notes,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const updateBookingType = `-- name: UpdateBookingType :one
+UPDATE booking_types
+SET
+  id = $1,
+  title = $2,
+  description = $3,
+  fixed = $4,
+  cost = $5,
+  created_at = DEFAULT,
+  last_edited = DEFAULT
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+type UpdateBookingTypeParams struct {
+	ID          int32  `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Fixed       bool   `json:"fixed"`
+	Cost        int32  `json:"cost"`
+}
+
+func (q *Queries) UpdateBookingType(ctx context.Context, arg UpdateBookingTypeParams) (int32, error) {
+	row := q.db.QueryRow(ctx, updateBookingType,
+		arg.ID,
+		arg.Title,
+		arg.Description,
+		arg.Fixed,
+		arg.Cost,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const updateEmployee = `-- name: UpdateEmployee :one
+UPDATE employees
+SET
+  id = $1,
+  name = $2,
+  surname = $3,
+  email = $4,
+  title = $5,
+  description = $6,
+  created_at = DEFAULT,
+  last_login = DEFAULT
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+type UpdateEmployeeParams struct {
+	ID          int32  `json:"id"`
+	Name        string `json:"name"`
+	Surname     string `json:"surname"`
+	Email       string `json:"email"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (int32, error) {
+	row := q.db.QueryRow(ctx, updateEmployee,
+		arg.ID,
+		arg.Name,
+		arg.Surname,
+		arg.Email,
+		arg.Title,
+		arg.Description,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET
+  id = $1,
+  name = $2,
+  surname = $3,
+  email = $4,
+  created_at = DEFAULT,
+  last_login = DEFAULT
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+type UpdateUserParams struct {
+	ID      int32  `json:"id"`
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+	Email   string `json:"email"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (int32, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.ID,
+		arg.Name,
+		arg.Surname,
+		arg.Email,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }

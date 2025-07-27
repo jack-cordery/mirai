@@ -9,12 +9,14 @@ import (
 )
 
 type Availability struct {
-	ID         int32            `json:"id"`
-	EmployeeID int32            `json:"employee_id"`
-	Datetime   pgtype.Timestamp `json:"datetime"`
-	Duration   pgtype.Interval  `json:"duration"`
-	CreatedAt  pgtype.Timestamp `json:"created_at"`
-	LastEdited pgtype.Timestamp `json:"last_edited"`
+	ID              int32            `json:"id"`
+	EmployeeID      int32            `json:"employee_id"`
+	Datetime        pgtype.Timestamp `json:"datetime"`
+	DurationUnits   int32            `json:"duration_units"`
+	DurationMinutes int32            `json:"duration_minutes"`
+	TypeID          int32            `json:"type_id"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	LastEdited      pgtype.Timestamp `json:"last_edited"`
 }
 
 type Booking struct {
@@ -23,7 +25,7 @@ type Booking struct {
 	AvailabilitySlot int32            `json:"availability_slot"`
 	TypeID           int32            `json:"type_id"`
 	Paid             bool             `json:"paid"`
-	Cost             pgtype.Numeric   `json:"cost"`
+	Cost             int32            `json:"cost"`
 	Notes            pgtype.Text      `json:"notes"`
 	CreatedAt        pgtype.Timestamp `json:"created_at"`
 	LastEdited       pgtype.Timestamp `json:"last_edited"`
@@ -34,7 +36,7 @@ type BookingType struct {
 	Title       string           `json:"title"`
 	Description string           `json:"description"`
 	Fixed       bool             `json:"fixed"`
-	Cost        pgtype.Numeric   `json:"cost"`
+	Cost        int32            `json:"cost"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	LastEdited  pgtype.Timestamp `json:"last_edited"`
 }
@@ -42,6 +44,8 @@ type BookingType struct {
 type Employee struct {
 	ID          int32            `json:"id"`
 	Name        string           `json:"name"`
+	Surname     string           `json:"surname"`
+	Email       string           `json:"email"`
 	Title       string           `json:"title"`
 	Description string           `json:"description"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
@@ -52,6 +56,7 @@ type User struct {
 	ID        int32            `json:"id"`
 	Name      string           `json:"name"`
 	Surname   string           `json:"surname"`
+	Email     string           `json:"email"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	LastLogin pgtype.Timestamp `json:"last_login"`
 }

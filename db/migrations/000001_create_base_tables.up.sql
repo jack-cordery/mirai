@@ -1,28 +1,23 @@
 CREATE TABLE IF NOT EXISTS employees (
   id serial PRIMARY KEY,
   name VARCHAR(40) NOT NULL,
+  surname VARCHAR(40) NOT NULL,
+  email VARCHAR(255) NOT NULL,
   title VARCHAR(40) NOT NULL,
   description TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (name, surname, title)
 );
 
 CREATE TABLE IF NOT EXISTS users (
   id serial PRIMARY KEY,
   name VARCHAR(40) NOT NULL,
   surname VARCHAR(40) NOT NULL,
+  email VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS availability (
-  id serial PRIMARY KEY,
-  employee_id INT NOT NULL REFERENCES employees (id) ON DELETE CASCADE,
-  datetime TIMESTAMP NOT NULL,
-  duration INTERVAL NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (employee_id, datetime)
+  last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (name, surname, email)
 );
 
 CREATE TABLE IF NOT EXISTS booking_types (
@@ -30,9 +25,22 @@ CREATE TABLE IF NOT EXISTS booking_types (
   title VARCHAR(40) NOT NULL,
   description TEXT NOT NULL,
   fixed BOOL NOT NULL,
-  cost MONEY NOT NULL,
+  cost INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (title, description)
+);
+
+CREATE TABLE IF NOT EXISTS availability (
+  id serial PRIMARY KEY,
+  employee_id INT NOT NULL REFERENCES employees (id) ON DELETE CASCADE,
+  datetime TIMESTAMP NOT NULL,
+  duration_units INT NOT NULL,
+  duration_minutes INT NOT NULL,
+  type_id INT NOT NULL REFERENCES booking_types (id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (employee_id, datetime)
 );
 
 CREATE TABLE IF NOT EXISTS bookings (
@@ -41,9 +49,9 @@ CREATE TABLE IF NOT EXISTS bookings (
   availability_slot INT NOT NULL REFERENCES availability (id) ON DELETE CASCADE,
   type_id INT NOT NULL REFERENCES booking_types (id) ON DELETE CASCADE,
   paid BOOL NOT NULL,
-  cost MONEY NOT NULL,
+  cost INT NOT NULL,
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_id, availability_slot)
 );
-

@@ -71,6 +71,31 @@ func SetupServer() {
 	mux.HandleFunc("GET /readyz", readyHandler(baseConn, ctx))
 	mux.HandleFunc("GET /livez", liveHandler)
 
+	mux.HandleFunc("POST /booking", postBooking(pool, ctx))
+	mux.HandleFunc("GET /booking/{booking_id}", getBooking(pool, ctx))
+	mux.HandleFunc("PUT /booking/{booking_id}", putBooking(pool, ctx))
+	mux.HandleFunc("DELETE /booking/{booking_id}", deleteBooking(pool, ctx))
+
+	mux.HandleFunc("POST /user", postUser(pool, ctx))
+	mux.HandleFunc("GET /user/{user_id}", getUser(pool, ctx))
+	mux.HandleFunc("PUT /user/{user_id}", putUser(pool, ctx))
+	mux.HandleFunc("DELETE /user/{user_id}", deleteUser(pool, ctx))
+
+	mux.HandleFunc("POST /employee", postEmployee(pool, ctx))
+	mux.HandleFunc("GET /employee/{employee_id}", getEmployee(pool, ctx))
+	mux.HandleFunc("PUT /employee/{employee_id}", putEmployee(pool, ctx))
+	mux.HandleFunc("DELETE /employee/{employee_id}", deleteEmployee(pool, ctx))
+
+	mux.HandleFunc("POST /booking_type", postBookingType(pool, ctx))
+	mux.HandleFunc("GET /booking_type/{type_id}", getBookingType(pool, ctx))
+	mux.HandleFunc("PUT /booking_type/{type_id}", putBookingType(pool, ctx))
+	mux.HandleFunc("DELETE /booking_type/{type_id}", deleteBookingType(pool, ctx))
+
+	mux.HandleFunc("POST /availability", postAvailabilitySlot(pool, ctx))
+	mux.HandleFunc("GET /availability/{availability_slot_id}", getAvailabilitySlot(pool, ctx))
+	mux.HandleFunc("PUT /availability/{availability_slot_id}", putAvailabilitySlot(pool, ctx))
+	mux.HandleFunc("DELETE /availability/{availability_slot_id}", deleteAvailabilitySlot(pool, ctx))
+
 	err = http.ListenAndServe(":8000", jsonContentTypeMiddleware(mux))
 	if err != nil {
 		log.Println(err)

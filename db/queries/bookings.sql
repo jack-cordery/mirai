@@ -34,6 +34,16 @@ WHERE
 LIMIT
   1;
 
+-- name: GetUserByEmail :one
+SELECT
+  *
+FROM
+  users
+WHERE
+  email = $1
+LIMIT
+  1;
+
 -- name: GetAvailabilitySlotById :one
 SELECT
   *
@@ -43,6 +53,12 @@ WHERE
   id = $1
 LIMIT
   1;
+
+-- name: GetAllBookingTypes :many
+SELECT
+  *
+FROM
+  booking_types;
 
 -- name: GetBookingTypeById :one
 SELECT

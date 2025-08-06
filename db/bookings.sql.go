@@ -236,6 +236,41 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) (int32, error) {
 	return id, err
 }
 
+const getAllBookingTypes = `-- name: GetAllBookingTypes :many
+SELECT
+  id, title, description, fixed, cost, created_at, last_edited
+FROM
+  booking_types
+`
+
+func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error) {
+	rows, err := q.db.Query(ctx, getAllBookingTypes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []BookingType
+	for rows.Next() {
+		var i BookingType
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.Fixed,
+			&i.Cost,
+			&i.CreatedAt,
+			&i.LastEdited,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllBookings = `-- name: GetAllBookings :many
 SELECT
   id, user_id, availability_slot, type_id, paid, cost, notes, created_at, last_edited
@@ -434,6 +469,31 @@ func (q *Queries) GetEmployeeById(ctx context.Context, id int32) (Employee, erro
 		&i.Email,
 		&i.Title,
 		&i.Description,
+		&i.CreatedAt,
+		&i.LastLogin,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT
+  id, name, surname, email, created_at, last_login
+FROM
+  users
+WHERE
+  email = $1
+LIMIT
+  1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Surname,
+		&i.Email,
 		&i.CreatedAt,
 		&i.LastLogin,
 	)

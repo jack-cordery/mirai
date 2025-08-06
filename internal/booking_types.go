@@ -154,14 +154,6 @@ func postBookingType(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 func getBookingType(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		typeID := r.PathValue("type_id")
-		id, err := strconv.ParseInt(typeID, 10, 32)
-		if err != nil {
-			log.Printf("error: %v converting type id to int in getBookingType: %s", err, typeID)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
 		conn, err := pool.Acquire(ctx)
 		if err != nil {
 			log.Printf("error aquiring pool in getBookingType: %v", err)
@@ -171,6 +163,42 @@ func getBookingType(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		defer conn.Release()
 
 		queries := db.New(conn)
+
+		typeID := r.PathValue("type_id")
+		if typeID == "" {
+			log.Printf("getting all booking types")
+			bookingTypes, err := queries.GetAllBookingTypes(ctx)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("error querying booking type table in getAllBookingTypes: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Println("there are no booking types")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			resp := []GetBookingTypeResponse{}
+
+			for _, b := range bookingTypes {
+				resp = append(resp, responseFromDBBookingType(b))
+			}
+
+			err = json.NewEncoder(w).Encode(resp)
+			if err != nil {
+				log.Printf("error encoding json in getBookingType: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+		}
+		id, err := strconv.ParseInt(typeID, 10, 32)
+		if err != nil {
+			log.Printf("error: %v converting type id to int in getBookingType: %s", err, typeID)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		bookingType, err := queries.GetBookingTypeById(ctx, int32(id))
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {

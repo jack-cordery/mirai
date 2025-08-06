@@ -186,6 +186,45 @@ func getUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	}
 }
 
+func getUserByEmail(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		email := r.URL.Query().Get("email")
+		if email == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		conn, err := pool.Acquire(ctx)
+		if err != nil {
+			log.Printf("error aquiring pool in getUserByEmail: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Release()
+
+		queries := db.New(conn)
+
+		user, err := queries.GetUserByEmail(ctx, email)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			log.Printf("error querying users table in getUserByEmail: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Printf("email: %s was requested in getUserByEmail and does not exist", email)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(responseFromDBUser(user))
+		if err != nil {
+			log.Printf("error encoding json in getUserByEmail: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
 func putUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userId := r.PathValue("user_id")

@@ -166,7 +166,6 @@ func getBookingType(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 		typeID := r.PathValue("type_id")
 		if typeID == "" {
-			log.Printf("getting all booking types")
 			bookingTypes, err := queries.GetAllBookingTypes(ctx)
 			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 				log.Printf("error querying booking type table in getAllBookingTypes: %v", err)

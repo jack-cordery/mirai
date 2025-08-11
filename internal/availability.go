@@ -188,13 +188,6 @@ func postAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerF
 func getAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		availabilitySlotID := r.PathValue("availability_slot_id")
-		id, err := strconv.ParseInt(availabilitySlotID, 10, 32)
-		if err != nil {
-			log.Printf("error: %v converting user id to int in getAvailabilitySlot: %s", err, availabilitySlotID)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
 		conn, err := pool.Acquire(ctx)
 		if err != nil {
 			log.Printf("error aquiring pool in getAvailabilitySlot: %v", err)
@@ -204,6 +197,35 @@ func getAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 		defer conn.Release()
 
 		queries := db.New(conn)
+		if availabilitySlotID == "" {
+			availabilitySlots, err := queries.GetAllAvailabilitySlots(ctx)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("error querying availability table in getAllAvailabilitySlots: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			resp := []GetAvailiabilitySlotResponse{}
+
+			for _, a := range availabilitySlots {
+				resp = append(resp, responseFromDBAvailability(a))
+			}
+
+			err = json.NewEncoder(w).Encode(resp)
+			if err != nil {
+				log.Printf("error encoding json in getAvailiability: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+		}
+
+		id, err := strconv.ParseInt(availabilitySlotID, 10, 32)
+		if err != nil {
+			log.Printf("error: %v converting user id to int in getAvailabilitySlot: %s", err, availabilitySlotID)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		availabilitySlot, err := queries.GetAvailabilitySlotById(ctx, int32(id))
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {

@@ -54,6 +54,12 @@ WHERE
 LIMIT
   1;
 
+-- name: GetAllAvailabilitySlots :many
+SELECT
+  *
+FROM
+  availability;
+
 -- name: GetAllBookingTypes :many
 SELECT
   *

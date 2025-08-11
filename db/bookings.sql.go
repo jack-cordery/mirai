@@ -236,6 +236,42 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) (int32, error) {
 	return id, err
 }
 
+const getAllAvailabilitySlots = `-- name: GetAllAvailabilitySlots :many
+SELECT
+  id, employee_id, datetime, duration_units, duration_minutes, type_id, created_at, last_edited
+FROM
+  availability
+`
+
+func (q *Queries) GetAllAvailabilitySlots(ctx context.Context) ([]Availability, error) {
+	rows, err := q.db.Query(ctx, getAllAvailabilitySlots)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Availability
+	for rows.Next() {
+		var i Availability
+		if err := rows.Scan(
+			&i.ID,
+			&i.EmployeeID,
+			&i.Datetime,
+			&i.DurationUnits,
+			&i.DurationMinutes,
+			&i.TypeID,
+			&i.CreatedAt,
+			&i.LastEdited,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllBookingTypes = `-- name: GetAllBookingTypes :many
 SELECT
   id, title, description, fixed, cost, created_at, last_edited

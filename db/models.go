@@ -9,26 +9,28 @@ import (
 )
 
 type Availability struct {
-	ID              int32            `json:"id"`
-	EmployeeID      int32            `json:"employee_id"`
-	Datetime        pgtype.Timestamp `json:"datetime"`
-	DurationUnits   int32            `json:"duration_units"`
-	DurationMinutes int32            `json:"duration_minutes"`
-	TypeID          int32            `json:"type_id"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
-	LastEdited      pgtype.Timestamp `json:"last_edited"`
+	ID         int32            `json:"id"`
+	EmployeeID int32            `json:"employee_id"`
+	Datetime   pgtype.Timestamp `json:"datetime"`
+	TypeID     int32            `json:"type_id"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	LastEdited pgtype.Timestamp `json:"last_edited"`
 }
 
 type Booking struct {
-	ID               int32            `json:"id"`
-	UserID           int32            `json:"user_id"`
-	AvailabilitySlot int32            `json:"availability_slot"`
-	TypeID           int32            `json:"type_id"`
-	Paid             bool             `json:"paid"`
-	Cost             int32            `json:"cost"`
-	Notes            pgtype.Text      `json:"notes"`
-	CreatedAt        pgtype.Timestamp `json:"created_at"`
-	LastEdited       pgtype.Timestamp `json:"last_edited"`
+	ID         int32            `json:"id"`
+	UserID     int32            `json:"user_id"`
+	TypeID     int32            `json:"type_id"`
+	Paid       bool             `json:"paid"`
+	Cost       int32            `json:"cost"`
+	Notes      pgtype.Text      `json:"notes"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	LastEdited pgtype.Timestamp `json:"last_edited"`
+}
+
+type BookingSlot struct {
+	BookingID          int32 `json:"booking_id"`
+	AvailabilitySlotID int32 `json:"availability_slot_id"`
 }
 
 type BookingType struct {

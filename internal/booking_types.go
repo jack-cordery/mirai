@@ -186,10 +186,11 @@ func getBookingType(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 			err = json.NewEncoder(w).Encode(resp)
 			if err != nil {
-				log.Printf("error encoding json in getBookingType: %v", err)
+				log.Printf("error encoding json in getAllBookingType: %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			return
 
 		}
 		id, err := strconv.ParseInt(typeID, 10, 32)

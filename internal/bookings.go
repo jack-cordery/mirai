@@ -16,36 +16,36 @@ import (
 )
 
 type GetBookingResponse struct {
-	BookingID        int32            `json:"booking_id"`
-	UserID           int32            `json:"user_id"`
-	AvailabilitySlot int32            `json:"availability_slot"`
-	TypeID           int32            `json:"type_id"`
-	Paid             bool             `json:"paid"`
-	Cost             int32            `json:"cost"`
-	Notes            pgtype.Text      `json:"notes"`
-	CreatedAt        pgtype.Timestamp `json:"created_at"`
-	LastEdited       pgtype.Timestamp `json:"last_edited"`
+	BookingID  int32            `json:"booking_id"`
+	UserID     int32            `json:"user_id"`
+	TypeID     int32            `json:"type_id"`
+	Paid       bool             `json:"paid"`
+	Cost       int32            `json:"cost"`
+	Notes      pgtype.Text      `json:"notes"`
+	SlotIDs    []int32          `json:"slot_ids"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	LastEdited pgtype.Timestamp `json:"last_edited"`
 }
 
-func responseFromDBBooking(booking db.Booking) GetBookingResponse {
+func responseFromDBBooking(booking db.GetBookingByIdRow) GetBookingResponse {
 	return GetBookingResponse{
-		BookingID:        booking.ID,
-		UserID:           booking.UserID,
-		AvailabilitySlot: booking.AvailabilitySlot,
-		TypeID:           booking.TypeID,
-		Paid:             booking.Paid,
-		Cost:             booking.Cost,
-		Notes:            booking.Notes,
-		CreatedAt:        booking.CreatedAt,
-		LastEdited:       booking.LastEdited,
+		BookingID:  booking.ID,
+		UserID:     booking.UserID,
+		TypeID:     booking.TypeID,
+		Paid:       booking.Paid,
+		Cost:       booking.Cost,
+		Notes:      booking.Notes,
+		SlotIDs:    booking.SlotIds,
+		CreatedAt:  booking.CreatedAt,
+		LastEdited: booking.LastEdited,
 	}
 }
 
 type PostBookingRequest struct {
-	UserID           int32       `json:"user_id"`
-	AvailabilitySlot int32       `json:"availability_slot"`
-	TypeID           int32       `json:"type_id"`
-	Notes            pgtype.Text `json:"notes"`
+	UserID            int32       `json:"user_id"`
+	AvailabilitySlots []int32     `json:"availability_slots"`
+	TypeID            int32       `json:"type_id"`
+	Notes             pgtype.Text `json:"notes"`
 }
 
 type PostBookingResponse struct {
@@ -54,22 +54,22 @@ type PostBookingResponse struct {
 
 func (r PostBookingRequest) ToDBParams(cost int32, paid bool) db.CreateBookingParams {
 	return db.CreateBookingParams{
-		UserID:           r.UserID,
-		AvailabilitySlot: r.AvailabilitySlot,
-		TypeID:           r.TypeID,
-		Notes:            r.Notes,
-		Cost:             cost,
-		Paid:             paid,
+		UserID:  r.UserID,
+		TypeID:  r.TypeID,
+		Notes:   r.Notes,
+		Cost:    cost,
+		Paid:    paid,
+		Column6: r.AvailabilitySlots,
 	}
 }
 
 type PutBookingRequest struct {
-	UserID           int32       `json:"user_id"`
-	AvailabilitySlot int32       `json:"availability_slot"`
-	TypeID           int32       `json:"type_id"`
-	Notes            pgtype.Text `json:"notes"`
-	Cost             int32       `json:"cost"`
-	Paid             bool        `json:"bool"`
+	UserID int32       `json:"user_id"`
+	TypeID int32       `json:"type_id"`
+	Notes  pgtype.Text `json:"notes"`
+	Cost   int32       `json:"cost"`
+	Paid   bool        `json:"bool"`
+	Slots  []int32     `json:"availability_slots"`
 }
 type PutBookingResponse struct {
 	BookingID int32 `json:"booking_id"`
@@ -77,13 +77,12 @@ type PutBookingResponse struct {
 
 func (r PutBookingRequest) ToDBParams(bookingID int32) db.UpdateBookingParams {
 	return db.UpdateBookingParams{
-		ID:               bookingID,
-		UserID:           r.UserID,
-		AvailabilitySlot: r.AvailabilitySlot,
-		TypeID:           r.TypeID,
-		Notes:            r.Notes,
-		Cost:             r.Cost,
-		Paid:             r.Paid,
+		ID:     bookingID,
+		UserID: r.UserID,
+		TypeID: r.TypeID,
+		Notes:  r.Notes,
+		Cost:   r.Cost,
+		Paid:   r.Paid,
 	}
 }
 
@@ -122,8 +121,14 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
+		duration := len(bookingRequest.AvailabilitySlots)
+		if duration < 1 {
+			log.Printf("requested a booking with no slots")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-		cost, err := getAndCalculateCost(queries, ctx, bookingRequest.TypeID, bookingRequest.AvailabilitySlot)
+		cost, err := getAndCalculateCost(queries, ctx, bookingRequest.TypeID, int32(duration))
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			log.Printf("error getting cost and availability in postBooking: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -132,7 +137,7 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		if err != nil && errors.Is(err, pgx.ErrNoRows) {
 			log.Printf("invalid BookingTypeID: %d and/or AvailabilitySlotID: %d",
 				bookingRequest.TypeID,
-				bookingRequest.AvailabilitySlot,
+				bookingRequest.AvailabilitySlots,
 			)
 		}
 
@@ -143,7 +148,7 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 				if pgErr.Code == "23505" {
 					log.Printf("uniqueness constraint violated in postBooking. userID: %d availabilitySlot: %d",
 						bookingRequest.UserID,
-						bookingRequest.AvailabilitySlot,
+						bookingRequest.AvailabilitySlots,
 					)
 					w.WriteHeader(http.StatusConflict)
 					return
@@ -152,7 +157,7 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 					log.Printf("either the booking type id: %d or user id: %d, or availabilitySlotID %d does not exist",
 						bookingRequest.TypeID,
 						bookingRequest.UserID,
-						bookingRequest.AvailabilitySlot,
+						bookingRequest.AvailabilitySlots,
 					)
 					w.WriteHeader(http.StatusBadRequest)
 					return
@@ -280,18 +285,18 @@ func putBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				if pgErr.Code == "23505" {
-					log.Printf("uniqueness constraint violated in putBooking. userID: %d availabilitySlot: %d",
+					log.Printf("uniqueness constraint violated in putBooking. userID: %d availabilitySlot: %v",
 						bookingRequest.UserID,
-						bookingRequest.AvailabilitySlot,
+						bookingRequest.Slots,
 					)
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
 				if pgErr.Code == "23503" {
-					log.Printf("putBooking: either the booking type id: %d or user id: %d, or availabilitySlotID %d does not exist",
+					log.Printf("putBooking: either the booking type id: %d or user id: %d, or availabilitySlotID %v does not exist",
 						bookingRequest.TypeID,
 						bookingRequest.UserID,
-						bookingRequest.AvailabilitySlot,
+						bookingRequest.Slots,
 					)
 					w.WriteHeader(http.StatusBadRequest)
 					return

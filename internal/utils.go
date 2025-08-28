@@ -47,17 +47,17 @@ func checkUserExists(queries *db.Queries, ctx context.Context, userID int32) (bo
 	return true, nil
 }
 
-func getAndCalculateCost(queries *db.Queries, ctx context.Context, typeID int32, availabilitySlotID int32) (int32, error) {
-	costAndAvailabilityResult, err := queries.GetCostAndAvailability(ctx, db.GetCostAndAvailabilityParams{ID: typeID, ID_2: availabilitySlotID})
+func getAndCalculateCost(queries *db.Queries, ctx context.Context, typeID int32, duration int32) (int32, error) {
+	bookingType, err := queries.GetBookingTypeById(ctx, typeID)
 	if err != nil {
 		return 0, err
 	}
 
-	if costAndAvailabilityResult.Fixed {
-		return costAndAvailabilityResult.Cost, nil
+	if bookingType.Fixed {
+		return bookingType.Cost, nil
 	}
 
-	totalCost := calculateCost(costAndAvailabilityResult.Cost, costAndAvailabilityResult.DurationUnits)
+	totalCost := calculateCost(bookingType.Cost, duration)
 
 	return totalCost, nil
 

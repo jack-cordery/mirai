@@ -43,7 +43,6 @@ response=$(curl -sS -w "\n%{http_code}" -H 'Content-Type: application/json' \
 	-d "{
 	  \"employee_id\": $employee_id,
 	  \"datetime\": \"2025-07-26T18:30:00Z\",
-	  \"duration_units\": 2,
 	  \"type_id\": $booking_type_id
 	}" "$SERVER/availability")
 
@@ -72,7 +71,6 @@ response=$(curl -s -w "\n%{http_code}" -H 'Content-Type: application/json' \
 	-d "{
 	  \"employee_id\": $employee_id,
 	  \"datetime\": \"2024-07-26T18:30:00Z\",
-	  \"duration_units\": 5,
 	  \"type_id\": $booking_type_id
 	}" "$SERVER/availability/$availability_id")
 

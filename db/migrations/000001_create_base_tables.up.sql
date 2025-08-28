@@ -35,8 +35,6 @@ CREATE TABLE IF NOT EXISTS availability (
   id serial PRIMARY KEY,
   employee_id INT NOT NULL REFERENCES employees (id) ON DELETE CASCADE,
   datetime TIMESTAMP NOT NULL,
-  duration_units INT NOT NULL,
-  duration_minutes INT NOT NULL,
   type_id INT NOT NULL REFERENCES booking_types (id) ON DELETE CASCADE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -46,12 +44,17 @@ CREATE TABLE IF NOT EXISTS availability (
 CREATE TABLE IF NOT EXISTS bookings (
   id serial PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-  availability_slot INT NOT NULL REFERENCES availability (id) ON DELETE CASCADE,
   type_id INT NOT NULL REFERENCES booking_types (id) ON DELETE CASCADE,
   paid BOOL NOT NULL,
   cost INT NOT NULL,
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (user_id, availability_slot)
+  last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS booking_slots (
+  booking_id INT NOT NULL REFERENCES bookings (id) ON DELETE CASCADE,
+  availability_slot_id INT NOT NULL REFERENCES availability (id) ON DELETE CASCADE,
+  PRIMARY KEY (booking_id, availability_slot_id),
+  UNIQUE (availability_slot_id)
 );

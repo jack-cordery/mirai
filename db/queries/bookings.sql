@@ -6,11 +6,26 @@ FROM
 
 -- name: GetBookingById :one
 SELECT
-  *
+  b.id,
+  b.user_id,
+  b.type_id,
+  b.paid,
+  b.cost,
+  b.notes,
+  b.created_at,
+  b.last_edited,
+  array_agg(
+    bs.availability_slot_id
+    ORDER BY
+      bs.availability_slot_id
+  )::int[] AS slot_ids
 FROM
-  bookings
+  bookings b
+  LEFT JOIN booking_slots bs ON b.id = bs.booking_id
 WHERE
-  id = $1
+  b.id = $1
+GROUP BY
+  b.id
 LIMIT
   1;
 
@@ -77,31 +92,33 @@ LIMIT
   1;
 
 -- name: CreateBooking :one 
-INSERT INTO
-  bookings (
-    user_id,
-    availability_slot,
-    type_id,
-    paid,
-    cost,
-    notes
+WITH
+  new_booking as (
+    INSERT INTO
+      bookings (user_id, type_id, paid, cost, notes)
+    VALUES
+      ($1, $2, $3, $4, $5)
+    RETURNING
+      id
   )
-VALUES
-  ($1, $2, $3, $4, $5, $6)
+INSERT INTO
+  booking_slots (booking_id, availability_slot_id)
+SELECT
+  id,
+  unnest($6::int[])
+FROM
+  new_booking
 RETURNING
-  id;
+  booking_id;
 
 -- name: UpdateBooking :one
 UPDATE bookings
 SET
-  id = $1,
   user_id = $2,
-  availability_slot = $3,
-  type_id = $4,
-  paid = $5,
-  cost = $6,
-  notes = $7,
-  created_at = DEFAULT,
+  type_id = $3,
+  paid = $4,
+  cost = $5,
+  notes = $6,
   last_edited = DEFAULT
 WHERE
   id = $1
@@ -114,6 +131,27 @@ WHERE
   id = $1
 RETURNING
   id;
+
+-- name: CreateBookingSlot :exec
+INSERT INTO
+  booking_slots (booking_id, availability_slot_id)
+VALUES
+  ($1, $2);
+
+-- name: UpdateBookingSlot :exec
+UPDATE booking_slots
+SET
+  booking_id = $3,
+  availability_slot_id = $4
+WHERE
+  booking_id = $1
+  AND availability_slot_id = $2;
+
+-- name: DeleteBookingSlot :exec
+DELETE FROM booking_slots
+WHERE
+  booking_id = $1
+  AND availability_slot_id = $2;
 
 -- name: CreateEmployee :one 
 INSERT INTO
@@ -177,15 +215,9 @@ RETURNING
 
 -- name: CreateAvailabilitySlot :one 
 INSERT INTO
-  availability (
-    employee_id,
-    datetime,
-    duration_units,
-    duration_minutes,
-    type_id
-  )
+  availability (employee_id, datetime, type_id)
 VALUES
-  ($1, $2, $3, $4, $5)
+  ($1, $2, $3)
 RETURNING
   id;
 
@@ -195,9 +227,7 @@ SET
   id = $1,
   employee_id = $2,
   datetime = $3,
-  duration_units = $4,
-  duration_minutes = $5,
-  type_id = $6,
+  type_id = $4,
   created_at = DEFAULT,
   last_edited = DEFAULT
 WHERE
@@ -241,43 +271,3 @@ WHERE
   id = $1
 RETURNING
   id;
-
--- name: GetCostAndAvailability :one
-WITH
-  vals AS (
-    SELECT
-      (
-        SELECT
-          fixed
-        FROM
-          booking_types
-        WHERE
-          booking_types.id = $1
-      ) AS fixed,
-      (
-        SELECT
-          cost
-        FROM
-          booking_types
-        WHERE
-          booking_types.id = $1
-      ) AS cost,
-      (
-        SELECT
-          duration_units
-        FROM
-          availability
-        WHERE
-          availability.id = $2
-      ) AS duration_units
-  )
-SELECT
-  fixed,
-  cost,
-  duration_units
-FROM
-  vals
-WHERE
-  fixed IS NOT NULL
-  AND cost IS NOT NULL
-  AND duration_units IS NOT NULL;

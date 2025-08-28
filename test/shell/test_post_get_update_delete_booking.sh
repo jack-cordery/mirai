@@ -54,7 +54,6 @@ response=$(curl -sS -w "\n%{http_code}" -H 'Content-Type: application/json' \
 	-d "{
 	  \"employee_id\": $employee_id,
 	  \"datetime\": \"2025-07-26T18:30:00Z\",
-	  \"duration_units\": 2,
 	  \"type_id\": $booking_type_id
 	}" "$SERVER/availability")
 
@@ -67,7 +66,7 @@ availability_id=$(echo "$body" | jq -r '.availability_slot_id')
 response=$(curl -sS -w "\n%{http_code}" -H 'Content-Type: application/json' \
 	-d "{
 	  \"user_id\": "$user_id",
-	  \"availability_slot\": "$availability_id",
+	  \"availability_slots\": ["$availability_id"],
 	  \"type_id\": "$booking_type_id",
 	  \"notes\": \"some notes\"
 	}" "$SERVER/booking")

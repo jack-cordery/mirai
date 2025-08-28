@@ -13,77 +13,85 @@ import (
 
 const createAvailabilitySlot = `-- name: CreateAvailabilitySlot :one
 INSERT INTO
-  availability (
-    employee_id,
-    datetime,
-    duration_units,
-    duration_minutes,
-    type_id
-  )
+  availability (employee_id, datetime, type_id)
 VALUES
-  ($1, $2, $3, $4, $5)
+  ($1, $2, $3)
 RETURNING
   id
 `
 
 type CreateAvailabilitySlotParams struct {
-	EmployeeID      int32            `json:"employee_id"`
-	Datetime        pgtype.Timestamp `json:"datetime"`
-	DurationUnits   int32            `json:"duration_units"`
-	DurationMinutes int32            `json:"duration_minutes"`
-	TypeID          int32            `json:"type_id"`
+	EmployeeID int32            `json:"employee_id"`
+	Datetime   pgtype.Timestamp `json:"datetime"`
+	TypeID     int32            `json:"type_id"`
 }
 
 func (q *Queries) CreateAvailabilitySlot(ctx context.Context, arg CreateAvailabilitySlotParams) (int32, error) {
-	row := q.db.QueryRow(ctx, createAvailabilitySlot,
-		arg.EmployeeID,
-		arg.Datetime,
-		arg.DurationUnits,
-		arg.DurationMinutes,
-		arg.TypeID,
-	)
+	row := q.db.QueryRow(ctx, createAvailabilitySlot, arg.EmployeeID, arg.Datetime, arg.TypeID)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
 }
 
 const createBooking = `-- name: CreateBooking :one
-INSERT INTO
-  bookings (
-    user_id,
-    availability_slot,
-    type_id,
-    paid,
-    cost,
-    notes
+WITH
+  new_booking as (
+    INSERT INTO
+      bookings (user_id, type_id, paid, cost, notes)
+    VALUES
+      ($1, $2, $3, $4, $5)
+    RETURNING
+      id
   )
-VALUES
-  ($1, $2, $3, $4, $5, $6)
+INSERT INTO
+  booking_slots (booking_id, availability_slot_id)
+SELECT
+  id,
+  unnest($6::int[])
+FROM
+  new_booking
 RETURNING
-  id
+  booking_id
 `
 
 type CreateBookingParams struct {
-	UserID           int32       `json:"user_id"`
-	AvailabilitySlot int32       `json:"availability_slot"`
-	TypeID           int32       `json:"type_id"`
-	Paid             bool        `json:"paid"`
-	Cost             int32       `json:"cost"`
-	Notes            pgtype.Text `json:"notes"`
+	UserID  int32       `json:"user_id"`
+	TypeID  int32       `json:"type_id"`
+	Paid    bool        `json:"paid"`
+	Cost    int32       `json:"cost"`
+	Notes   pgtype.Text `json:"notes"`
+	Column6 []int32     `json:"column_6"`
 }
 
 func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (int32, error) {
 	row := q.db.QueryRow(ctx, createBooking,
 		arg.UserID,
-		arg.AvailabilitySlot,
 		arg.TypeID,
 		arg.Paid,
 		arg.Cost,
 		arg.Notes,
+		arg.Column6,
 	)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
+	var booking_id int32
+	err := row.Scan(&booking_id)
+	return booking_id, err
+}
+
+const createBookingSlot = `-- name: CreateBookingSlot :exec
+INSERT INTO
+  booking_slots (booking_id, availability_slot_id)
+VALUES
+  ($1, $2)
+`
+
+type CreateBookingSlotParams struct {
+	BookingID          int32 `json:"booking_id"`
+	AvailabilitySlotID int32 `json:"availability_slot_id"`
+}
+
+func (q *Queries) CreateBookingSlot(ctx context.Context, arg CreateBookingSlotParams) error {
+	_, err := q.db.Exec(ctx, createBookingSlot, arg.BookingID, arg.AvailabilitySlotID)
+	return err
 }
 
 const createBookingType = `-- name: CreateBookingType :one
@@ -194,6 +202,23 @@ func (q *Queries) DeleteBooking(ctx context.Context, id int32) (int32, error) {
 	return id, err
 }
 
+const deleteBookingSlot = `-- name: DeleteBookingSlot :exec
+DELETE FROM booking_slots
+WHERE
+  booking_id = $1
+  AND availability_slot_id = $2
+`
+
+type DeleteBookingSlotParams struct {
+	BookingID          int32 `json:"booking_id"`
+	AvailabilitySlotID int32 `json:"availability_slot_id"`
+}
+
+func (q *Queries) DeleteBookingSlot(ctx context.Context, arg DeleteBookingSlotParams) error {
+	_, err := q.db.Exec(ctx, deleteBookingSlot, arg.BookingID, arg.AvailabilitySlotID)
+	return err
+}
+
 const deleteBookingType = `-- name: DeleteBookingType :one
 DELETE FROM booking_types
 WHERE
@@ -238,7 +263,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) (int32, error) {
 
 const getAllAvailabilitySlots = `-- name: GetAllAvailabilitySlots :many
 SELECT
-  id, employee_id, datetime, duration_units, duration_minutes, type_id, created_at, last_edited
+  id, employee_id, datetime, type_id, created_at, last_edited
 FROM
   availability
 `
@@ -256,8 +281,6 @@ func (q *Queries) GetAllAvailabilitySlots(ctx context.Context) ([]Availability, 
 			&i.ID,
 			&i.EmployeeID,
 			&i.Datetime,
-			&i.DurationUnits,
-			&i.DurationMinutes,
 			&i.TypeID,
 			&i.CreatedAt,
 			&i.LastEdited,
@@ -309,7 +332,7 @@ func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error)
 
 const getAllBookings = `-- name: GetAllBookings :many
 SELECT
-  id, user_id, availability_slot, type_id, paid, cost, notes, created_at, last_edited
+  id, user_id, type_id, paid, cost, notes, created_at, last_edited
 FROM
   bookings
 `
@@ -326,7 +349,6 @@ func (q *Queries) GetAllBookings(ctx context.Context) ([]Booking, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.AvailabilitySlot,
 			&i.TypeID,
 			&i.Paid,
 			&i.Cost,
@@ -346,7 +368,7 @@ func (q *Queries) GetAllBookings(ctx context.Context) ([]Booking, error) {
 
 const getAvailabilitySlotById = `-- name: GetAvailabilitySlotById :one
 SELECT
-  id, employee_id, datetime, duration_units, duration_minutes, type_id, created_at, last_edited
+  id, employee_id, datetime, type_id, created_at, last_edited
 FROM
   availability
 WHERE
@@ -362,8 +384,6 @@ func (q *Queries) GetAvailabilitySlotById(ctx context.Context, id int32) (Availa
 		&i.ID,
 		&i.EmployeeID,
 		&i.Datetime,
-		&i.DurationUnits,
-		&i.DurationMinutes,
 		&i.TypeID,
 		&i.CreatedAt,
 		&i.LastEdited,
@@ -373,28 +393,54 @@ func (q *Queries) GetAvailabilitySlotById(ctx context.Context, id int32) (Availa
 
 const getBookingById = `-- name: GetBookingById :one
 SELECT
-  id, user_id, availability_slot, type_id, paid, cost, notes, created_at, last_edited
+  b.id,
+  b.user_id,
+  b.type_id,
+  b.paid,
+  b.cost,
+  b.notes,
+  b.created_at,
+  b.last_edited,
+  array_agg(
+    bs.availability_slot_id
+    ORDER BY
+      bs.availability_slot_id
+  )::int[] AS slot_ids
 FROM
-  bookings
+  bookings b
+  LEFT JOIN booking_slots bs ON b.id = bs.booking_id
 WHERE
-  id = $1
+  b.id = $1
+GROUP BY b.id
 LIMIT
   1
 `
 
-func (q *Queries) GetBookingById(ctx context.Context, id int32) (Booking, error) {
+type GetBookingByIdRow struct {
+	ID         int32            `json:"id"`
+	UserID     int32            `json:"user_id"`
+	TypeID     int32            `json:"type_id"`
+	Paid       bool             `json:"paid"`
+	Cost       int32            `json:"cost"`
+	Notes      pgtype.Text      `json:"notes"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	LastEdited pgtype.Timestamp `json:"last_edited"`
+	SlotIds    []int32          `json:"slot_ids"`
+}
+
+func (q *Queries) GetBookingById(ctx context.Context, id int32) (GetBookingByIdRow, error) {
 	row := q.db.QueryRow(ctx, getBookingById, id)
-	var i Booking
+	var i GetBookingByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.AvailabilitySlot,
 		&i.TypeID,
 		&i.Paid,
 		&i.Cost,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.LastEdited,
+		&i.SlotIds,
 	)
 	return i, err
 }
@@ -422,65 +468,6 @@ func (q *Queries) GetBookingTypeById(ctx context.Context, id int32) (BookingType
 		&i.CreatedAt,
 		&i.LastEdited,
 	)
-	return i, err
-}
-
-const getCostAndAvailability = `-- name: GetCostAndAvailability :one
-WITH
-  vals AS (
-    SELECT
-      (
-        SELECT
-          fixed
-        FROM
-          booking_types
-        WHERE
-          booking_types.id = $1
-      ) AS fixed,
-      (
-        SELECT
-          cost
-        FROM
-          booking_types
-        WHERE
-          booking_types.id = $1
-      ) AS cost,
-      (
-        SELECT
-          duration_units
-        FROM
-          availability
-        WHERE
-          availability.id = $2
-      ) AS duration_units
-  )
-SELECT
-  fixed,
-  cost,
-  duration_units
-FROM
-  vals
-WHERE
-  fixed IS NOT NULL
-  AND cost IS NOT NULL
-  AND duration_units IS NOT NULL
-`
-
-type GetCostAndAvailabilityParams struct {
-	ID   int32 `json:"id"`
-	ID_2 int32 `json:"id_2"`
-}
-
-type GetCostAndAvailabilityRow struct {
-	Fixed         bool  `json:"fixed"`
-	Cost          int32 `json:"cost"`
-	DurationUnits int32 `json:"duration_units"`
-}
-
-func (q *Queries) GetCostAndAvailability(ctx context.Context, arg GetCostAndAvailabilityParams) (GetCostAndAvailabilityRow, error) {
-	row := q.db.QueryRow(ctx, getCostAndAvailability, arg.ID, arg.ID_2)
-	var i GetCostAndAvailabilityRow
-	err := row.Scan(&i.Fixed, &i.Cost, &i.DurationUnits)
 	return i, err
 }
 
@@ -567,9 +554,7 @@ SET
   id = $1,
   employee_id = $2,
   datetime = $3,
-  duration_units = $4,
-  duration_minutes = $5,
-  type_id = $6,
+  type_id = $4,
   created_at = DEFAULT,
   last_edited = DEFAULT
 WHERE
@@ -579,12 +564,10 @@ RETURNING
 `
 
 type UpdateAvailabilitySlotParams struct {
-	ID              int32            `json:"id"`
-	EmployeeID      int32            `json:"employee_id"`
-	Datetime        pgtype.Timestamp `json:"datetime"`
-	DurationUnits   int32            `json:"duration_units"`
-	DurationMinutes int32            `json:"duration_minutes"`
-	TypeID          int32            `json:"type_id"`
+	ID         int32            `json:"id"`
+	EmployeeID int32            `json:"employee_id"`
+	Datetime   pgtype.Timestamp `json:"datetime"`
+	TypeID     int32            `json:"type_id"`
 }
 
 func (q *Queries) UpdateAvailabilitySlot(ctx context.Context, arg UpdateAvailabilitySlotParams) (int32, error) {
@@ -592,8 +575,6 @@ func (q *Queries) UpdateAvailabilitySlot(ctx context.Context, arg UpdateAvailabi
 		arg.ID,
 		arg.EmployeeID,
 		arg.Datetime,
-		arg.DurationUnits,
-		arg.DurationMinutes,
 		arg.TypeID,
 	)
 	var id int32
@@ -602,38 +583,33 @@ func (q *Queries) UpdateAvailabilitySlot(ctx context.Context, arg UpdateAvailabi
 }
 
 const updateBooking = `-- name: UpdateBooking :one
-UPDATE bookings
-SET
-  id = $1,
-  user_id = $2,
-  availability_slot = $3,
-  type_id = $4,
-  paid = $5,
-  cost = $6,
-  notes = $7,
-  created_at = DEFAULT,
-  last_edited = DEFAULT
-WHERE
-  id = $1
-RETURNING
-  id
+    UPDATE bookings
+    SET
+      user_id = $2,
+      type_id = $3,
+      paid = $4,
+      cost = $5,
+      notes = $6,
+      last_edited = DEFAULT
+    WHERE
+      id = $1
+    RETURNING
+      id
 `
 
 type UpdateBookingParams struct {
-	ID               int32       `json:"id"`
-	UserID           int32       `json:"user_id"`
-	AvailabilitySlot int32       `json:"availability_slot"`
-	TypeID           int32       `json:"type_id"`
-	Paid             bool        `json:"paid"`
-	Cost             int32       `json:"cost"`
-	Notes            pgtype.Text `json:"notes"`
+	ID     int32       `json:"id"`
+	UserID int32       `json:"user_id"`
+	TypeID int32       `json:"type_id"`
+	Paid   bool        `json:"paid"`
+	Cost   int32       `json:"cost"`
+	Notes  pgtype.Text `json:"notes"`
 }
 
 func (q *Queries) UpdateBooking(ctx context.Context, arg UpdateBookingParams) (int32, error) {
 	row := q.db.QueryRow(ctx, updateBooking,
 		arg.ID,
 		arg.UserID,
-		arg.AvailabilitySlot,
 		arg.TypeID,
 		arg.Paid,
 		arg.Cost,
@@ -642,6 +618,33 @@ func (q *Queries) UpdateBooking(ctx context.Context, arg UpdateBookingParams) (i
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const updateBookingSlot = `-- name: UpdateBookingSlot :exec
+UPDATE booking_slots
+SET
+  booking_id = $3,
+  availability_slot_id = $4
+WHERE
+  booking_id = $1
+  AND availability_slot_id = $2
+`
+
+type UpdateBookingSlotParams struct {
+	BookingID            int32 `json:"booking_id"`
+	AvailabilitySlotID   int32 `json:"availability_slot_id"`
+	BookingID_2          int32 `json:"booking_id_2"`
+	AvailabilitySlotID_2 int32 `json:"availability_slot_id_2"`
+}
+
+func (q *Queries) UpdateBookingSlot(ctx context.Context, arg UpdateBookingSlotParams) error {
+	_, err := q.db.Exec(ctx, updateBookingSlot,
+		arg.BookingID,
+		arg.AvailabilitySlotID,
+		arg.BookingID_2,
+		arg.AvailabilitySlotID_2,
+	)
+	return err
 }
 
 const updateBookingType = `-- name: UpdateBookingType :one

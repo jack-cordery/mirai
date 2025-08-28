@@ -22,8 +22,6 @@ type GetAvailiabilitySlotResponse struct {
 	AvailabilitySlotID int32            `json:"availability_slot_id"`
 	EmployeeID         int32            `json:"employee_id"`
 	Datetime           pgtype.Timestamp `json:"datetime"`
-	DurationUnits      int32            `json:"duration_units"`
-	DurationMinutes    int32            `json:"duration_minutes"`
 	TypeID             int32            `json:"type_id"`
 	CreatedAt          pgtype.Timestamp `json:"created_at"`
 	LastEdited         pgtype.Timestamp `json:"last_edited"`
@@ -34,8 +32,6 @@ func responseFromDBAvailability(availabilitySlot db.Availability) GetAvailiabili
 		AvailabilitySlotID: availabilitySlot.ID,
 		EmployeeID:         availabilitySlot.EmployeeID,
 		Datetime:           availabilitySlot.Datetime,
-		DurationUnits:      availabilitySlot.DurationUnits,
-		DurationMinutes:    availabilitySlot.DurationMinutes,
 		TypeID:             availabilitySlot.TypeID,
 		CreatedAt:          availabilitySlot.CreatedAt,
 		LastEdited:         availabilitySlot.LastEdited,
@@ -43,10 +39,9 @@ func responseFromDBAvailability(availabilitySlot db.Availability) GetAvailiabili
 }
 
 type PostAvailabilitySlotRequest struct {
-	EmployeeID    int32     `json:"employee_id"`
-	Datetime      time.Time `json:"datetime"` // this expects RFC 3339 format, just need to sure it is encoded like this
-	DurationUnits int32     `json:"duration_units"`
-	TypeID        int32     `json:"type_id"`
+	EmployeeID int32     `json:"employee_id"`
+	Datetime   time.Time `json:"datetime"` // this expects RFC 3339 format, just need to sure it is encoded like this
+	TypeID     int32     `json:"type_id"`
 }
 
 func (p PostAvailabilitySlotRequest) ToDBParams() (db.CreateAvailabilitySlotParams, error) {
@@ -56,11 +51,9 @@ func (p PostAvailabilitySlotRequest) ToDBParams() (db.CreateAvailabilitySlotPara
 	}
 
 	return db.CreateAvailabilitySlotParams{
-		EmployeeID:      p.EmployeeID,
-		Datetime:        datetime,
-		DurationUnits:   p.DurationUnits,
-		DurationMinutes: p.DurationUnits * Unit,
-		TypeID:          p.TypeID,
+		EmployeeID: p.EmployeeID,
+		Datetime:   datetime,
+		TypeID:     p.TypeID,
 	}, nil
 }
 
@@ -69,10 +62,9 @@ type PostAvailabilitySlotResponse struct {
 }
 
 type PutAvailabilitySlotRequest struct {
-	EmployeeID    int32     `json:"employee_id"`
-	Datetime      time.Time `json:"datetime"` // this expects RFC 3339 format, just need to sure it is encoded like this
-	DurationUnits int32     `json:"duration_units"`
-	TypeID        int32     `json:"type_id"`
+	EmployeeID int32     `json:"employee_id"`
+	Datetime   time.Time `json:"datetime"` // this expects RFC 3339 format, just need to sure it is encoded like this
+	TypeID     int32     `json:"type_id"`
 }
 
 type PutAvailabilitySlotResponse struct {
@@ -86,12 +78,10 @@ func (r PutAvailabilitySlotRequest) ToDBParams(availabilitySlotID int32) (db.Upd
 	}
 
 	return db.UpdateAvailabilitySlotParams{
-		ID:              availabilitySlotID,
-		EmployeeID:      r.EmployeeID,
-		Datetime:        datetime,
-		DurationUnits:   r.DurationUnits,
-		DurationMinutes: r.DurationUnits * Unit,
-		TypeID:          r.TypeID,
+		ID:         availabilitySlotID,
+		EmployeeID: r.EmployeeID,
+		Datetime:   datetime,
+		TypeID:     r.TypeID,
 	}, nil
 }
 
@@ -213,10 +203,11 @@ func getAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 
 			err = json.NewEncoder(w).Encode(resp)
 			if err != nil {
-				log.Printf("error encoding json in getAvailiability: %v", err)
+				log.Printf("error encoding json in getAllAvailiability: %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			return
 
 		}
 

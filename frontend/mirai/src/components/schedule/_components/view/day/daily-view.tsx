@@ -291,7 +291,7 @@ export default function DailyView({
         }, [currentDate]);
 
         return (
-                <div className="">
+                <div className="h-full w-full">
                         <div className="flex justify-between gap-3 flex-wrap mb-5">
                                 <h1 className="text-3xl font-semibold mb-4">
                                         {getFormattedDayTitle()}
@@ -336,7 +336,7 @@ export default function DailyView({
                                                 x: { type: "spring", stiffness: 300, damping: 30 },
                                                 opacity: { duration: 0.2 },
                                         }}
-                                        className="flex flex-col gap-4"
+                                        className="flex flex-col h-full gap-4"
                                 >
                                         {!stopDayEventSummary && (
                                                 <div className="all-day-events">
@@ -368,9 +368,9 @@ export default function DailyView({
                                                 </div>
                                         )}
 
-                                        <div className="relative rounded-md bg-default-50 hover:bg-default-100 transition duration-400">
+                                        <div className="relative h-full rounded-md bg-default-50 hover:bg-default-100 transition duration-400">
                                                 <motion.div
-                                                        className="relative rounded-xl flex ease-in-out"
+                                                        className="relative h-full rounded-xl flex ease-in-out"
                                                         ref={hoursColumnRef}
                                                         variants={containerVariants}
                                                         initial="hidden" // Ensure initial state is hidden
@@ -383,7 +383,7 @@ export default function DailyView({
                                                                         <motion.div
                                                                                 key={`hour-${index}`}
                                                                                 variants={itemVariants}
-                                                                                className="cursor-pointer   transition duration-300  p-4 h-[64px] text-left text-sm text-muted-foreground border-default-200"
+                                                                                className="cursor-pointer   transition duration-300  p-4 flex-1 text-left text-sm text-muted-foreground border-default-200"
                                                                         >
                                                                                 {hour}
                                                                         </motion.div>
@@ -396,7 +396,7 @@ export default function DailyView({
                                                                                         handleAddEventDay(detailedHour as string);
                                                                                 }}
                                                                                 key={`hour-${index + startTime.hour}`}
-                                                                                className="cursor-pointer w-full relative border-b  hover:bg-default-200/50  transition duration-300  p-4 h-[64px] text-left text-sm text-muted-foreground border-default-200"
+                                                                                className="cursor-pointer w-full relative border-b  hover:bg-default-200/50  transition duration-300  p-4 flex-1 text-left text-sm text-muted-foreground border-default-200"
                                                                         >
                                                                                 <div className="absolute bg-accent flex items-center justify-center text-xs opacity-0 transition left-0 top-0 duration-250 hover:opacity-100 w-full h-full">
                                                                                         Add Event
@@ -478,7 +478,7 @@ export default function DailyView({
                                                         >
                                                                 <Badge
                                                                         variant="outline"
-                                                                        className="absolute -translate-y-1/2 bg-white z-50 left-[-20px] text-xs"
+                                                                        className="absolute -translate-y-1/2 bg-white z-50 left-[-20px] text-xs dark:text-black"
                                                                 >
                                                                         {detailedHour}
                                                                 </Badge>

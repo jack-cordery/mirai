@@ -122,13 +122,13 @@ export default function SchedulerViewFilteration({
         }, []);
 
         return (
-                <div className="flex w-full flex-col">
-                        <div className="flex w-full">
-                                <div className="dayly-weekly-monthly-selection relative w-full">
+                <div className="flex w-full h-full flex-col">
+                        <div className="flex w-full h-full">
+                                <div className="dayly-weekly-monthly-selection relative w-full h-full">
                                         <Tabs
                                                 value={activeView}
                                                 onValueChange={setActiveView}
-                                                className={cn("w-full", classNames?.tabs)}
+                                                className={cn("w-full h-full", classNames?.tabs)}
                                         >
                                                 <div className="flex justify-between items-center mb-4">
                                                         <TabsList className="grid grid-cols-3">
@@ -192,7 +192,7 @@ export default function SchedulerViewFilteration({
                                                 {viewsSelector?.includes("day") && (
                                                         <TabsContent value="day">
                                                                 <AnimatePresence mode="wait">
-                                                                        <motion.div {...animationConfig}>
+                                                                        <motion.div {...animationConfig} className="h-full">
                                                                                 <DailyView
                                                                                         stopDayEventSummary={stopDayEventSummary}
                                                                                         classNames={classNames?.buttons}
@@ -215,7 +215,7 @@ export default function SchedulerViewFilteration({
                                                 {viewsSelector?.includes("week") && (
                                                         <TabsContent value="week">
                                                                 <AnimatePresence mode="wait">
-                                                                        <motion.div {...animationConfig}>
+                                                                        <motion.div {...animationConfig} className="h-full">
                                                                                 <WeeklyView
                                                                                         classNames={classNames?.buttons}
                                                                                         prevButton={

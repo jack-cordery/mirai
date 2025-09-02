@@ -174,8 +174,9 @@ export default function DailyView({
                         if (!hoursColumnRef.current) return;
                         const rect = hoursColumnRef.current.getBoundingClientRect();
                         const y = e.clientY - rect.top;
-                        const hourHeight = rect.height / 24;
-                        const hour = Math.max(startTime.hour, Math.min(endTime.hour, Math.floor(y / hourHeight)));
+
+                        const hourHeight = rect.height / (endTime.hour - startTime.hour + 1);
+                        const hour = Math.max(startTime.hour, startTime.hour + Math.min(endTime.hour, Math.floor(y / hourHeight)));
                         const minuteFraction = (y % hourHeight) / hourHeight;
                         const minutes = Math.floor(minuteFraction * 60);
 

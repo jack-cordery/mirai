@@ -36,6 +36,7 @@ export interface Handlers {
     dayEvents: Event[],
     workStartHour: number,
     workEndHour: number,
+    hourHeight: number,
     periodOptions?: {
       eventsInSamePeriod?: number;
       periodIndex?: number;

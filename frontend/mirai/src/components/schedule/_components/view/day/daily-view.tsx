@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion, type TargetAndTransition } from "framer-motion";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CustomModal from "@/components/ui/custom-modal";
 import { loadWorkingDayTimes } from "@/lib/utils";
+
 
 const { startTime, endTime } = loadWorkingDayTimes();
 // Generate hours in 12-hour format
@@ -168,6 +169,25 @@ export default function DailyView({
         const [direction, setDirection] = useState<number>(0);
         const { setOpen } = useModal();
         const { getters, handlers } = useScheduler();
+        const [hHeight, setHHeight] = useState(0);
+        useEffect(() => {
+                const updateHeight = () => {
+                        if (hoursColumnRef.current) {
+                                const rect = hoursColumnRef.current.getBoundingClientRect();
+                                const numHours = endTime.hour - startTime.hour + 1;
+                                setHHeight(rect.height / numHours);
+                        }
+                };
+
+                // Use requestAnimationFrame to ensure DOM is painted
+                requestAnimationFrame(updateHeight);
+
+                // Also update on window resize
+                window.addEventListener('resize', updateHeight);
+                return () => window.removeEventListener('resize', updateHeight);
+        }, [startTime.hour, endTime.hour]);
+        useEffect(() => {
+        }, [hHeight]);
 
         const handleMouseMove = useCallback(
                 (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -432,6 +452,7 @@ export default function DailyView({
                                                                                                 dayEvents,
                                                                                                 startTime.hour,
                                                                                                 endTime.hour,
+                                                                                                hHeight,
                                                                                                 {
                                                                                                         eventsInSamePeriod,
                                                                                                         periodIndex,

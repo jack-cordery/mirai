@@ -196,6 +196,7 @@ export const SchedulerProvider = ({
                 dayEvents: Event[],
                 workStartHour: number,
                 workEndHour: number,
+                hourHeight: number,
                 periodOptions?: {
                         eventsInSamePeriod?: number;
                         periodIndex?: number;
@@ -256,7 +257,7 @@ export const SchedulerProvider = ({
                         const diffInMinutes = endTime - startTime;
 
                         // Calculate the event height based on the duration (64px per hour, so 64px/60min = 1.0667px per minute)
-                        eventHeight = (diffInMinutes / 60) * 64;
+                        eventHeight = (diffInMinutes / 60) * hourHeight;
 
                         // Get the event start hour as a fraction (e.g., 13.5 for 13:30)
                         const eventStartHour =
@@ -266,15 +267,13 @@ export const SchedulerProvider = ({
                         const dayEndHour = workEndHour;
 
                         // Calculate maxHeight based on the difference between the day-end hour and the event's start hour
-                        maxHeight = Math.max(0, (dayEndHour - eventStartHour) * 64);
+                        maxHeight = Math.max(0, (dayEndHour - eventStartHour) * hourHeight);
 
                         // Limit the event height to the calculated maxHeight (so it doesn't overflow beyond the day)
                         eventHeight = Math.min(eventHeight, maxHeight);
 
                         // Calculate the top position based on the event's start time (64px per hour)
-                        eventTop = (eventStartHour - workStartHour) * 64;
-                        console.log("eventTop", eventTop)
-                        console.log("workStartHour", workStartHour)
+                        eventTop = (eventStartHour - workStartHour) * hourHeight;
                 } else {
                         console.error("Invalid event or missing start/end dates.");
                 }

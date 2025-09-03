@@ -634,6 +634,9 @@ export default function WeeklyView({
                                                                                                         handlers.handleEventStyling(
                                                                                                                 event,
                                                                                                                 dayEvents,
+                                                                                                                0,
+                                                                                                                24,
+                                                                                                                64,
                                                                                                                 {
                                                                                                                         eventsInSamePeriod,
                                                                                                                         periodIndex,

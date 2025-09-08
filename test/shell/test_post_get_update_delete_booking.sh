@@ -53,14 +53,15 @@ booking_type_id=$(echo "$body" | jq -r '.booking_type_id')
 response=$(curl -sS -w "\n%{http_code}" -H 'Content-Type: application/json' \
 	-d "{
 	  \"employee_id\": $employee_id,
-	  \"datetime\": \"2025-07-26T18:30:00Z\",
+	  \"start_time\": \"2025-07-26T18:30:00Z\",
+	  \"end_time\": \"2025-07-26T19:00:00Z\",
 	  \"type_id\": $booking_type_id
 	}" "$SERVER/availability")
 
 body=$(echo "$response" | sed '$d')
 status=$(echo "$response" | tail -n1)
 
-availability_id=$(echo "$body" | jq -r '.availability_slot_id')
+availability_id=$(echo "$body" | jq -r '.availability_slot_ids[0]')
 
 # test POST
 response=$(curl -sS -w "\n%{http_code}" -H 'Content-Type: application/json' \

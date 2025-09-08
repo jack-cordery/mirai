@@ -139,3 +139,75 @@ func TestCalculateTest(t *testing.T) {
 
 	})
 }
+
+func TestSpanToSlots(t *testing.T) {
+	t.Run("base", func(t *testing.T) {
+		t.Parallel()
+		startTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		endTime, _ := time.Parse(time.RFC3339, "2025-09-08T15:00:00Z")
+		unit := 30
+
+		expected_slot_a, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		expected_slot_b, _ := time.Parse(time.RFC3339, "2025-09-08T14:30:00Z")
+
+		actual, _ := spanToSlots(startTime, endTime, unit)
+
+		assert.Equal(t, []time.Time{expected_slot_a, expected_slot_b}, actual)
+
+	})
+
+	t.Run("base extended", func(t *testing.T) {
+		t.Parallel()
+		startTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		endTime, _ := time.Parse(time.RFC3339, "2025-09-08T16:00:00Z")
+		unit := 60
+
+		expected_slot_a, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		expected_slot_b, _ := time.Parse(time.RFC3339, "2025-09-08T15:00:00Z")
+
+		actual, _ := spanToSlots(startTime, endTime, unit)
+
+		assert.Equal(t, []time.Time{expected_slot_a, expected_slot_b}, actual)
+
+	})
+
+	t.Run("misaligned start time", func(t *testing.T) {
+		t.Parallel()
+		startTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:15:00Z")
+		endTime, _ := time.Parse(time.RFC3339, "2025-09-08T15:00:00Z")
+		unit := 30
+
+		_, err := spanToSlots(startTime, endTime, unit)
+		assert.Error(t, err)
+	})
+
+	t.Run("misaligned end time", func(t *testing.T) {
+		t.Parallel()
+		startTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		endTime, _ := time.Parse(time.RFC3339, "2025-09-08T15:15:00Z")
+		unit := 30
+
+		_, err := spanToSlots(startTime, endTime, unit)
+		assert.Error(t, err)
+	})
+
+	t.Run("no duration end time", func(t *testing.T) {
+		t.Parallel()
+		startTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		endTime, _ := time.Parse(time.RFC3339, "2025-09-08T15:15:00Z")
+		unit := 30
+
+		_, err := spanToSlots(startTime, endTime, unit)
+		assert.Error(t, err)
+	})
+
+	t.Run("seconds provided", func(t *testing.T) {
+		t.Parallel()
+		startTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:30Z")
+		endTime, _ := time.Parse(time.RFC3339, "2025-09-08T15:00:30Z")
+		unit := 30
+
+		_, err := spanToSlots(startTime, endTime, unit)
+		assert.Error(t, err)
+	})
+}

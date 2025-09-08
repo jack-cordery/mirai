@@ -26,17 +26,17 @@ format-sql:
 migrate-force:
 	@echo "Running migration force to version $(VERSION). Ensure you have run compose, so that the containers are running"
 	@set -o allexport; source .env.local; set +o allexport; \
-	docker-compose --env-file .env.local run --rm --remove-orphans migrate -path /migrations/ -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@psql:5432/$$POSTGRES_DB?sslmode=disable" force $(VERSION)
+	docker compose --env-file .env.local run --rm --remove-orphans migrate -path /migrations/ -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@psql:5432/$$POSTGRES_DB?sslmode=disable" force $(VERSION)
 
 migrate-up:
 	@echo "Running migration up. Ensure you have run compose, so that the containers are running"
 	@set -o allexport; source .env.local; set +o allexport; \
-	docker-compose --env-file .env.local run --rm --remove-orphans migrate -path /migrations/ -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@psql:5432/$$POSTGRES_DB?sslmode=disable" up
+	docker compose --env-file .env.local run --rm --remove-orphans migrate -path /migrations/ -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@psql:5432/$$POSTGRES_DB?sslmode=disable" up
 
 migrate-down:
 	@echo "Running migration down $(N). Ensure you have run compose, so that the containers are running"
 	@set -o allexport; source .env.local; set +o allexport; \
-	docker-compose --env-file .env.local run --rm --remove-orphans migrate -path /migrations/ -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@psql:5432/$$POSTGRES_DB?sslmode=disable" down $(N)
+	docker compose --env-file .env.local run --rm --remove-orphans migrate -path /migrations/ -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@psql:5432/$$POSTGRES_DB?sslmode=disable" down $(N)
 
 create-migration:
 	migrate create -ext sql -dir db/migrations -seq $(NAME)

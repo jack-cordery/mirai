@@ -67,7 +67,7 @@ func (p PostAvailabilitySlotRequest) ToDBParams() ([]db.CreateAvailabilitySlotPa
 }
 
 type PostAvailabilitySlotResponse struct {
-	AvailabilitySlotID []int32 `json:"availability_slot_ids"`
+	AvailabilitySlotIDs []int32 `json:"availability_slot_ids"`
 }
 
 type PutAvailabilitySlotRequest struct {
@@ -175,7 +175,7 @@ func postAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerF
 		}
 
 		response := PostAvailabilitySlotResponse{
-			AvailabilitySlotID: slotIDs,
+			AvailabilitySlotIDs: slotIDs,
 		}
 
 		w.WriteHeader(http.StatusCreated)

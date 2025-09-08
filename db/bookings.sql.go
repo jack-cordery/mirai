@@ -411,7 +411,8 @@ FROM
   LEFT JOIN booking_slots bs ON b.id = bs.booking_id
 WHERE
   b.id = $1
-GROUP BY b.id
+GROUP BY
+  b.id
 LIMIT
   1
 `
@@ -583,18 +584,18 @@ func (q *Queries) UpdateAvailabilitySlot(ctx context.Context, arg UpdateAvailabi
 }
 
 const updateBooking = `-- name: UpdateBooking :one
-    UPDATE bookings
-    SET
-      user_id = $2,
-      type_id = $3,
-      paid = $4,
-      cost = $5,
-      notes = $6,
-      last_edited = DEFAULT
-    WHERE
-      id = $1
-    RETURNING
-      id
+UPDATE bookings
+SET
+  user_id = $2,
+  type_id = $3,
+  paid = $4,
+  cost = $5,
+  notes = $6,
+  last_edited = DEFAULT
+WHERE
+  id = $1
+RETURNING
+  id
 `
 
 type UpdateBookingParams struct {

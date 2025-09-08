@@ -9,7 +9,7 @@ services:
       - 8000:8000
     environment:
         DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@psql:5432/${POSTGRES_DB}?sslmode=disable
-        APP_URL: http://localhost:5175
+        APP_URL: http://localhost:5173
     depends_on:
       - migrate
     networks:

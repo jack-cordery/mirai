@@ -2,7 +2,9 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"math/big"
+	"slices"
 	"time"
 
 	"github.com/jack-cordery/mirai/db"
@@ -60,5 +62,51 @@ func getAndCalculateCost(queries *db.Queries, ctx context.Context, typeID int32,
 	totalCost := calculateCost(bookingType.Cost, duration)
 
 	return totalCost, nil
+
+}
+
+func spanToSlots(startTime time.Time, endTime time.Time, unit int) ([]time.Time, error) {
+	// take the two and divide across units
+	// provide error if startTime and/or endTime dont sit on a unit
+	// i think we want to find the delta in minutes betwee the two
+	// divide by units and then for range over that and populate with startTime + units
+	// problem is that divide will floor divide in golang so we will just need to check that explicitly
+	if !startTime.Before(endTime) {
+		return []time.Time{}, errors.New("startTime after endTime")
+	}
+
+	if startTime.Second() != int(0) || endTime.Second() != int(0) {
+		return []time.Time{}, errors.New("seconds provided")
+	}
+
+	allowedMinutes := []int{}
+	m := int(0)
+	for m < 60 {
+		allowedMinutes = append(allowedMinutes, m)
+		m += unit
+	}
+
+	if !(slices.Contains(allowedMinutes, startTime.Minute()) && slices.Contains(allowedMinutes, endTime.Minute())) {
+		return []time.Time{}, errors.New("startTime or endTime isnt one of the allowed minutes")
+	}
+
+	delta := endTime.Sub(startTime).Minutes()
+	if float64(int32(delta)) != delta {
+		return []time.Time{}, errors.New("delta between startTime and endTime is not a whole minute")
+
+	}
+	deltaInt := int32(delta)
+
+	numberOfSlots := deltaInt / int32(unit)
+
+	unitDuration := time.Duration(unit) * time.Minute
+	slots := []time.Time{}
+	slot := startTime
+	for range numberOfSlots {
+		slots = append(slots, slot)
+		slot = slot.Add(unitDuration)
+	}
+
+	return slots, nil
 
 }

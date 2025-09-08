@@ -3,7 +3,6 @@ const apiUrl = import.meta.env.VITE_API_URL;
 export async function postAvailabilitySlot(postRequest: {
   employee_id: string;
   datetime: string;
-  duration_units: boolean;
   type_id: number;
 }) {
   const res = await fetch(`${apiUrl}/availability`, {

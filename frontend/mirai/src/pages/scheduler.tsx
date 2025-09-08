@@ -2,7 +2,7 @@ import { getAllAvailability } from "@/api/availability";
 import Scheduler from "@/components/scheduler";
 import { SparklesCore } from "@/components/ui/sparkles";
 import type { Event } from "@/types/index"
-import type { AvailabilitySlot } from "@/types/booking";
+import type { AvailabilitySlot, PostAvailabilitySlotRequest } from "@/types/booking";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -37,6 +37,18 @@ function availabilitySlotsToEvents(slots: AvailabilitySlot[]): Event[] {
                         title: `Employee ${slot.employee_id} availability with type ${slot.type_id}`,
                 };
         });
+}
+
+function eventToPostAvailabilitySlot(slots: Event): PostAvailabilitySlotRequest {
+        const startDate = new Date(slot.datetime);
+        const endDate = new Date(startDate.getTime() + UNIT * 60 * 1000);
+
+        return {
+                id: slot.availability_slot_id.toString(),
+                startDate,
+                endDate,
+                title: `Employee ${slot.employee_id} availability with type ${slot.type_id}`,
+        };
 }
 
 export default function Schedule() {

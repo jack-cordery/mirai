@@ -26,6 +26,11 @@ export type AvailabilitySlot = {
   created_at: string;
   last_edited: string;
 };
+export type PostAvailabilitySlotRequest = {
+  employee_id: string;
+  datetime: string;
+  type_id: number;
+};
 
 export function displayTime(time: TimeOfDay) {
   return `${time.hour.toString().padStart(2, "0")}:${time.minute.toString().padStart(2, "0")}`;

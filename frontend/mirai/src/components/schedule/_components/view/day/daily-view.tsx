@@ -17,7 +17,6 @@ import { loadWorkingDayTimes } from "@/lib/utils";
 const { startTime, endTime } = loadWorkingDayTimes();
 // Generate hours in 12-hour format
 const hours = Array.from({ length: endTime.hour - startTime.hour + 1 }, (_, i) => {
-
         const hour = (i + startTime.hour) % 12 || 12;
         const ampm = (i + startTime.hour) < 12 ? "AM" : "PM";
         return `${hour}:00 ${ampm}`;

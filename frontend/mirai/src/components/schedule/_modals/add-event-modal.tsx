@@ -17,9 +17,10 @@ import { useModal } from "@/providers/modal-context";
 import SelectDate from "@/components/schedule/_components/add-event-components/select-date";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type EventFormData, eventSchema, type Variant, type Event } from "@/types/index";
+import { type EventFormData, eventSchema, type Event, type Option } from "@/types/index";
 import { useScheduler } from "@/providers/schedular-provider";
-import { v4 as uuidv4 } from "uuid"; // Use UUID to generate event IDs
+import { v4 as uuidv4 } from 'uuid';
+
 
 export default function AddEventModal({
         CustomAddEventModal,
@@ -27,14 +28,9 @@ export default function AddEventModal({
         CustomAddEventModal?: React.FC<{ register: any; errors: any }>;
 }) {
         const { setClose, data } = useModal();
-
-        const [selectedColor, setSelectedColor] = useState<string>(
-                getEventColor(data?.variant || "primary")
-        );
+        const { handlers, typeOptions, employeeOptions, selectedEmployee, setSelectedEmployee, selectedType, setSelectedType } = useScheduler();
 
         const typedData = data as { default: Event };
-
-        const { handlers } = useScheduler();
 
         const {
                 register,
@@ -45,12 +41,10 @@ export default function AddEventModal({
         } = useForm<EventFormData>({
                 resolver: zodResolver(eventSchema),
                 defaultValues: {
-                        title: "",
-                        description: "",
                         startDate: new Date(),
                         endDate: new Date(),
-                        variant: data?.variant || "primary",
-                        color: data?.color || "blue",
+                        type: typeOptions[0],
+                        employee: employeeOptions[0],
                 },
         });
 
@@ -59,80 +53,24 @@ export default function AddEventModal({
                 if (data?.default) {
                         const eventData = data?.default;
                         reset({
-                                title: eventData.title,
-                                description: eventData.description || "",
                                 startDate: eventData.startDate,
                                 endDate: eventData.endDate,
-                                variant: eventData.variant || "primary",
-                                color: eventData.color || "blue",
+                                type: typeOptions[0],
+                                employee: employeeOptions[0],
                         });
                 }
         }, [data, reset]);
 
-        const colorOptions = [
-                { key: "blue", name: "Blue" },
-                { key: "red", name: "Red" },
-                { key: "green", name: "Green" },
-                { key: "yellow", name: "Yellow" },
-        ];
-
-        function getEventColor(variant: Variant) {
-                switch (variant) {
-                        case "primary":
-                                return "blue";
-                        case "danger":
-                                return "red";
-                        case "success":
-                                return "green";
-                        case "warning":
-                                return "yellow";
-                        default:
-                                return "blue";
-                }
-        }
-
-        function getEventStatus(color: string) {
-                switch (color) {
-                        case "blue":
-                                return "primary";
-                        case "red":
-                                return "danger";
-                        case "green":
-                                return "success";
-                        case "yellow":
-                                return "warning";
-                        default:
-                                return "default";
-                }
-        }
-
-        const getButtonVariant = (color: string) => {
-                switch (color) {
-                        case "blue":
-                                return "default";
-                        case "red":
-                                return "destructive";
-                        case "green":
-                                return "success";
-                        case "yellow":
-                                return "warning";
-                        default:
-                                return "default";
-                }
-        };
-
         const onSubmit: SubmitHandler<EventFormData> = (formData) => {
                 const newEvent: Event = {
-                        id: uuidv4(), // Generate a unique ID
-                        title: formData.title,
+                        id: uuidv4().toString(),
                         startDate: formData.startDate,
                         endDate: formData.endDate,
-                        variant: formData.variant,
-                        description: formData.description,
+                        employeeId: formData.employee.id,
+                        typeId: formData.type.id,
                 };
 
-                if (!typedData?.default?.id) handlers.handleAddEvent(newEvent);
-                else handlers.handleUpdateEvent(newEvent, typedData.default.id);
+                handlers.handleAddEvent(newEvent);
                 setClose(); // Close the modal after submission
         };
 
@@ -142,30 +80,6 @@ export default function AddEventModal({
                                 <CustomAddEventModal register={register} errors={errors} />
                         ) : (
                                 <>
-                                        <div className="grid gap-2">
-                                                <Label htmlFor="title">Event Name</Label>
-                                                <Input
-                                                        id="title"
-                                                        {...register("title")}
-                                                        placeholder="Enter event name"
-                                                        className={cn(errors.title && "border-red-500")}
-                                                />
-                                                {errors.title && (
-                                                        <p className="text-sm text-red-500">
-                                                                {errors.title.message as string}
-                                                        </p>
-                                                )}
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                                <Label htmlFor="description">Description</Label>
-                                                <Textarea
-                                                        id="description"
-                                                        {...register("description")}
-                                                        placeholder="Enter event description"
-                                                />
-                                        </div>
-
                                         <SelectDate
                                                 data={{
                                                         startDate: data?.default?.startDate || new Date(),
@@ -175,42 +89,70 @@ export default function AddEventModal({
                                         />
 
                                         <div className="grid gap-2">
-                                                <Label>Color</Label>
+                                                <Label>Booking Type</Label>
                                                 <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                                 <Button
-                                                                        variant={getButtonVariant(selectedColor)}
                                                                         className="w-fit my-2"
                                                                 >
                                                                         {
-                                                                                colorOptions.find((color) => color.key === selectedColor)
-                                                                                        ?.name
+                                                                                typeOptions.find((type) => type.id === (selectedType?.id ?? 0))
+                                                                                        ?.label
                                                                         }
                                                                 </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent>
-                                                                {colorOptions.map((color) => (
+                                                                {typeOptions.map((type) => (
                                                                         <DropdownMenuItem
-                                                                                key={color.key}
+                                                                                key={type.id}
                                                                                 onClick={() => {
-                                                                                        setSelectedColor(color.key);
-                                                                                        setValue("variant", getEventStatus(color.key));
+                                                                                        setSelectedType(type);
                                                                                 }}
                                                                         >
                                                                                 <div className="flex items-center">
                                                                                         <div
-                                                                                                style={{
-                                                                                                        backgroundColor: `var(--${color.key})`,
-                                                                                                }}
                                                                                                 className={`w-4 h-4 rounded-full mr-2`}
                                                                                         />
-                                                                                        {color.name}
+                                                                                        {type.label}
                                                                                 </div>
                                                                         </DropdownMenuItem>
                                                                 ))}
                                                         </DropdownMenuContent>
                                                 </DropdownMenu>
                                         </div>
+                                        <div className="grid gap-2">
+                                                <Label>Employee</Label>
+                                                <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                                <Button
+                                                                        className="w-fit my-2"
+                                                                >
+                                                                        {
+                                                                                employeeOptions.find((type) => type.id === (selectedEmployee?.id ?? 0))
+                                                                                        ?.label
+                                                                        }
+                                                                </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent>
+                                                                {employeeOptions.map((employee) => (
+                                                                        <DropdownMenuItem
+                                                                                key={employee.id}
+                                                                                onClick={() => {
+                                                                                        setSelectedEmployee(employee);
+                                                                                }}
+                                                                        >
+                                                                                <div className="flex items-center">
+                                                                                        <div
+                                                                                                className={`w-4 h-4 rounded-full mr-2`}
+                                                                                        />
+                                                                                        {employee.label}
+                                                                                </div>
+                                                                        </DropdownMenuItem>
+                                                                ))}
+                                                        </DropdownMenuContent>
+                                                </DropdownMenu>
+                                        </div>
+
 
                                         <div className="flex justify-end space-x-2 mt-4 pt-2 border-t">
                                                 <Button variant="outline" type="button" onClick={() => setClose()}>

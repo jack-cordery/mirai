@@ -10,11 +10,10 @@ export type IconSvgProps = SVGProps<SVGSVGElement> & {
 // Define event type
 export interface Event {
   id: string;
-  title: string;
-  description?: string;
+  employeeId: number;
   startDate: Date;
   endDate: Date;
-  variant?: Variant;
+  typeId: number;
 }
 
 // Define the state interface for the scheduler
@@ -74,7 +73,20 @@ export interface SchedulerContextType {
   getters: Getters;
   handlers: Handlers;
   weekStartsOn: startOfWeek;
+  selectedType: Option | null;
+  setSelectedType: React.Dispatch<React.SetStateAction<Option | null>>;
+  selectedEmployee: Option | null;
+  setSelectedEmployee: React.Dispatch<React.SetStateAction<Option | null>>;
+  typeOptions: Option[];
+  setTypeOptions: React.Dispatch<React.SetStateAction<Option[]>>;
+  employeeOptions: Option[];
+  setEmployeeOptions: React.Dispatch<React.SetStateAction<Option[]>>;
 }
+
+export type Option = {
+  id: number;
+  label: string;
+};
 
 // Define the variant options
 export const variants = [
@@ -87,14 +99,17 @@ export const variants = [
 
 export type Variant = (typeof variants)[number];
 
+const OptionSchema = z.object({
+  label: z.string().nonoptional(),
+  id: z.number().nonoptional(),
+});
+
 // Define Zod schema for form validation
 export const eventSchema = z.object({
-  title: z.string().nonempty("Event name is required"),
-  description: z.string().optional(),
-  startDate: z.date(),
-  endDate: z.date(),
-  variant: z.enum(["primary", "danger", "success", "warning", "default"]),
-  color: z.string().nonempty("Color selection is required"),
+  startDate: z.date().nonoptional(),
+  endDate: z.date().nonoptional(),
+  employee: OptionSchema.nonoptional(),
+  type: OptionSchema.nonoptional(),
 });
 
 export type EventFormData = z.infer<typeof eventSchema>;

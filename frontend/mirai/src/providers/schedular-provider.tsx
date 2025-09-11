@@ -5,6 +5,7 @@ import React, {
         type ReactNode,
         type Dispatch,
         useEffect,
+        useState,
 } from "react";
 import { z } from "zod";
 
@@ -13,6 +14,7 @@ import type {
         Event,
         Getters,
         Handlers,
+        Option,
         SchedulerContextType,
         startOfWeek,
 } from "@/types/index";
@@ -91,6 +93,13 @@ export const SchedulerProvider = ({
                 schedulerReducer,
                 { events: initialState ?? [] } // Sets initialState or an empty array as the default
         );
+
+        const [typeOptions, setTypeOptions] = useState<Option[]>([]);
+        const [employeeOptions, setEmployeeOptions] = useState<Option[]>([]);
+        const [selectedEmployee, setSelectedEmployee] = useState<Option | null>(employeeOptions[0])
+        const [selectedType, setSelectedType] = useState<Option | null>(typeOptions[0])
+
+
 
         useEffect(() => {
                 if (initialState) {
@@ -336,7 +345,7 @@ export const SchedulerProvider = ({
 
         return (
                 <SchedulerContext.Provider
-                        value={{ events: state, dispatch, getters, handlers, weekStartsOn }}
+                        value={{ events: state, dispatch, getters, handlers, weekStartsOn, typeOptions, setTypeOptions, employeeOptions, setEmployeeOptions, selectedEmployee, setSelectedEmployee, selectedType, setSelectedType }}
                 >
                         <ModalProvider>{children}</ModalProvider>
                 </SchedulerContext.Provider>

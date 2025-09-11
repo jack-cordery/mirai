@@ -7,12 +7,12 @@ import { useScheduler } from "@/providers/schedular-provider";
 import { useModal } from "@/providers/modal-context";
 import AddEventModal from "@/components/schedule/_modals/add-event-modal";
 import EventStyled from "../event-component/event-styled";
-import type { CustomEventModal, Event } from "@/types/index";
+import type { CustomEventModal, Event, Option } from "@/types/index";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CustomModal from "@/components/ui/custom-modal";
 import { loadWorkingDayTimes } from "@/lib/utils";
-
+import { v4 as uuidv4 } from "uuid";
 
 const { startTime, endTime } = loadWorkingDayTimes();
 // Generate hours in 12-hour format
@@ -167,7 +167,7 @@ export default function DailyView({
         const [currentDate, setCurrentDate] = useState<Date>(new Date());
         const [direction, setDirection] = useState<number>(0);
         const { setOpen } = useModal();
-        const { getters, handlers } = useScheduler();
+        const { getters, handlers, typeOptions, employeeOptions, selectedEmployee, selectedType } = useScheduler();
         const [hHeight, setHHeight] = useState(0);
         useEffect(() => {
                 const updateHeight = () => {
@@ -290,9 +290,9 @@ export default function DailyView({
                 handleAddEvent({
                         startDate: date,
                         endDate: new Date(date.getTime() + 60 * 60 * 1000), // 1-hour duration
-                        title: "",
-                        id: "",
-                        variant: "primary",
+                        id: uuidv4.toString(),
+                        employeeId: selectedEmployee?.id ?? 0,
+                        typeId: selectedType?.id ?? 0,
                 });
         }
 

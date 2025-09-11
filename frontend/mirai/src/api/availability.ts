@@ -1,10 +1,10 @@
+import type { PostAvailabilitySlotRequest } from "@/types/booking";
+
 const apiUrl = import.meta.env.VITE_API_URL;
 
-export async function postAvailabilitySlot(postRequest: {
-  employee_id: string;
-  datetime: string;
-  type_id: number;
-}) {
+export async function postAvailabilitySlot(
+  postRequest: PostAvailabilitySlotRequest,
+) {
   const res = await fetch(`${apiUrl}/availability`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

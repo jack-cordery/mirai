@@ -27,8 +27,9 @@ export type AvailabilitySlot = {
   last_edited: string;
 };
 export type PostAvailabilitySlotRequest = {
-  employee_id: string;
-  datetime: string;
+  employee_id: number;
+  start_time: string;
+  end_time: string;
   type_id: number;
 };
 

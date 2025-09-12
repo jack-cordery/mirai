@@ -1,14 +1,25 @@
 import { getAllAvailability } from "@/api/availability";
 import SchedulerWrapper from "@/components/schedule/_components/view/schedular-view-filteration";
 import { useScheduler } from "@/providers/schedular-provider";
-import type { AvailabilitySlot } from "@/types/booking";
+import type { AvailabilitySlot, BookingType } from "@/types/booking";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
-import { type Event } from "@/types/index"
+import { type Event, type Option } from "@/types/index"
+import { getAllBookingTypes } from "@/api/booking-type";
 
 const UNIT = 30;
 const FETCH_DURATION = 60; // seconds
+
+function bookingTypesToOptions(bookingTypes: BookingType[]): Option[] {
+        return bookingTypes.map((bookingType) => {
+                return {
+                        id: bookingType.type_id,
+                        label: bookingType.title,
+                }
+        })
+
+}
 
 function availabilitySlotsToEvents(slots: AvailabilitySlot[]): Event[] {
         return slots.map((slot) => {
@@ -29,7 +40,6 @@ function availabilitySlotsToEvents(slots: AvailabilitySlot[]): Event[] {
 //
 // }
 //
-const typeOptions = [{ "id": 1, "label": "haircut" }, { "id": 2, "label": "not a haircut" }]
 const employeeOptions = [{ "id": 1, "label": "a" }, { "id": 2, "label": "b" }]
 
 export default function Scheduler() {
@@ -37,8 +47,9 @@ export default function Scheduler() {
         useEffect(() => {
                 async function fetchEvents() {
                         try {
-                                const data: AvailabilitySlot[] = await getAllAvailability()
-                                const events = availabilitySlotsToEvents(data)
+                                const [availabilityData, bookingTypeData] = await Promise.all([getAllAvailability(), getAllBookingTypes()])
+                                const events = availabilitySlotsToEvents(availabilityData)
+                                const typeOptions = bookingTypesToOptions(bookingTypeData)
                                 dispatch({ type: "SET_EVENTS", payload: events })
                                 setTypeOptions(typeOptions)
                                 setEmployeeOptions(employeeOptions)

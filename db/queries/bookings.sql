@@ -39,6 +39,12 @@ WHERE
 LIMIT
   1;
 
+-- name: GetAllEmployees :many
+SELECT
+  *
+FROM
+  employees;
+
 -- name: GetUserById :one
 SELECT
   *

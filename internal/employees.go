@@ -162,13 +162,6 @@ func postEmployee(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 func getEmployee(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		employeeID := r.PathValue("employee_id")
-		id, err := strconv.ParseInt(employeeID, 10, 32)
-		if err != nil {
-			log.Printf("error: %v converting employee id to int in getEmployee: %s", err, employeeID)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 
 		conn, err := pool.Acquire(ctx)
 		if err != nil {
@@ -179,6 +172,42 @@ func getEmployee(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		defer conn.Release()
 
 		queries := db.New(conn)
+		employeeID := r.PathValue("employee_id")
+
+		if employeeID == "" {
+			employees, err := queries.GetAllEmployees(ctx)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("error querying employees table in getAllEmployees: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Println("there are no booking types")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			resp := []GetEmployeeResponse{}
+
+			for _, b := range employees {
+				resp = append(resp, responseFromDBEmployee(b))
+			}
+
+			err = json.NewEncoder(w).Encode(resp)
+			if err != nil {
+				log.Printf("error encoding json in getEmployees: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+
+		}
+		id, err := strconv.ParseInt(employeeID, 10, 32)
+		if err != nil {
+			log.Printf("error: %v converting employee id to int in getEmployee: %s", err, employeeID)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		employee, err := queries.GetEmployeeById(ctx, int32(id))
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {

@@ -103,6 +103,7 @@ func SetupServer() {
 
 	mux.HandleFunc("POST /employee", postEmployee(pool, ctx))
 	mux.HandleFunc("GET /employee/{employee_id}", getEmployee(pool, ctx))
+	mux.HandleFunc("GET /employee/", getEmployee(pool, ctx))
 	mux.HandleFunc("PUT /employee/{employee_id}", putEmployee(pool, ctx))
 	mux.HandleFunc("DELETE /employee/{employee_id}", deleteEmployee(pool, ctx))
 

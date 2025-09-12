@@ -366,6 +366,42 @@ func (q *Queries) GetAllBookings(ctx context.Context) ([]Booking, error) {
 	return items, nil
 }
 
+const getAllEmployees = `-- name: GetAllEmployees :many
+SELECT
+  id, name, surname, email, title, description, created_at, last_login
+FROM
+  employees
+`
+
+func (q *Queries) GetAllEmployees(ctx context.Context) ([]Employee, error) {
+	rows, err := q.db.Query(ctx, getAllEmployees)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Employee
+	for rows.Next() {
+		var i Employee
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Surname,
+			&i.Email,
+			&i.Title,
+			&i.Description,
+			&i.CreatedAt,
+			&i.LastLogin,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAvailabilitySlotById = `-- name: GetAvailabilitySlotById :one
 SELECT
   id, employee_id, datetime, type_id, created_at, last_edited

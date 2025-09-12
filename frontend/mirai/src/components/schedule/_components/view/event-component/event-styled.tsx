@@ -135,11 +135,10 @@ export default function EventStyled({
                                                 e.stopPropagation();
                                                 handleEditEvent({
                                                         id: event?.id,
-                                                        title: event?.title,
                                                         startDate: event?.startDate,
                                                         endDate: event?.endDate,
-                                                        description: event?.description,
-                                                        variant: event?.variant,
+                                                        employeeId: event?.employeeId,
+                                                        typeId: event?.typeId,
                                                 });
                                         }}
                                 >
@@ -151,22 +150,20 @@ export default function EventStyled({
                                                 e.stopPropagation();
                                                 handleEditEvent({
                                                         id: event?.id,
-                                                        title: event?.title,
                                                         startDate: event?.startDate,
                                                         endDate: event?.endDate,
-                                                        description: event?.description,
-                                                        variant: event?.variant,
+                                                        employeeId: event?.employeeId,
+                                                        typeId: event?.typeId,
                                                 });
                                         }}
                                         className={cn(
                                                 "w-full p-2 rounded",
-                                                getBackgroundColor(event?.variant),
                                                 event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
                                         )}
                                 >
                                         <div className="flex flex-col h-full">
                                                 <div className="font-semibold text-xs truncate mb-1">
-                                                        {event?.title || "Untitled Event"}
+                                                        {`${event?.typeId} with ${event?.employeeId}` || "Untitled Event"}
                                                 </div>
 
                                                 {/* Show time in minimized mode */}
@@ -176,8 +173,8 @@ export default function EventStyled({
                                                         </div>
                                                 )}
 
-                                                {!event?.minmized && event?.description && (
-                                                        <div className="my-2 text-sm">{event?.description}</div>
+                                                {!event?.minmized && event?.typeId && (
+                                                        <div className="my-2 text-sm">{event?.typeId}</div>
                                                 )}
 
                                                 {!event?.minmized && (

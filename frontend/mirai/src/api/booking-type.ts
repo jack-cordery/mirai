@@ -13,7 +13,7 @@ export async function postBookingType(postRequest: {
   });
 
   if (!res.ok) {
-    throw new Error(`User creation failed with ${res.status}`);
+    throw new Error(`creating booking type failed with ${res.status}`);
   }
   return res.json();
 }

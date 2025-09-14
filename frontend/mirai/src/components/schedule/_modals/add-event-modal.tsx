@@ -20,6 +20,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type EventFormData, eventSchema, type Event, type Option } from "@/types/index";
 import { useScheduler } from "@/providers/schedular-provider";
 import { v4 as uuidv4 } from 'uuid';
+import { postAvailabilitySlot } from "@/api/availability";
+import { toast } from "sonner";
 
 
 export default function AddEventModal({
@@ -61,7 +63,7 @@ export default function AddEventModal({
                 }
         }, [data, reset]);
 
-        const onSubmit: SubmitHandler<EventFormData> = (formData) => {
+        const onSubmit: SubmitHandler<EventFormData> = async (formData) => {
                 const newEvent: Event = {
                         id: uuidv4().toString(),
                         startDate: formData.startDate,
@@ -69,9 +71,22 @@ export default function AddEventModal({
                         employeeId: formData.employee.id,
                         typeId: formData.type.id,
                 };
+                // TODO:: call api and only on success handleAddEvent
+                try {
+                        const res = await postAvailabilitySlot({
+                                employee_id: newEvent.employeeId,
+                                start_time: newEvent.startDate.toString(),
+                                end_time: newEvent.endDate.toString(),
+                                type_id: newEvent.typeId,
 
-                handlers.handleAddEvent(newEvent);
-                setClose(); // Close the modal after submission
+                        })
+
+                        handlers.handleAddEvent(newEvent);
+                        setClose(); // Close the modal after submission
+                } catch (error) {
+                        toast(`creation failed: ${error}`)
+
+                }
         };
 
         return (

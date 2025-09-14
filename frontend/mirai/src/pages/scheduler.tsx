@@ -1,6 +1,7 @@
 import Scheduler from "@/components/scheduler";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { SchedulerProvider } from "@/providers/schedular-provider";
+import type { Event } from "@/types";
 import React from "react";
 
 const BackgroundAnimation = React.memo(() => {

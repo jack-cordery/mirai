@@ -45,6 +45,9 @@ go.work
 .AppleDouble
 .LSOverride
 
+# Vite 
+**/.vite/*
+
 # Icon must end with two \r
 Icon
 

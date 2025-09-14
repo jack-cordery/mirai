@@ -18,6 +18,17 @@ export type BookingType = {
   last_edited: string;
 };
 
+export type Employee = {
+  employee_id: number;
+  name: string;
+  surname: string;
+  email: string;
+  title: string;
+  description: string;
+  created_at: string;
+  last_login: string;
+};
+
 export type AvailabilitySlot = {
   availability_slot_id: number;
   employee_id: number;

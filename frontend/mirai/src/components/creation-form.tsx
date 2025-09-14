@@ -21,6 +21,7 @@ import { Textarea } from "./ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { postBookingType } from "@/api/booking-type"
 import { toast } from "sonner"
+import { postEmployee } from "@/api/employee"
 
 
 export function BookingTypeFormCard() {
@@ -114,75 +115,106 @@ export function BookingTypeFormCard() {
 }
 
 
-export function AvailabilityFormCard({
-        availability,
-        onChange,
-}: {
-        availability: Date[];
-        onChange: (slots: Date[]) => void;
-}) {
-        const [selectedDates, setSelectedDates] = useState<Date[]>(availability || []);
+export function EmployeeFormCard() {
+        const [formData, setFormData] = useState({
+                name: "",
+                surname: "",
+                email: "",
+                title: "",
+                description: "",
+        });
 
-        const handleSelect = (date: Date | undefined) => {
-                if (!date) return;
+        const handleChange = (field: string, value: any) => {
+                setFormData((prev) => ({ ...prev, [field]: value }));
+        };
 
-                const exists = selectedDates.some(
-                        (d) => d.toISOString().split("T")[0] === date.toISOString().split("T")[0]
-                );
-
-                let updatedDates;
-                if (exists) {
-                        updatedDates = selectedDates.filter(
-                                (d) => d.toISOString().split("T")[0] === date.toISOString().split("T")[0]
-                        );
-                } else {
-                        updatedDates = [...selectedDates, date];
+        const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+                e.preventDefault();
+                try {
+                        const res = await postEmployee({
+                                name: formData.name,
+                                surname: formData.surname,
+                                email: formData.email,
+                                title: formData.title,
+                                description: formData.description,
+                        })
+                        toast(`employee ${formData.name} ${formData.surname} created`)
+                        setFormData({
+                                name: "",
+                                surname: "",
+                                email: "",
+                                title: "",
+                                description: "",
+                        })
+                        console.log(res)
+                } catch (err) {
+                        toast("creation failed")
+                        console.log(err)
                 }
-
-                setSelectedDates(updatedDates);
-                onChange(updatedDates);
         };
 
         return (
-                <Card>
-                        <CardHeader>
-                                <CardTitle>Availability</CardTitle>
-                                <CardDescription>Select one or more dates for availability.</CardDescription>
-                        </CardHeader>
+                //TODO: make this so that i can add employees
+                //name , surname, email, title, description
+                <form onSubmit={handleSubmit}>
+                        <Card>
+                                <CardHeader>
+                                        <CardTitle>Employee</CardTitle>
+                                        <CardDescription>Set the information for this employee.</CardDescription>
+                                </CardHeader>
 
-                        <CardContent className="space-y-4">
-                                <Label>Pick Dates</Label>
-                                <Calendar
-                                        mode="single"
-                                        selected={undefined} // disable default highlight
-                                        onDayClick={handleSelect}
-                                        modifiers={{
-                                                selected: selectedDates,
-                                        }}
-                                />
-
-                                {selectedDates.length > 0 && (
-                                        <div className="mt-4 text-sm">
-                                                <strong>Selected Dates:</strong>
-                                                <ul className="list-disc list-inside">
-                                                        {selectedDates.map((date, i) => (
-                                                                <li key={i}>{date.toLocaleDateString(undefined, {
-                                                                        year: "numeric",
-                                                                        month: "short",
-                                                                        day: "numeric",
-                                                                })}</li>
-                                                        ))}
-                                                </ul>
+                                <CardContent className="grid gap-6">
+                                        <div className="grid grid-cols-2 gap-3">
+                                                <div className="flex flex-col">
+                                                        <Label htmlFor="name">Name</Label>
+                                                        <Input
+                                                                id="name"
+                                                                value={formData.name}
+                                                                onChange={(e) => handleChange("name", e.target.value)}
+                                                        />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                        <Label htmlFor="surname">Surname</Label>
+                                                        <Input
+                                                                id="surname"
+                                                                value={formData.surname}
+                                                                onChange={(e) => handleChange("surname", e.target.value)}
+                                                        />
+                                                </div>
                                         </div>
-                                )}
-                        </CardContent>
+                                        <div className="grid  gap-3">
+                                                <Label htmlFor="title">Title</Label>
+                                                <Input
+                                                        id="title"
+                                                        value={formData.title}
+                                                        onChange={(e) => handleChange("title", e.target.value)}
+                                                />
+                                        </div>
+                                        <div className="grid  gap-3">
+                                                <Label htmlFor="email">Email</Label>
+                                                <Input
+                                                        id="email"
+                                                        value={formData.email}
+                                                        onChange={(e) => handleChange("email", e.target.value)}
+                                                />
+                                        </div>
+                                        <div className="grid resize-none gap-3">
+                                                <Label htmlFor="description">Description</Label>
+                                                <Textarea
+                                                        id="description"
+                                                        value={formData.description}
+                                                        className="resize-none whitespace-pre-wrap break-words"
+                                                        rows={4}
+                                                        onChange={(e) => handleChange("description", e.target.value)}
+                                                />
+                                        </div>
+                                </CardContent>
 
-                        <CardFooter>
-                                <Button type="button" onClick={() => onChange(selectedDates)}>
-                                        Save Availability
-                                </Button>
-                        </CardFooter>
-                </Card>
+                                <CardFooter>
+                                        <Button type="submit" >Create</Button>
+                                </CardFooter>
+                        </Card>
+                </form >
         );
 }
 
@@ -192,7 +224,7 @@ export default function CreationForm() {
                         <Tabs defaultValue="booking_type">
                                 <TabsList>
                                         <TabsTrigger value="booking_type">Booking Type</TabsTrigger>
-                                        <TabsTrigger value="availability">Availability</TabsTrigger>
+                                        <TabsTrigger value="employee">Employee</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="booking_type">
@@ -200,8 +232,8 @@ export default function CreationForm() {
                                         />
                                 </TabsContent>
 
-                                <TabsContent value="availability">
-                                        /* availability card */
+                                <TabsContent value="employee">
+                                        <EmployeeFormCard />
                                 </TabsContent>
                         </Tabs>
                 </div>

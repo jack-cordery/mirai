@@ -11,6 +11,38 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getNearest30MinuteBlock(date = new Date()): Date {
+  const result = new Date(date);
+  result.setSeconds(0);
+  result.setMilliseconds(0);
+
+  const minutes = result.getMinutes();
+  const roundedMinutes = minutes < 30 ? 30 : 60;
+
+  result.setMinutes(roundedMinutes);
+  return result;
+}
+
+export function toLocalISOString(date: Date) {
+  const pad = (num: number) => String(num).padStart(2, "0");
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1); // Months are 0-indexed
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+
+  // Timezone offset in minutes
+  const offset = date.getTimezoneOffset();
+  const sign = offset > 0 ? "-" : "+";
+  const absOffset = Math.abs(offset);
+  const offsetHours = pad(Math.floor(absOffset / 60));
+  const offsetMinutes = pad(absOffset % 60);
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offsetHours}:${offsetMinutes}`;
+}
+
 export function loadWorkingDayTimes() {
   // read in and checconst rawStartTime = import.meta.env.VITE_START_TIME
   const rawStartTime = import.meta.env.VITE_START_TIME;

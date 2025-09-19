@@ -40,7 +40,7 @@ function availabilitySlotsToEvents(slots: AvailabilitySlot[]): Event[] {
                         id: uuidv4().toString(),
                         startDate: startDate,
                         endDate: endDate,
-                        employeeId: slot.availability_slot_id,
+                        employeeId: slot.employee_id,
                         typeId: slot.type_id,
                 };
         });
@@ -60,6 +60,7 @@ export default function Scheduler() {
                                 const events = availabilitySlotsToEvents(availabilityData)
                                 const typeOptions = bookingTypesToOptions(bookingTypeData)
                                 const employeeOptions = employeesToOptions(employeeData)
+                                console.log(events)
                                 dispatch({ type: "SET_EVENTS", payload: events })
                                 setTypeOptions(typeOptions)
                                 setEmployeeOptions(employeeOptions)

@@ -72,7 +72,12 @@ export default function EventStyled({
         onDelete?: (id: string) => void;
 }) {
         const { setOpen } = useModal();
-        const { handlers } = useScheduler();
+        const { handlers, employeeOptions, typeOptions } = useScheduler();
+        const typeLabel = typeOptions.find(t => t.id === event?.typeId)?.label;
+        const employeeLabel = employeeOptions.find(e => e.id === event?.employeeId)?.label;
+        console.log(typeLabel)
+        console.log(employeeOptions)
+        console.log(`employeeId${event.employeeId}`)
 
         // Determine if delete button should be shown
         // Hide it for minimized events to save space, show on hover instead
@@ -161,9 +166,11 @@ export default function EventStyled({
                                                 event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
                                         )}
                                 >
-                                        <div className="flex flex-col h-full">
+                                        <div className="flex flex-col h-full outline-2 rounded-2xl p-1 my-2 hover:bg-primary hover:text-black">
                                                 <div className="font-semibold text-xs truncate mb-1">
-                                                        {`${event?.typeId} with ${event?.employeeId}` || "Untitled Event"}
+                                                        {typeLabel && employeeLabel
+                                                                ? `${typeLabel} with ${employeeLabel}`
+                                                                : "Untitled Event"}
                                                 </div>
 
                                                 {/* Show time in minimized mode */}

@@ -11,7 +11,7 @@ import {
         DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { cn, getNearest30MinuteBlock, toLocalISOString } from "@/lib/utils";
 
 import { useModal } from "@/providers/modal-context";
 import SelectDate from "@/components/schedule/_components/add-event-components/select-date";
@@ -30,38 +30,29 @@ export default function AddEventModal({
         CustomAddEventModal?: React.FC<{ register: any; errors: any }>;
 }) {
         const { setClose, data } = useModal();
-        const { handlers, typeOptions, employeeOptions, selectedEmployee, setSelectedEmployee, selectedType, setSelectedType } = useScheduler();
+        const { handlers, typeOptions, employeeOptions } = useScheduler();
 
         const typedData = data as { default: Event };
 
         const {
                 register,
                 handleSubmit,
-                reset,
                 formState: { errors },
                 setValue,
+                watch,
         } = useForm<EventFormData>({
                 resolver: zodResolver(eventSchema),
                 defaultValues: {
-                        startDate: new Date(),
-                        endDate: new Date(),
+                        startDate: getNearest30MinuteBlock(new Date()),
+                        endDate: getNearest30MinuteBlock(new Date()),
                         type: typeOptions[0],
                         employee: employeeOptions[0],
                 },
         });
+        const selectedType = watch("type");
+        const selectedEmployee = watch("employee");
 
         // Reset the form on initialization
-        useEffect(() => {
-                if (data?.default) {
-                        const eventData = data?.default;
-                        reset({
-                                startDate: eventData.startDate,
-                                endDate: eventData.endDate,
-                                type: typeOptions[0],
-                                employee: employeeOptions[0],
-                        });
-                }
-        }, [data, reset]);
 
         const onSubmit: SubmitHandler<EventFormData> = async (formData) => {
                 const newEvent: Event = {
@@ -73,10 +64,10 @@ export default function AddEventModal({
                 };
                 // TODO:: call api and only on success handleAddEvent
                 try {
-                        const res = await postAvailabilitySlot({
+                        await postAvailabilitySlot({
                                 employee_id: newEvent.employeeId,
-                                start_time: newEvent.startDate.toString(),
-                                end_time: newEvent.endDate.toString(),
+                                start_time: toLocalISOString(newEvent.startDate),
+                                end_time: toLocalISOString(newEvent.endDate),
                                 type_id: newEvent.typeId,
 
                         })
@@ -97,8 +88,8 @@ export default function AddEventModal({
                                 <>
                                         <SelectDate
                                                 data={{
-                                                        startDate: data?.default?.startDate || new Date(),
-                                                        endDate: data?.default?.endDate || new Date(),
+                                                        startDate: data?.default?.startDate || getNearest30MinuteBlock(new Date()),
+                                                        endDate: data?.default?.endDate || getNearest30MinuteBlock(new Date()),
                                                 }}
                                                 setValue={setValue}
                                         />
@@ -121,7 +112,7 @@ export default function AddEventModal({
                                                                         <DropdownMenuItem
                                                                                 key={type.id}
                                                                                 onClick={() => {
-                                                                                        setSelectedType(type);
+                                                                                        setValue("type", type)
                                                                                 }}
                                                                         >
                                                                                 <div className="flex items-center">
@@ -153,7 +144,7 @@ export default function AddEventModal({
                                                                         <DropdownMenuItem
                                                                                 key={employee.id}
                                                                                 onClick={() => {
-                                                                                        setSelectedEmployee(employee);
+                                                                                        setValue("employee", employee)
                                                                                 }}
                                                                         >
                                                                                 <div className="flex items-center">

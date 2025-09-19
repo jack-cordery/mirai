@@ -65,9 +65,8 @@ export default function SelectDate({
         }, [startDate, endDate, setValue]);
 
         // Time options for select
-        const hours = Array.from({ length: 12 }, (_, i) => i === 0 ? 12 : i);
-        const minutes = Array.from({ length: 60 }, (_, i) => i);
-        const periods = ["AM", "PM"];
+        const hours = Array.from({ length: 24 }, (_, i) => i === 0 ? 24 : i);
+        const minutes = [0, 30];
 
         // Convert 24-hour format to 12-hour format
         const get12HourFormat = (hour: number) => {
@@ -178,12 +177,10 @@ export default function SelectDate({
                                         <Label>Start Time</Label>
                                         <div className="flex space-x-2">
                                                 <Select
-                                                        value={get12HourFormat(startDate.getHours()).toString()}
+                                                        value={startDate.getHours().toString()}
                                                         onValueChange={(value) => {
                                                                 const hour = parseInt(value, 10);
-                                                                const period = getPeriod(startDate.getHours());
-                                                                const newHour = get24HourFormat(hour, period);
-                                                                const newDate = setHours(startDate, newHour);
+                                                                const newDate = setHours(startDate, hour);
                                                                 setStartDate(newDate);
                                                         }}
                                                 >
@@ -217,26 +214,6 @@ export default function SelectDate({
                                                                 ))}
                                                         </SelectContent>
                                                 </Select>
-                                                <Select
-                                                        value={getPeriod(startDate.getHours())}
-                                                        onValueChange={(value) => {
-                                                                const hour = get12HourFormat(startDate.getHours());
-                                                                const newHour = get24HourFormat(hour, value);
-                                                                const newDate = setHours(startDate, newHour);
-                                                                setStartDate(newDate);
-                                                        }}
-                                                >
-                                                        <SelectTrigger className="w-[70px]">
-                                                                <SelectValue placeholder="AM/PM" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                                {periods.map((period) => (
-                                                                        <SelectItem key={period} value={period}>
-                                                                                {period}
-                                                                        </SelectItem>
-                                                                ))}
-                                                        </SelectContent>
-                                                </Select>
                                         </div>
                                         <div className="text-xs text-muted-foreground">
                                                 Current time: {format(startDate, "hh:mm a")}
@@ -248,12 +225,10 @@ export default function SelectDate({
                                         <Label>End Time</Label>
                                         <div className="flex space-x-2">
                                                 <Select
-                                                        value={get12HourFormat(endDate.getHours()).toString()}
+                                                        value={endDate.getHours().toString()}
                                                         onValueChange={(value) => {
                                                                 const hour = parseInt(value, 10);
-                                                                const period = getPeriod(endDate.getHours());
-                                                                const newHour = get24HourFormat(hour, period);
-                                                                const newDate = setHours(endDate, newHour);
+                                                                const newDate = setHours(endDate, hour);
                                                                 setEndDate(newDate);
                                                         }}
                                                 >
@@ -283,26 +258,6 @@ export default function SelectDate({
                                                                 {minutes.map((minute) => (
                                                                         <SelectItem key={minute} value={minute.toString()}>
                                                                                 {minute.toString().padStart(2, "0")}
-                                                                        </SelectItem>
-                                                                ))}
-                                                        </SelectContent>
-                                                </Select>
-                                                <Select
-                                                        value={getPeriod(endDate.getHours())}
-                                                        onValueChange={(value) => {
-                                                                const hour = get12HourFormat(endDate.getHours());
-                                                                const newHour = get24HourFormat(hour, value);
-                                                                const newDate = setHours(endDate, newHour);
-                                                                setEndDate(newDate);
-                                                        }}
-                                                >
-                                                        <SelectTrigger className="w-[70px]">
-                                                                <SelectValue placeholder="AM/PM" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                                {periods.map((period) => (
-                                                                        <SelectItem key={period} value={period}>
-                                                                                {period}
                                                                         </SelectItem>
                                                                 ))}
                                                         </SelectContent>

@@ -32,18 +32,39 @@ function employeesToOptions(employees: Employee[]): Option[] {
 }
 
 function availabilitySlotsToEvents(slots: AvailabilitySlot[]): Event[] {
-        return slots.map((slot) => {
+        const mappedSlots = slots.map((slot) => {
                 const startDate = new Date(slot.datetime);
                 const endDate = new Date(startDate.getTime() + UNIT * 60 * 1000);
 
                 return {
-                        id: uuidv4().toString(),
+                        id: slot.availability_slot_id.toString(),
                         startDate: startDate,
                         endDate: endDate,
                         employeeId: slot.employee_id,
                         typeId: slot.type_id,
                 };
         });
+        const sorted = mappedSlots.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+        const merged: typeof mappedSlots = [];
+
+        for (const curr of sorted) {
+                const last = merged[merged.length - 1];
+
+                if (
+                        last &&
+                        last.endDate.getTime() === curr.startDate.getTime() &&
+                        last.employeeId === curr.employeeId &&
+                        last.typeId === curr.typeId
+                ) {
+                        last.endDate = curr.endDate;
+                } else {
+                        merged.push({ ...curr });
+                }
+        }
+        return merged
+
+
 }
 
 // function eventToPostAvailabilitySlot(event: Event): PostAvailabilitySlotRequest {

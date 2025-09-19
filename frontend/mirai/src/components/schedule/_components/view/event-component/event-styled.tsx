@@ -75,9 +75,6 @@ export default function EventStyled({
         const { handlers, employeeOptions, typeOptions } = useScheduler();
         const typeLabel = typeOptions.find(t => t.id === event?.typeId)?.label;
         const employeeLabel = employeeOptions.find(e => e.id === event?.employeeId)?.label;
-        console.log(typeLabel)
-        console.log(employeeOptions)
-        console.log(`employeeId${event.employeeId}`)
 
         // Determine if delete button should be shown
         // Hide it for minimized events to save space, show on hover instead
@@ -176,7 +173,7 @@ export default function EventStyled({
                                                 {/* Show time in minimized mode */}
                                                 {event?.minmized && (
                                                         <div className="text-[10px] opacity-80">
-                                                                {formatTime(event?.startDate)}
+                                                                {`${formatTime(event?.startDate)} - ${formatTime(event?.endDate)}`}
                                                         </div>
                                                 )}
 

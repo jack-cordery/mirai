@@ -1,5 +1,3 @@
-"use client";
-
 import { type EventFormData } from "@/types";
 import React, { useEffect, useState } from "react";
 import { type UseFormSetValue } from "react-hook-form";

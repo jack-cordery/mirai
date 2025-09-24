@@ -2,13 +2,16 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
   datetimeToTime,
-  valueToTime,
   type AvailabilitySlot,
   type TimeOfDay,
 } from "@/types/booking";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function capatalise(s: string): string {
+  return s.length === 0 ? "" : s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 export function getNearest30MinuteBlock(date = new Date()): Date {

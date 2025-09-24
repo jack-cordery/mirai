@@ -1,15 +1,13 @@
-"use client";
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/providers/modal-context";
-import AddEventModal from "@/components/schedule/_modals/add-event-modal";
+import AddEventModal, { EditEventModal } from "@/components/schedule/_modals/add-event-modal";
 import type { Event, CustomEventModal } from "@/types";
 import { TrashIcon, CalendarIcon, ClockIcon } from "lucide-react";
 import { useScheduler } from "@/providers/schedular-provider";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { capatalise, cn } from "@/lib/utils";
 import CustomModal from "@/components/ui/custom-modal";
 
 // Function to format date
@@ -85,7 +83,7 @@ export default function EventStyled({
                 // Open the modal with the content
                 setOpen(
                         <CustomModal title="Edit Event">
-                                <AddEventModal
+                                <EditEventModal
                                         CustomAddEventModal={
                                                 CustomEventModal?.CustomAddEventModal?.CustomForm
                                         }
@@ -159,14 +157,14 @@ export default function EventStyled({
                                                 });
                                         }}
                                         className={cn(
-                                                "w-full p-2 rounded",
+                                                "flex flex-col h-full w-full p-2 rounded",
                                                 event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
                                         )}
                                 >
-                                        <div className="flex flex-col h-full outline-2 rounded-2xl p-1 my-2 hover:bg-primary hover:text-black">
+                                        <div className="flex flex-col flex-grow outline-2 rounded-2xl p-2 my-2 hover:bg-primary hover:text-black">
                                                 <div className="font-semibold text-xs truncate mb-1">
                                                         {typeLabel && employeeLabel
-                                                                ? `${typeLabel} with ${employeeLabel}`
+                                                                ? `${capatalise(typeLabel)} with ${employeeLabel}`
                                                                 : "Untitled Event"}
                                                 </div>
 

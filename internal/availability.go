@@ -272,7 +272,6 @@ func getAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 }
 
 func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var availabilitySlotRequest PutAvailabilitySlotRequest
@@ -361,7 +360,6 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 		response := PutAvailabilitySlotResponse{
 			AvailabilitySlotIDs: slotIDs,
 		}
-		log.Printf("put responding with %v", slotIDs)
 
 		w.WriteHeader(http.StatusCreated)
 		err = json.NewEncoder(w).Encode(response)

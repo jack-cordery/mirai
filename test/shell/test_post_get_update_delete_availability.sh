@@ -107,10 +107,9 @@ status=$(echo "$response" | tail -n1)
 
 assert_status_with_cleanup "GET" "/availability" "$status" "200" "$availability_id_1"
 
-# assert_body_contains_with_cleanup "GET" "/availability" "$body" "$employee_id" "$availability_id_1"
+assert_body_contains_with_cleanup "GET" "/availability" "$body" "$employee_id" "$availability_id_1"
 assert_body_contains_with_cleanup "GET" "/availability" "$body" "2024-07-26T19:30:00" "$availability_id_1"
-# assert_body_contains_with_cleanup "GET" "/availability" "$body" "5" "$availability_id_1"
-# assert_body_contains_with_cleanup "GET" "/availability" "$body" "$booking_type_id" "$availability_id_1"
+assert_body_contains_with_cleanup "GET" "/availability" "$body" "$booking_type_id" "$availability_id_1"
 
 # test DELETE
 response=$(curl -sS -w "\n%{http_code}" -X DELETE "$SERVER/availability/$availability_id_1")

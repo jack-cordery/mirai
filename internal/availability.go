@@ -71,27 +71,50 @@ type PostAvailabilitySlotResponse struct {
 }
 
 type PutAvailabilitySlotRequest struct {
-	EmployeeID int32     `json:"employee_id"`
-	Datetime   time.Time `json:"datetime"` // this expects RFC 3339 format, just need to sure it is encoded like this
-	TypeID     int32     `json:"type_id"`
+	AvailabilitySlotIDs []int32   `json:"availability_slot_ids"`
+	EmployeeID          int32     `json:"employee_id"`
+	StartTime           time.Time `json:"start_time"` // this expects RFC 3339 format, just need to sure it is encoded like this
+	EndTime             time.Time `json:"end_time"`   // this expects RFC 3339 format, just need to sure it is encoded like this
+	TypeID              int32     `json:"type_id"`
 }
 
 type PutAvailabilitySlotResponse struct {
-	AvailabilitySlotID int32 `json:"availability_slot_id"`
+	AvailabilitySlotIDs []int32 `json:"availability_slot_ids"`
 }
 
-func (r PutAvailabilitySlotRequest) ToDBParams(availabilitySlotID int32) (db.UpdateAvailabilitySlotParams, error) {
-	datetime, err := timeToTimeStamp(r.Datetime)
+func (p PutAvailabilitySlotRequest) ToCreationParams() ([]db.CreateAvailabilitySlotParams, error) {
+	params := []db.CreateAvailabilitySlotParams{}
+	slots, err := spanToSlots(p.StartTime, p.EndTime, Unit)
 	if err != nil {
-		return db.UpdateAvailabilitySlotParams{}, err
+		return []db.CreateAvailabilitySlotParams{}, err
+	}
+	for _, slot := range slots {
+		slotTimeStamp, err := timeToTimeStamp(slot)
+		if err != nil {
+			return []db.CreateAvailabilitySlotParams{}, err
+		}
+		params = append(params,
+			db.CreateAvailabilitySlotParams{
+				EmployeeID: p.EmployeeID,
+				Datetime:   slotTimeStamp,
+				TypeID:     p.TypeID,
+			})
+	}
+	return params, nil
+}
+
+func handleCreation(params []db.CreateAvailabilitySlotParams, qtx *db.Queries, ctx context.Context) ([]int32, error) {
+	slotIDs := []int32{}
+	for _, param := range params {
+		availabilitySlotID, err := qtx.CreateAvailabilitySlot(ctx, param)
+		if err != nil {
+			return nil, err
+		}
+		slotIDs = append(slotIDs, availabilitySlotID)
 	}
 
-	return db.UpdateAvailabilitySlotParams{
-		ID:         availabilitySlotID,
-		EmployeeID: r.EmployeeID,
-		Datetime:   datetime,
-		TypeID:     r.TypeID,
-	}, nil
+	return slotIDs, nil
+
 }
 
 func postAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
@@ -136,35 +159,31 @@ func postAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerF
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		slotIDs := []int32{}
 
-		for _, param := range params {
-			availabilitySlotID, err := qtx.CreateAvailabilitySlot(ctx, param)
-			slotIDs = append(slotIDs, availabilitySlotID)
-			if err != nil {
-				var pgErr *pgconn.PgError
-				if errors.As(err, &pgErr) {
-					if pgErr.Code == "23505" {
-						log.Printf("uniqueness constraint violated in postAvailabilitySlot. employeeID: %d Datetime: %s",
-							availabilitySlotRequest.EmployeeID,
-							param.Datetime.Time,
-						)
-						w.WriteHeader(http.StatusConflict)
-						return
-					}
-					if pgErr.Code == "23503" {
-						log.Printf("either the booking type id: %d or employee id: %d does not exist",
-							availabilitySlotRequest.TypeID,
-							availabilitySlotRequest.EmployeeID,
-						)
-						w.WriteHeader(http.StatusBadRequest)
-						return
-					}
+		slotIDs, err := handleCreation(params, qtx, ctx)
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) {
+				if pgErr.Code == "23505" {
+					log.Printf("uniqueness constraint violated in postAvailabilitySlot. employeeID: %d Datetime: %s",
+						availabilitySlotRequest.EmployeeID,
+						availabilitySlotRequest.StartTime,
+					)
+					w.WriteHeader(http.StatusConflict)
+					return
 				}
-				log.Printf("general error when trying to create booking type in postAvailabilitySlot: %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
+				if pgErr.Code == "23503" {
+					log.Printf("either the booking type id: %d or employee id: %d does not exist",
+						availabilitySlotRequest.TypeID,
+						availabilitySlotRequest.EmployeeID,
+					)
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
 			}
+			log.Printf("general error when trying to create booking type in postAvailabilitySlot: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		err = tx.Commit(ctx)
@@ -255,17 +274,9 @@ func getAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		availabilitySlotId := r.PathValue("availability_slot_id")
-		id, err := strconv.ParseInt(availabilitySlotId, 10, 32)
-		if err != nil {
-			log.Printf("error: %v converting user id to int in putAvailabilitySlot: %s", err, availabilitySlotId)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 
 		var availabilitySlotRequest PutAvailabilitySlotRequest
-
-		err = json.NewDecoder(r.Body).Decode(&availabilitySlotRequest)
+		err := json.NewDecoder(r.Body).Decode(&availabilitySlotRequest)
 		if err != nil {
 			log.Printf("error decoding body in putAvailabilitySlot: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -297,35 +308,45 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
 
-		request, err := availabilitySlotRequest.ToDBParams(int32(id))
+		for _, id := range availabilitySlotRequest.AvailabilitySlotIDs {
+			_, err = qtx.DeleteAvailabilitySlot(ctx, id)
+			if err != nil {
+				log.Printf("error deleting id %d in putAvailabilitySlot: %v", id, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+
+		params, err := availabilitySlotRequest.ToCreationParams()
 		if err != nil {
-			log.Printf("error converting request to db params in putAvailabilitySlot: %v", err)
+			log.Printf("error creating params in putAvailabilitySlot: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		log.Printf("params for put creation are %v", params)
 
-		availabilitySlotID, err := qtx.UpdateAvailabilitySlot(ctx, request)
+		slotIDs, err := handleCreation(params, qtx, ctx)
 		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				log.Printf(
-					"availabilitySlot id: %d, which does not exist, was attemped to be updated by putAvailabilitySlot",
-					id,
-				)
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				if pgErr.Code == "23505" {
-					log.Printf("uniqueness constraint violated in putAvailabilitySlot. EmployeeID: %d Datetime: %s",
+					log.Printf("uniqueness constraint violated in postAvailabilitySlot. employeeID: %d Datetime: %s",
 						availabilitySlotRequest.EmployeeID,
-						availabilitySlotRequest.Datetime,
+						availabilitySlotRequest.StartTime,
+					)
+					w.WriteHeader(http.StatusConflict)
+					return
+				}
+				if pgErr.Code == "23503" {
+					log.Printf("either the booking type id: %d or employee id: %d does not exist",
+						availabilitySlotRequest.TypeID,
+						availabilitySlotRequest.EmployeeID,
 					)
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
 			}
-			log.Printf("general error when trying to update row in putAvailabilitySlot: %v", err)
+			log.Printf("general error when trying to create booking type in postAvailabilitySlot: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -338,8 +359,9 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 		}
 
 		response := PutAvailabilitySlotResponse{
-			AvailabilitySlotID: availabilitySlotID,
+			AvailabilitySlotIDs: slotIDs,
 		}
+		log.Printf("put responding with %v", slotIDs)
 
 		w.WriteHeader(http.StatusCreated)
 		err = json.NewEncoder(w).Encode(response)

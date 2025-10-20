@@ -213,9 +213,6 @@ export default function SelectDate({
                                                         </SelectContent>
                                                 </Select>
                                         </div>
-                                        <div className="text-xs text-muted-foreground">
-                                                Current time: {format(startDate, "hh:mm a")}
-                                        </div>
                                 </div>
 
                                 {/* End Time */}
@@ -260,9 +257,6 @@ export default function SelectDate({
                                                                 ))}
                                                         </SelectContent>
                                                 </Select>
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                                Current time: {format(endDate, "hh:mm a")}
                                         </div>
                                 </div>
                         </div>

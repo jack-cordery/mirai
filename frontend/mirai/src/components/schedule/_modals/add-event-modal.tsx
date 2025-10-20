@@ -313,7 +313,7 @@ export function EditEventModal({
                                                 <Button variant="outline" type="button" onClick={() => setClose()}>
                                                         Cancel
                                                 </Button>
-                                                <Button type="submit">Save Event</Button>
+                                                <Button type="submit">Edit Event</Button>
                                         </div>
                                 </>
                         )}

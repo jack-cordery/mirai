@@ -25,8 +25,6 @@ status=$(echo "$response" | tail -n1)
 
 employee_id=$(echo "$body" | jq -r '.employee_id')
 
-echo $employee_id
-
 response=$(curl -sS -w "\n%{http_code}" -H 'Content-Type: application/json' \
 		-d '{
         "title": "not a haircut",
@@ -39,7 +37,6 @@ body=$(echo "$response" | sed '$d')
 status=$(echo "$response" | tail -n1)
 
 booking_type_id=$(echo "$body" | jq -r '.booking_type_id')
-echo $booking_type_id
 
 # test POST
 response=$(curl -sS -w "\n%{http_code}" -H 'Content-Type: application/json' \
@@ -96,8 +93,6 @@ status=$(echo "$response" | tail -n1)
 availability_id_1=$(echo "$body" | jq -r '.availability_slot_ids[0]')
 availability_id_2=$(echo "$body" | jq -r '.availability_slot_ids[1]')
 
-echo $body
-
 # test PUT
 assert_status_with_cleanup "PUT" "/availability" "$status" "201" "$availability_id_1"
 
@@ -112,14 +107,18 @@ assert_body_contains_with_cleanup "GET" "/availability" "$body" "2024-07-26T19:3
 assert_body_contains_with_cleanup "GET" "/availability" "$body" "$booking_type_id" "$availability_id_1"
 
 # test DELETE
-response=$(curl -sS -w "\n%{http_code}" -X DELETE "$SERVER/availability/$availability_id_1")
+response=$(curl -sS -w "\n%{http_code}" -X DELETE "$SERVER/availability/" \
+  -H "Content-Type: application/json" \
+  -d "{\"availability_slot_ids\": [$availability_id_1]}")
 
 body=$(echo "$response" | sed '$d')
 status=$(echo "$response" | tail -n1)
 
 assert_status "DELETE" "/availability" "$status" "204" 
 
-response=$(curl -sS -w "\n%{http_code}" -X DELETE "$SERVER/availability/$availability_id_2")
+response=$(curl -sS -w "\n%{http_code}" -X DELETE "$SERVER/availability/" \
+  -H "Content-Type: application/json" \
+  -d "{\"availability_slot_ids\": [$availability_id_2]}")
 
 body=$(echo "$response" | sed '$d')
 status=$(echo "$response" | tail -n1)

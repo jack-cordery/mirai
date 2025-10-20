@@ -82,6 +82,10 @@ type PutAvailabilitySlotResponse struct {
 	AvailabilitySlotIDs []int32 `json:"availability_slot_ids"`
 }
 
+type DeleteAvailabilitySlotRequest struct {
+	AvailabilitySlotIDs []int32 `json:"availability_slot_ids"`
+}
+
 func (p PutAvailabilitySlotRequest) ToCreationParams() ([]db.CreateAvailabilitySlotParams, error) {
 	params := []db.CreateAvailabilitySlotParams{}
 	slots, err := spanToSlots(p.StartTime, p.EndTime, Unit)
@@ -273,7 +277,6 @@ func getAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 
 func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		var availabilitySlotRequest PutAvailabilitySlotRequest
 		err := json.NewDecoder(r.Body).Decode(&availabilitySlotRequest)
 		if err != nil {
@@ -322,7 +325,6 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		log.Printf("params for put creation are %v", params)
 
 		slotIDs, err := handleCreation(params, qtx, ctx)
 		if err != nil {
@@ -369,17 +371,30 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			return
 		}
 	}
-
 }
 
 func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		availabilitySlotId := r.PathValue("availability_slot_id")
-		id, err := strconv.ParseInt(availabilitySlotId, 10, 32)
-		if err != nil {
-			log.Printf("error: %v converting availabilitySlot id to int in deleteAvailabilitySlot: %s", err, availabilitySlotId)
-			w.WriteHeader(http.StatusBadRequest)
-			return
+		availabilitySlotIds := []int32{}
+		if availabilitySlotId != "" {
+			id, err := strconv.ParseInt(availabilitySlotId, 10, 32)
+			if err != nil {
+				log.Printf("error: %v converting availabilitySlot id to int in deleteAvailabilitySlot: %s", err, availabilitySlotId)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			availabilitySlotIds = []int32{int32(id)}
+		} else {
+			var availabilitySlotRequest DeleteAvailabilitySlotRequest
+			err := json.NewDecoder(r.Body).Decode(&availabilitySlotRequest)
+			if err != nil {
+				log.Printf("error decoding body in deleteAvailabilitySlot: %v", err)
+				log.Println(r.Body)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			availabilitySlotIds = availabilitySlotRequest.AvailabilitySlotIDs
 		}
 
 		conn, err := pool.Acquire(ctx)
@@ -407,16 +422,18 @@ func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.Handle
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
 
-		_, err = qtx.DeleteAvailabilitySlot(ctx, int32(id))
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			log.Printf("general error when trying to delete availabilitySlot in deleteAvailabilitySlot: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if errors.Is(err, pgx.ErrNoRows) {
-			log.Printf("availabilitySlot id: %d, which does not exist, was attemped to be deleted by deleteAvailabilitySlot", id)
-			w.WriteHeader(http.StatusNotFound)
-			return
+		for _, id := range availabilitySlotIds {
+			_, err = qtx.DeleteAvailabilitySlot(ctx, int32(id))
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("general error when trying to delete availabilitySlot in deleteAvailabilitySlot: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("availabilitySlot id: %d, which does not exist, was attemped to be deleted by deleteAvailabilitySlot", id)
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
 		}
 
 		err = tx.Commit(ctx)

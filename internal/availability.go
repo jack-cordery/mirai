@@ -322,7 +322,6 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		log.Printf("params for put creation are %v", params)
 
 		slotIDs, err := handleCreation(params, qtx, ctx)
 		if err != nil {

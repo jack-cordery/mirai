@@ -18,8 +18,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type EventFormData, eventSchema, type Event, type Option } from "@/types/index";
 import { useScheduler } from "@/providers/schedular-provider";
 import { v4 as uuidv4 } from 'uuid';
-import { postAvailabilitySlot } from "@/api/availability";
+import { postAvailabilitySlot, putAvailabilitySlot } from "@/api/availability";
 import { toast } from "sonner";
+import type { PostAvailabilitySlotResponse, PutAvailabilitySlotResponse } from "@/types/booking";
 
 
 export default function AddEventModal({
@@ -53,22 +54,22 @@ export default function AddEventModal({
         // Reset the form on initialization
 
         const onSubmit: SubmitHandler<EventFormData> = async (formData) => {
-                const newEvent: Event = {
-                        id: uuidv4().toString(),
-                        startDate: formData.startDate,
-                        endDate: formData.endDate,
-                        employeeId: formData.employee.id,
-                        typeId: formData.type.id,
-                };
                 try {
-                        await postAvailabilitySlot({
-                                employee_id: newEvent.employeeId,
-                                start_time: toLocalISOString(newEvent.startDate),
-                                end_time: toLocalISOString(newEvent.endDate),
-                                type_id: newEvent.typeId,
-
+                        const res: PostAvailabilitySlotResponse = await postAvailabilitySlot({
+                                employee_id: formData.employee.id,
+                                start_time: toLocalISOString(formData.startDate),
+                                end_time: toLocalISOString(formData.endDate),
+                                type_id: formData.type.id,
                         })
 
+                        const newEvent: Event = {
+                                id: uuidv4().toString(),
+                                startDate: formData.startDate,
+                                endDate: formData.endDate,
+                                employeeId: formData.employee.id,
+                                typeId: formData.type.id,
+                                availability_slot_ids: res.availability_slot_ids,
+                        }
                         handlers.handleAddEvent(newEvent);
                         setClose(); // Close the modal after submission
                 } catch (error) {
@@ -178,6 +179,7 @@ export function EditEventModal({
         const { handlers, typeOptions, employeeOptions } = useScheduler();
 
         const typedData = data as { default: Event };
+        console.log(`typed data is ${JSON.stringify(typedData)}`)
 
         const {
                 register,
@@ -188,8 +190,8 @@ export function EditEventModal({
         } = useForm<EventFormData>({
                 resolver: zodResolver(eventSchema),
                 defaultValues: {
-                        startDate: getNearest30MinuteBlock(new Date()),
-                        endDate: getNearest30MinuteBlock(new Date()),
+                        startDate: getNearest30MinuteBlock(typedData.default.startDate),
+                        endDate: getNearest30MinuteBlock(typedData.default.endDate),
                         type: typeOptions[0],
                         employee: employeeOptions[0],
                 },
@@ -200,23 +202,26 @@ export function EditEventModal({
         // Reset the form on initialization
 
         const onSubmit: SubmitHandler<EventFormData> = async (formData) => {
-                const newEvent: Event = {
-                        id: uuidv4().toString(),
-                        startDate: formData.startDate,
-                        endDate: formData.endDate,
-                        employeeId: formData.employee.id,
-                        typeId: formData.type.id,
-                };
                 try {
-                        await postAvailabilitySlot({
-                                employee_id: newEvent.employeeId,
-                                start_time: toLocalISOString(newEvent.startDate),
-                                end_time: toLocalISOString(newEvent.endDate),
-                                type_id: newEvent.typeId,
-
+                        const res: PutAvailabilitySlotResponse = await putAvailabilitySlot({
+                                availability_slot_ids: typedData.default.availability_slot_ids,
+                                employee_id: formData.employee.id,
+                                start_time: toLocalISOString(formData.startDate),
+                                end_time: toLocalISOString(formData.endDate),
+                                type_id: formData.type.id,
                         })
 
-                        handlers.handleAddEvent(newEvent);
+                        const updatedEvent: Event = {
+                                id: typedData.default.id,
+                                availability_slot_ids: res.availability_slot_ids,
+                                startDate: formData.startDate,
+                                endDate: formData.endDate,
+                                typeId: formData.type.id,
+                                employeeId: formData.employee.id,
+                        }
+
+
+                        handlers.handleUpdateEvent(updatedEvent, updatedEvent.id);
                         setClose(); // Close the modal after submission
                 } catch (error) {
                         toast(`creation failed: ${error}`)

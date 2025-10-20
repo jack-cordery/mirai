@@ -1,11 +1,11 @@
 import { getAllAvailability } from "@/api/availability";
 import SchedulerWrapper from "@/components/schedule/_components/view/schedular-view-filteration";
 import { useScheduler } from "@/providers/schedular-provider";
-import type { AvailabilitySlot, BookingType, Employee } from "@/types/booking";
+import type { BookingType, Employee } from "@/types/booking";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
-import { type Event, type Option } from "@/types/index"
+import { type Option } from "@/types/index"
+import { availabilitySlotsToEvents } from "@/lib/utils";
 import { getAllBookingTypes } from "@/api/booking-type";
 import { getAllEmployees } from "@/api/employee";
 
@@ -31,42 +31,11 @@ function employeesToOptions(employees: Employee[]): Option[] {
 
 }
 
-function availabilitySlotsToEvents(slots: AvailabilitySlot[]): Event[] {
-        const mappedSlots = slots.map((slot) => {
-                const startDate = new Date(slot.datetime);
-                const endDate = new Date(startDate.getTime() + UNIT * 60 * 1000);
-
-                return {
-                        id: slot.availability_slot_id.toString(),
-                        startDate: startDate,
-                        endDate: endDate,
-                        employeeId: slot.employee_id,
-                        typeId: slot.type_id,
-                };
-        });
-        const sorted = mappedSlots.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-
-        const merged: typeof mappedSlots = [];
-
-        for (const curr of sorted) {
-                const last = merged[merged.length - 1];
-
-                if (
-                        last &&
-                        last.endDate.getTime() === curr.startDate.getTime() &&
-                        last.employeeId === curr.employeeId &&
-                        last.typeId === curr.typeId
-                ) {
-                        last.endDate = curr.endDate;
-                } else {
-                        merged.push({ ...curr });
-                }
-        }
-        return merged
-
-
-}
-
+// TODO: here i think i need to somehow store availability_slots in events 
+// so that i can use for editing and deleting events later 
+// looks like i will need to add a field to event and just store them 
+// when merging and then use that later
+//
 // function eventToPostAvailabilitySlot(event: Event): PostAvailabilitySlotRequest {
 //
 // }
@@ -78,7 +47,7 @@ export default function Scheduler() {
                 async function fetchEvents() {
                         try {
                                 const [availabilityData, bookingTypeData, employeeData] = await Promise.all([getAllAvailability(), getAllBookingTypes(), getAllEmployees()])
-                                const events = availabilitySlotsToEvents(availabilityData)
+                                const events = availabilitySlotsToEvents(availabilityData, UNIT)
                                 const typeOptions = bookingTypesToOptions(bookingTypeData)
                                 const employeeOptions = employeesToOptions(employeeData)
                                 console.log(events)

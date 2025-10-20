@@ -14,6 +14,7 @@ export interface Event {
   startDate: Date;
   endDate: Date;
   typeId: number;
+  availability_slot_ids: number[];
 }
 
 // Define the state interface for the scheduler

@@ -6,6 +6,8 @@ import {
   type TimeOfDay,
 } from "@/types/booking";
 
+import { type Event } from "@/types/index";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -126,4 +128,45 @@ export function generateOptions(
     }
   }
   return options;
+}
+
+export function availabilitySlotsToEvents(
+  slots: AvailabilitySlot[],
+  unit: number,
+): Event[] {
+  const mappedSlots = slots.map((slot) => {
+    const startDate = new Date(slot.datetime);
+    const endDate = new Date(startDate.getTime() + unit * 60 * 1000);
+
+    return {
+      id: slot.availability_slot_id.toString(),
+      startDate: startDate,
+      endDate: endDate,
+      employeeId: slot.employee_id,
+      typeId: slot.type_id,
+      availability_slot_ids: [slot.availability_slot_id],
+    };
+  });
+  const sorted = mappedSlots.sort(
+    (a, b) => a.startDate.getTime() - b.startDate.getTime(),
+  );
+
+  const merged: Event[] = [];
+
+  for (const curr of sorted) {
+    const last = merged[merged.length - 1];
+
+    if (
+      last &&
+      last.endDate.getTime() === curr.startDate.getTime() &&
+      last.employeeId === curr.employeeId &&
+      last.typeId === curr.typeId
+    ) {
+      last.endDate = curr.endDate;
+      last.availability_slot_ids.push(...curr.availability_slot_ids);
+    } else {
+      merged.push({ ...curr });
+    }
+  }
+  return merged;
 }

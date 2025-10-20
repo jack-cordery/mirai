@@ -139,6 +139,7 @@ export default function EventStyled({
                                                         endDate: event?.endDate,
                                                         employeeId: event?.employeeId,
                                                         typeId: event?.typeId,
+                                                        availability_slot_ids: event?.availability_slot_ids,
                                                 });
                                         }}
                                 >
@@ -154,6 +155,7 @@ export default function EventStyled({
                                                         endDate: event?.endDate,
                                                         employeeId: event?.employeeId,
                                                         typeId: event?.typeId,
+                                                        availability_slot_ids: event?.availability_slot_ids,
                                                 });
                                         }}
                                         className={cn(

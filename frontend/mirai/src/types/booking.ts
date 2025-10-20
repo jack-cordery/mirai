@@ -37,11 +37,28 @@ export type AvailabilitySlot = {
   created_at: string;
   last_edited: string;
 };
+
 export type PostAvailabilitySlotRequest = {
   employee_id: number;
   start_time: string;
   end_time: string;
   type_id: number;
+};
+
+export type PostAvailabilitySlotResponse = {
+  availability_slot_ids: number[];
+};
+
+export type PutAvailabilitySlotRequest = {
+  availability_slot_ids: number[];
+  employee_id: number;
+  start_time: string;
+  end_time: string;
+  type_id: number;
+};
+
+export type PutAvailabilitySlotResponse = {
+  availability_slot_ids: number[];
 };
 
 export function displayTime(time: TimeOfDay) {

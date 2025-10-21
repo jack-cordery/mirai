@@ -61,6 +61,10 @@ export type PutAvailabilitySlotResponse = {
   availability_slot_ids: number[];
 };
 
+export type DeleteAvailabilitySlotRequest = {
+  availability_slot_ids: number[];
+};
+
 export function displayTime(time: TimeOfDay) {
   return `${time.hour.toString().padStart(2, "0")}:${time.minute.toString().padStart(2, "0")}`;
 }

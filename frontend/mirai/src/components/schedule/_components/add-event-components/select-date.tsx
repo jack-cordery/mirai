@@ -102,7 +102,9 @@ export default function SelectDate({
                                                                 )}
                                                         >
                                                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                                                {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                                                                {startDate instanceof Date && !isNaN(startDate.getTime())
+                                                                        ? format(startDate, "PPP")
+                                                                        : <span>Pick a date</span>}
                                                         </Button>
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-auto p-0" align="start">

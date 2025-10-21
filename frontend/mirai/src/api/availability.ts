@@ -1,4 +1,5 @@
 import type {
+  DeleteAvailabilitySlotRequest,
   PostAvailabilitySlotRequest,
   PutAvailabilitySlotRequest,
 } from "@/types/booking";
@@ -33,6 +34,20 @@ export async function putAvailabilitySlot(
     throw new Error(`availability slot edit has failed with ${res.status}`);
   }
   return res.json();
+}
+
+export async function deleteAvailabilitySlot(
+  deleteRequest: DeleteAvailabilitySlotRequest,
+) {
+  const res = await fetch(`${apiUrl}/availability`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(deleteRequest),
+  });
+
+  if (!res.ok) {
+    throw new Error(`availability slot delete has failed with ${res.status}`);
+  }
 }
 
 export async function getAllAvailability() {

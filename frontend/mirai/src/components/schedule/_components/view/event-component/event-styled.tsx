@@ -9,6 +9,8 @@ import { useScheduler } from "@/providers/schedular-provider";
 import { motion } from "framer-motion";
 import { capatalise, cn } from "@/lib/utils";
 import CustomModal from "@/components/ui/custom-modal";
+import { toast } from "sonner";
+import { deleteAvailabilitySlot } from "@/api/availability";
 
 // Function to format date
 const formatDate = (date: Date) => {
@@ -114,10 +116,16 @@ export default function EventStyled({
                 >
                         {/* Delete button - shown by default for non-minimized, or on hover for minimized */}
                         <Button
-                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
                                         e.stopPropagation();
-                                        handlers.handleDeleteEvent(event?.id);
-                                        onDelete?.(event?.id);
+                                        try {
+                                                await deleteAvailabilitySlot({ availability_slot_ids: event.availability_slot_ids })
+                                                handlers.handleDeleteEvent(event?.id);
+                                                onDelete?.(event?.id);
+                                        } catch (err) {
+                                                toast('delete failed')
+                                                console.log(err)
+                                        }
                                 }}
                                 variant="destructive"
                                 size="icon"

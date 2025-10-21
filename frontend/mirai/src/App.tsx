@@ -7,6 +7,7 @@ import Create from './pages/create';
 import NotFound from './pages/not-found';
 import ProtectedRoute from './components/protected-route';
 import Schedule from './pages/scheduler';
+import SidebarLayout from './components/admin-sidebar-layout';
 
 export default function App() {
 
@@ -20,15 +21,19 @@ export default function App() {
                                         <Booking />
                                 </ProtectedRoute>
                         } />
-                        <Route path="/dashboard" element={
-                                <Dashboard />
-                        } />
-                        <Route path="/create" element={
-                                <Create />
-                        } />
-                        <Route path="/scheduler" element={
-                                <Schedule />
-                        } />
+                        <Route element={
+                                <SidebarLayout />
+                        } >
+                                <Route path="/create" element={
+                                        <Create />
+                                } />
+                                <Route path="/scheduler" element={
+                                        <Schedule />
+                                } />
+                                <Route path="/dashboard" element={
+                                        <Dashboard />
+                                } />
+                        </Route>
                         <Route path="*" element={<NotFound />} />
                 </Routes>
         );

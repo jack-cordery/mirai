@@ -31,15 +31,6 @@ function employeesToOptions(employees: Employee[]): Option[] {
 
 }
 
-// TODO: here i think i need to somehow store availability_slots in events 
-// so that i can use for editing and deleting events later 
-// looks like i will need to add a field to event and just store them 
-// when merging and then use that later
-//
-// function eventToPostAvailabilitySlot(event: Event): PostAvailabilitySlotRequest {
-//
-// }
-//
 
 export default function Scheduler() {
         const { dispatch, setEmployeeOptions, setTypeOptions } = useScheduler()

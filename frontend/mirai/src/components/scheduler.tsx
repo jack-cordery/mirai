@@ -50,7 +50,6 @@ export default function Scheduler() {
                                 const events = availabilitySlotsToEvents(availabilityData, UNIT)
                                 const typeOptions = bookingTypesToOptions(bookingTypeData)
                                 const employeeOptions = employeesToOptions(employeeData)
-                                console.log(events)
                                 dispatch({ type: "SET_EVENTS", payload: events })
                                 setTypeOptions(typeOptions)
                                 setEmployeeOptions(employeeOptions)

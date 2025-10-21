@@ -179,7 +179,6 @@ export function EditEventModal({
         const { handlers, typeOptions, employeeOptions } = useScheduler();
 
         const typedData = data as { default: Event };
-        console.log(`typed data is ${JSON.stringify(typedData)}`)
 
         const {
                 register,

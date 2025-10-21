@@ -144,7 +144,9 @@ export default function SelectDate({
                                                                 )}
                                                         >
                                                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                                                {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                                                                {endDate instanceof Date && !isNaN(endDate.getTime())
+                                                                        ? format(endDate, "PPP")
+                                                                        : <span>Pick a date</span>}
                                                         </Button>
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-auto p-0" align="start">

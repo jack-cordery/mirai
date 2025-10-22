@@ -30,7 +30,9 @@ import {
         SidebarMenu,
         SidebarMenuButton,
         SidebarMenuItem,
+        useSidebar,
 } from "@/components/ui/sidebar"
+import { useLocation } from "react-router-dom"
 
 const data = {
         user: {
@@ -60,6 +62,15 @@ const data = {
 }
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+        const { setPage } = useSidebar();
+        const location = useLocation();
+        React.useEffect(() => {
+                const pageTitle = location.pathname;
+                console.log(pageTitle);
+                setPage(pageTitle);
+        })
+
+
         return (
                 <Sidebar collapsible="offcanvas" {...props}>
                         <SidebarHeader>

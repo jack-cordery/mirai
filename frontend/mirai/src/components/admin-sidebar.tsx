@@ -34,10 +34,7 @@ import {
         useSidebar,
 } from "@/components/ui/sidebar"
 import { useLocation } from "react-router-dom"
-<<<<<<< HEAD
 import { useAuth } from "@/contexts/auth-context"
-=======
->>>>>>> d9178bc335699a9b52ede2c4877dc7d79994c71b
 
 const data = {
         user: {
@@ -72,7 +69,7 @@ const data = {
 }
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-        const { user } = useAuth();
+        const { user, title } = useAuth();
         const { setPage } = useSidebar();
         const location = useLocation();
         React.useEffect(() => {
@@ -100,7 +97,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                                                 >
                                                         <a href="/">
                                                                 <IconInnerShadowTop className="!size-5" />
-                                                                <span className="text-base font-semibold">Mirai</span>
+                                                                <span className="text-base font-semibold">{title}</span>
                                                         </a>
                                                 </SidebarMenuButton>
                                         </SidebarMenuItem>

@@ -218,7 +218,7 @@ export function EmployeeFormCard() {
         );
 }
 
-export default function CreationForm() {
+export default function SettingsForm() {
         return (
                 <div className="flex w-full max-w-sm flex-col gap-6">
                         <Tabs defaultValue="booking_type">

@@ -34,6 +34,7 @@ import {
         useSidebar,
 } from "@/components/ui/sidebar"
 import { useLocation } from "react-router-dom"
+import { useAuth } from "@/contexts/auth-context"
 
 const data = {
         user: {
@@ -68,13 +69,19 @@ const data = {
 }
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+        const { user } = useAuth();
         const { setPage } = useSidebar();
         const location = useLocation();
         React.useEffect(() => {
                 const pageTitle = location.pathname;
-                console.log(pageTitle);
                 setPage(pageTitle);
         })
+
+        const footerUser = {
+                name: (user?.name ?? "" + user?.surname ?? ""),
+                email: user?.email ?? "",
+                avatar: "some.jpg",
+        }
 
 
         return (
@@ -99,7 +106,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                                 <NavSecondary items={data.navSecondary} className="mt-auto" />
                         </SidebarContent>
                         <SidebarFooter>
-                                <NavUser user={data.user} />
+                                <NavUser user={footerUser} />
                         </SidebarFooter>
                 </Sidebar>
         )

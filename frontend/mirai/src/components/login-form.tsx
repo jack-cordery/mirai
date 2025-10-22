@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function LoginForm() {
-        const { setIsAuthenticated } = useAuth();
+        const { setIsAuthenticated, setUser } = useAuth();
         const [email, setEmail] = useState("");
         const navigate = useNavigate();
         const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -21,6 +21,7 @@ export default function LoginForm() {
                 try {
                         const res = await checkUser({ email })
                         setIsAuthenticated({ isAuthenticated: true });
+                        setUser(res);
                         navigate("/bookings");
                         console.log(res)
                 } catch (err) {

@@ -7,6 +7,7 @@ import {
         SidebarMenu,
         SidebarMenuButton,
         SidebarMenuItem,
+        useSidebar,
 } from "@/components/ui/sidebar"
 import { useNavigate } from "react-router-dom"
 
@@ -20,6 +21,7 @@ export function NavMain({
         }[]
 }) {
         const navigate = useNavigate();
+        const { page, setPage } = useSidebar();
 
         return (
                 <SidebarGroup>
@@ -28,8 +30,12 @@ export function NavMain({
                                         <SidebarMenuItem className="flex items-center gap-2">
                                                 <SidebarMenuButton
                                                         tooltip="Quick Create"
-                                                        className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-                                                        onClick={() => navigate("/create")}
+
+                                                        className={`${page == "/create" ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear" : ""}`}
+                                                        onClick={() => {
+                                                                navigate("/create");
+                                                        }
+                                                        }
                                                 >
                                                         <IconCirclePlusFilled />
                                                         <span>Quick Create</span>
@@ -39,8 +45,12 @@ export function NavMain({
                                 <SidebarMenu>
                                         {items.map((item) => (
                                                 <SidebarMenuItem key={item.title}>
-                                                        <SidebarMenuButton tooltip={item.title}
-                                                                onClick={() => navigate(item.url)}>
+                                                        <SidebarMenuButton
+                                                                className={`${page == item.url ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear" : ""}`}
+                                                                tooltip={item.title}
+                                                                onClick={() => {
+                                                                        navigate(item.url);
+                                                                }}>
                                                                 {item.icon && <item.icon />}
                                                                 <span>{item.title}</span>
                                                         </SidebarMenuButton>

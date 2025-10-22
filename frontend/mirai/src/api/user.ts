@@ -1,3 +1,5 @@
+import type { GetUserResponse } from "@/types/user";
+
 const apiUrl = import.meta.env.VITE_API_URL;
 
 export async function postUser(postRequest: {
@@ -18,7 +20,9 @@ export async function postUser(postRequest: {
 }
 
 // get user by email and return details
-export async function checkUser(postRequest: { email: string }) {
+export async function checkUser(postRequest: {
+  email: string;
+}): Promise<GetUserResponse> {
   const res = await fetch(`${apiUrl}/userByEmail?email=${postRequest.email}`);
 
   if (!res.ok) {

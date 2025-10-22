@@ -69,14 +69,21 @@ const data = {
 }
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+        const { user, title } = useAuth();
         const { setPage } = useSidebar();
-        const { title } = useAuth();
         const location = useLocation();
         React.useEffect(() => {
                 const pageTitle = location.pathname;
-                console.log(pageTitle);
                 setPage(pageTitle);
-        })
+        });
+
+
+        const footerUser = {
+                name: (user?.name ?? "" + user?.surname ?? ""),
+                email: user?.email ?? "",
+                avatar: "some.jpg",
+        }
+
 
 
         return (
@@ -101,8 +108,8 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                                 <NavSecondary items={data.navSecondary} className="mt-auto" />
                         </SidebarContent>
                         <SidebarFooter>
-                                <NavUser user={data.user} />
-                        </SidebarFooter>
-                </Sidebar>
+                                <NavUser user={footerUser} />
+                        </SidebarFooter >
+                </Sidebar >
         )
 }

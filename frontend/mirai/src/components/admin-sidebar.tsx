@@ -16,6 +16,7 @@ import {
         IconSettings,
         IconUsers,
         IconCalendarWeek,
+        IconCirclePlusFilled,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -41,6 +42,11 @@ const data = {
                 avatar: "/avatars/shadcn.jpg",
         },
         navMain: [
+                {
+                        title: "Quick Create",
+                        url: "/create",
+                        icon: IconCirclePlusFilled,
+                },
                 {
                         title: "Dashboard",
                         url: "/dashboard",

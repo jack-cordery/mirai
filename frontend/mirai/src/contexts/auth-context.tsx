@@ -4,14 +4,25 @@ import type { ReactNode } from 'react';
 
 export type Authenticated = { isAuthenticated: boolean };
 
-const AuthContext = createContext<{ isAuthenticated: Authenticated | null, setIsAuthenticated: (isAuthenticated: Authenticated) => void }>(
-        { isAuthenticated: null, setIsAuthenticated: () => { } });
+const AuthContext = createContext<{
+        isAuthenticated: Authenticated | null,
+        setIsAuthenticated: (isAuthenticated: Authenticated) => void,
+        title: string,
+        setTitle: (title: string) => void,
+}>(
+        {
+                isAuthenticated: null,
+                setIsAuthenticated: () => { },
+                title: "",
+                setTitle: () => { }
+        });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
         const [isAuthenticated, setIsAuthenticated] = useState<Authenticated | null>(null);
+        const [title, setTitle] = useState("Mirai.");
 
         return (
-                <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
+                <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, title, setTitle }}>
                         {children}
                 </AuthContext.Provider>
         )

@@ -8,6 +8,7 @@ import NotFound from './pages/not-found';
 import ProtectedRoute from './components/protected-route';
 import Schedule from './pages/scheduler';
 import SidebarLayout from './components/admin-sidebar-layout';
+import Settings from './pages/settings';
 
 export default function App() {
 
@@ -32,6 +33,9 @@ export default function App() {
                                 } />
                                 <Route path="/dashboard" element={
                                         <Dashboard />
+                                } />
+                                <Route path="/settings" element={
+                                        <Settings />
                                 } />
                         </Route>
                         <Route path="*" element={<NotFound />} />

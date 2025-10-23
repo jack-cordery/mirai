@@ -58,6 +58,13 @@ type AuthParams struct {
 	HParams         HashParams
 }
 
+type RegisterRequest struct {
+	Name     string `json:"name"`
+	Surname  string `json:"surname"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type RegisterResponse struct {
 	Message string `json:"message"`
 }
@@ -75,6 +82,7 @@ type LogoutResponse struct {
 
 type StatusResponse struct {
 	UserID int32       `json:"userID"`
+	Email  string      `json:"email"`
 	Perms  Permissions `json:"permissions"`
 }
 
@@ -116,7 +124,7 @@ func HandleLogout(w http.ResponseWriter, r *http.Request, ctx context.Context, q
 	return nil
 }
 
-func HandleRegister(w http.ResponseWriter, ctx context.Context, queries *db.Queries, creds Creds, a *AuthParams) error {
+func HandleRegister(w http.ResponseWriter, ctx context.Context, queries *db.Queries, creds RegisterRequest, a *AuthParams) error {
 	// TODO: Add validation step
 
 	// 1. Check DB to see they are new
@@ -132,6 +140,8 @@ func HandleRegister(w http.ResponseWriter, ctx context.Context, queries *db.Quer
 			return err
 		}
 		userId, err := queries.CreateUser(ctx, db.CreateUserParams{
+			Name:           creds.Name,
+			Surname:        creds.Surname,
 			Email:          creds.Email,
 			HashedPassword: hashedPassword,
 		})
@@ -288,6 +298,7 @@ func HandleSessionStatus(w http.ResponseWriter, r *http.Request, ctx context.Con
 
 	valid, err := VerifySession(ctx, queries, token)
 	if err != nil {
+		log.Printf("verifying session in HandleSessionStatus failed with %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return err
 	}
@@ -296,6 +307,7 @@ func HandleSessionStatus(w http.ResponseWriter, r *http.Request, ctx context.Con
 		w.WriteHeader(http.StatusUnauthorized)
 		err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
 		if err != nil {
+			log.Printf("writing json in HandleSessionStatus failed with %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return err
 		}
@@ -303,11 +315,19 @@ func HandleSessionStatus(w http.ResponseWriter, r *http.Request, ctx context.Con
 	} else {
 		session, err := queries.GetSessionByToken(ctx, token)
 		if err != nil {
+			log.Printf("getting session by token in HandleSessionStatus failed with %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return err
 		}
 		roles, err := queries.GetRolesForUser(ctx, session.UserID)
 		if err != nil {
+			log.Printf("getting roles for user in HandleSessionStatus failed with %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return err
+		}
+		user, err := queries.GetUserById(ctx, session.UserID)
+		if err != nil {
+			log.Printf("getting employee by id for user in HandleSessionStatus failed with %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return err
 		}
@@ -315,8 +335,10 @@ func HandleSessionStatus(w http.ResponseWriter, r *http.Request, ctx context.Con
 		w.WriteHeader(http.StatusOK)
 		err = json.NewEncoder(w).Encode(StatusResponse{
 			UserID: session.UserID,
+			Email:  user.Email,
 			Perms:  Permissions{Roles: roles}})
 		if err != nil {
+			log.Printf("writing Status Response in HandleSessionStatus failed with %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return err
 		}

@@ -2,7 +2,9 @@ package internal
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -68,6 +70,35 @@ func readyHandler(conn *pgxpool.Conn, ctx context.Context) http.HandlerFunc {
 }
 
 func SetupServer() {
+	randomHex := os.Getenv("RANDOM_HEX")
+	secretKey, err := hex.DecodeString(randomHex)
+	if secretKey == nil || err != nil || len(secretKey) == 0 {
+		log.Fatal(errors.New("valid secret key must be provided"))
+		return
+	}
+	p := HashParams{
+		Memory:      64 * 1024,
+		Iterations:  3,
+		Parallelism: 2,
+		SaltLength:  16,
+		KeyLength:   32,
+	}
+	c := CookieParams{
+		Name:     "miraiSessionToken",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+	a := &AuthParams{
+		SessionDuration: 1,
+		TokenLength:     64,
+		SecretKey:       secretKey,
+		RedirectPath:    "/home",
+		LoginPath:       "/login",
+		CParams:         c,
+		HParams:         p,
+	}
 	appUrl := os.Getenv("APP_URL")
 	ctx := context.Background()
 
@@ -100,6 +131,15 @@ func SetupServer() {
 	mux.HandleFunc("PUT /user/{user_id}", putUser(pool, ctx))
 	mux.HandleFunc("DELETE /user/{user_id}", deleteUser(pool, ctx))
 	mux.HandleFunc("GET /userByEmail", getUserByEmail(pool, ctx))
+
+	mux.HandleFunc("POST /auth/login", postLogin(pool, ctx, a))
+	mux.HandleFunc("POST /auth/logout", postLogout(pool, ctx, a))
+	mux.HandleFunc("POST /auth/register", postRegister(pool, ctx, a))
+	mux.HandleFunc("GET /auth/session/status", getSessionStatus(pool, ctx, a))
+	mux.HandleFunc("POST /auth/session/refresh", postSessionRefresh(pool, ctx, a))
+	// mux.HandleFunc("POST /auth/change-password", postChangePassword())
+	// mux.HandleFunc("POST /auth/reset-password", postResetPassword())
+	// mux.HandleFunc("POST /auth/forgot-password", postForgotPassword())
 
 	mux.HandleFunc("POST /employee", postEmployee(pool, ctx))
 	mux.HandleFunc("GET /employee/{employee_id}", getEmployee(pool, ctx))

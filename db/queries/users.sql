@@ -1,8 +1,8 @@
 -- name: CreateUser :one 
 INSERT INTO
-  users (name, surname, email)
+  users (name, surname, email, hashed_password)
 VALUES
-  ($1, $2, $3)
+  ($1, $2, $3, $4)
 RETURNING
   id;
 
@@ -13,6 +13,7 @@ SET
   name = $2,
   surname = $3,
   email = $4,
+  hashed_password = $5,
   created_at = DEFAULT,
   last_login = DEFAULT
 WHERE

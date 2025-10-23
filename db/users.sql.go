@@ -52,21 +52,27 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (i
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO
-  users (name, surname, email)
+  users (name, surname, email, hashed_password)
 VALUES
-  ($1, $2, $3)
+  ($1, $2, $3, $4)
 RETURNING
   id
 `
 
 type CreateUserParams struct {
-	Name    string `json:"name"`
-	Surname string `json:"surname"`
-	Email   string `json:"email"`
+	Name           string `json:"name"`
+	Surname        string `json:"surname"`
+	Email          string `json:"email"`
+	HashedPassword string `json:"hashed_password"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (int32, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Surname, arg.Email)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Name,
+		arg.Surname,
+		arg.Email,
+		arg.HashedPassword,
+	)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
@@ -335,6 +341,7 @@ SET
   name = $2,
   surname = $3,
   email = $4,
+  hashed_password = $5,
   created_at = DEFAULT,
   last_login = DEFAULT
 WHERE
@@ -344,10 +351,11 @@ RETURNING
 `
 
 type UpdateUserParams struct {
-	ID      int32  `json:"id"`
-	Name    string `json:"name"`
-	Surname string `json:"surname"`
-	Email   string `json:"email"`
+	ID             int32  `json:"id"`
+	Name           string `json:"name"`
+	Surname        string `json:"surname"`
+	Email          string `json:"email"`
+	HashedPassword string `json:"hashed_password"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (int32, error) {
@@ -356,6 +364,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (int32, 
 		arg.Name,
 		arg.Surname,
 		arg.Email,
+		arg.HashedPassword,
 	)
 	var id int32
 	err := row.Scan(&id)

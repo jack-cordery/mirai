@@ -15,9 +15,38 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(40) NOT NULL,
   surname VARCHAR(40) NOT NULL,
   email VARCHAR(255) NOT NULL,
+  hashed_password VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (name, surname, email)
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  session_token VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(50) NOT NULL UNIQUE,
+  description TEXT
+);
+
+INSERT INTO
+  roles (name, description)
+VALUES
+  ('ADMIN', 'Administrator with full access'),
+  ('USER', 'Regular user with limited access');
+
+CREATE TABLE IF NOT EXISTS user_roles (
+  user_id INT NOT NULL,
+  role_id INT NOT NULL,
+  PRIMARY KEY (user_id, role_id),
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS booking_types (

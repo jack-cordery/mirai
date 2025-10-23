@@ -152,28 +152,6 @@ func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) 
 	return id, err
 }
 
-const createUser = `-- name: CreateUser :one
-INSERT INTO
-  users (name, surname, email)
-VALUES
-  ($1, $2, $3)
-RETURNING
-  id
-`
-
-type CreateUserParams struct {
-	Name    string `json:"name"`
-	Surname string `json:"surname"`
-	Email   string `json:"email"`
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (int32, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Surname, arg.Email)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
-}
-
 const deleteAvailabilitySlot = `-- name: DeleteAvailabilitySlot :one
 DELETE FROM availability
 WHERE
@@ -243,20 +221,6 @@ RETURNING
 
 func (q *Queries) DeleteEmployee(ctx context.Context, id int32) (int32, error) {
 	row := q.db.QueryRow(ctx, deleteEmployee, id)
-	err := row.Scan(&id)
-	return id, err
-}
-
-const deleteUser = `-- name: DeleteUser :one
-DELETE FROM users
-WHERE
-  id = $1
-RETURNING
-  id
-`
-
-func (q *Queries) DeleteUser(ctx context.Context, id int32) (int32, error) {
-	row := q.db.QueryRow(ctx, deleteUser, id)
 	err := row.Scan(&id)
 	return id, err
 }
@@ -355,42 +319,6 @@ func (q *Queries) GetAllBookings(ctx context.Context) ([]Booking, error) {
 			&i.Notes,
 			&i.CreatedAt,
 			&i.LastEdited,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllEmployees = `-- name: GetAllEmployees :many
-SELECT
-  id, name, surname, email, title, description, created_at, last_login
-FROM
-  employees
-`
-
-func (q *Queries) GetAllEmployees(ctx context.Context) ([]Employee, error) {
-	rows, err := q.db.Query(ctx, getAllEmployees)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Employee
-	for rows.Next() {
-		var i Employee
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Surname,
-			&i.Email,
-			&i.Title,
-			&i.Description,
-			&i.CreatedAt,
-			&i.LastLogin,
 		); err != nil {
 			return nil, err
 		}
@@ -504,83 +432,6 @@ func (q *Queries) GetBookingTypeById(ctx context.Context, id int32) (BookingType
 		&i.Cost,
 		&i.CreatedAt,
 		&i.LastEdited,
-	)
-	return i, err
-}
-
-const getEmployeeById = `-- name: GetEmployeeById :one
-SELECT
-  id, name, surname, email, title, description, created_at, last_login
-FROM
-  employees
-WHERE
-  id = $1
-LIMIT
-  1
-`
-
-func (q *Queries) GetEmployeeById(ctx context.Context, id int32) (Employee, error) {
-	row := q.db.QueryRow(ctx, getEmployeeById, id)
-	var i Employee
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Surname,
-		&i.Email,
-		&i.Title,
-		&i.Description,
-		&i.CreatedAt,
-		&i.LastLogin,
-	)
-	return i, err
-}
-
-const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT
-  id, name, surname, email, created_at, last_login
-FROM
-  users
-WHERE
-  email = $1
-LIMIT
-  1
-`
-
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Surname,
-		&i.Email,
-		&i.CreatedAt,
-		&i.LastLogin,
-	)
-	return i, err
-}
-
-const getUserById = `-- name: GetUserById :one
-SELECT
-  id, name, surname, email, created_at, last_login
-FROM
-  users
-WHERE
-  id = $1
-LIMIT
-  1
-`
-
-func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
-	row := q.db.QueryRow(ctx, getUserById, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Surname,
-		&i.Email,
-		&i.CreatedAt,
-		&i.LastLogin,
 	)
 	return i, err
 }
@@ -755,40 +606,6 @@ func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) 
 		arg.Email,
 		arg.Title,
 		arg.Description,
-	)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
-}
-
-const updateUser = `-- name: UpdateUser :one
-UPDATE users
-SET
-  id = $1,
-  name = $2,
-  surname = $3,
-  email = $4,
-  created_at = DEFAULT,
-  last_login = DEFAULT
-WHERE
-  id = $1
-RETURNING
-  id
-`
-
-type UpdateUserParams struct {
-	ID      int32  `json:"id"`
-	Name    string `json:"name"`
-	Surname string `json:"surname"`
-	Email   string `json:"email"`
-}
-
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (int32, error) {
-	row := q.db.QueryRow(ctx, updateUser,
-		arg.ID,
-		arg.Name,
-		arg.Surname,
-		arg.Email,
 	)
 	var id int32
 	err := row.Scan(&id)

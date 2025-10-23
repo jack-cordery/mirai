@@ -29,42 +29,6 @@ GROUP BY
 LIMIT
   1;
 
--- name: GetEmployeeById :one
-SELECT
-  *
-FROM
-  employees
-WHERE
-  id = $1
-LIMIT
-  1;
-
--- name: GetAllEmployees :many
-SELECT
-  *
-FROM
-  employees;
-
--- name: GetUserById :one
-SELECT
-  *
-FROM
-  users
-WHERE
-  id = $1
-LIMIT
-  1;
-
--- name: GetUserByEmail :one
-SELECT
-  *
-FROM
-  users
-WHERE
-  email = $1
-LIMIT
-  1;
-
 -- name: GetAvailabilitySlotById :one
 SELECT
   *
@@ -185,35 +149,6 @@ RETURNING
 
 -- name: DeleteEmployee :one
 DELETE FROM employees
-WHERE
-  id = $1
-RETURNING
-  id;
-
--- name: CreateUser :one 
-INSERT INTO
-  users (name, surname, email)
-VALUES
-  ($1, $2, $3)
-RETURNING
-  id;
-
--- name: UpdateUser :one
-UPDATE users
-SET
-  id = $1,
-  name = $2,
-  surname = $3,
-  email = $4,
-  created_at = DEFAULT,
-  last_login = DEFAULT
-WHERE
-  id = $1
-RETURNING
-  id;
-
--- name: DeleteUser :one
-DELETE FROM users
 WHERE
   id = $1
 RETURNING

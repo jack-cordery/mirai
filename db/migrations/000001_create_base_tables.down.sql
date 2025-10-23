@@ -6,6 +6,12 @@ DROP TABLE IF EXISTS availability;
 
 DROP TABLE IF EXISTS booking_types;
 
+DROP TABLE IF EXISTS sessions;
+
+DROP TABLE IF EXISTS user_roles;
+
+DROP TABLE IF EXISTS roles;
+
 DROP TABLE IF EXISTS users;
 
 DROP TABLE IF EXISTS employees;

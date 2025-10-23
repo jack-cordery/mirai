@@ -54,11 +54,31 @@ type Employee struct {
 	LastLogin   pgtype.Timestamp `json:"last_login"`
 }
 
+type Role struct {
+	ID          int32       `json:"id"`
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+}
+
+type Session struct {
+	ID           int32            `json:"id"`
+	UserID       int32            `json:"user_id"`
+	SessionToken string           `json:"session_token"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	ExpiresAt    pgtype.Timestamp `json:"expires_at"`
+}
+
 type User struct {
-	ID        int32            `json:"id"`
-	Name      string           `json:"name"`
-	Surname   string           `json:"surname"`
-	Email     string           `json:"email"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	LastLogin pgtype.Timestamp `json:"last_login"`
+	ID             int32            `json:"id"`
+	Name           string           `json:"name"`
+	Surname        string           `json:"surname"`
+	Email          string           `json:"email"`
+	HashedPassword string           `json:"hashed_password"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	LastLogin      pgtype.Timestamp `json:"last_login"`
+}
+
+type UserRole struct {
+	UserID int32 `json:"user_id"`
+	RoleID int32 `json:"role_id"`
 }

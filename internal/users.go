@@ -373,3 +373,17 @@ func deleteUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	}
 
 }
+
+type AuthConfig struct {
+}
+
+// checkUser handles the /validate endpoint which checks the cookie on the request
+// which is a session token, and will return the user details in the body
+// TODO: create session token in login step
+func checkUser(pool *pgxpool.Pool, ctx context.Context, config AuthConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// this needs to look at the session token in the cookie and
+		// check again the db and then either return status unapproved
+		// or return ok with user details
+	}
+}

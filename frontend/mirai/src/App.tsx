@@ -9,16 +9,25 @@ import ProtectedRoute from './components/protected-route';
 import Schedule from './pages/scheduler';
 import SidebarLayout from './components/admin-sidebar-layout';
 import Settings from './pages/settings';
+import Unauthorized from './pages/unauthorized';
 
 export default function App() {
 
         return (
                 <Routes>
                         <Route path="/" element={<Home />} />
-                        <Route path="/register" element={<SignUp />} />
-                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={
+                                <ProtectedRoute allowedRole=''>
+                                        <SignUp />
+                                </ProtectedRoute>
+                        } />
+                        <Route path="/login" element={
+                                <ProtectedRoute allowedRole=''>
+                                        <Login />
+                                </ProtectedRoute>
+                        } />
                         <Route path="/bookings" element={
-                                <ProtectedRoute>
+                                <ProtectedRoute allowedRole='USER'>
                                         <Booking />
                                 </ProtectedRoute>
                         } />
@@ -26,26 +35,28 @@ export default function App() {
                                 <SidebarLayout />
                         } >
                                 <Route path="/create" element={
-                                        <ProtectedRoute>
+                                        <ProtectedRoute allowedRole='ADMIN'>
                                                 <Create />
                                         </ProtectedRoute>
                                 } />
                                 <Route path="/scheduler" element={
-                                        <ProtectedRoute>
+
+                                        <ProtectedRoute allowedRole='ADMIN'>
                                                 <Schedule />
                                         </ProtectedRoute>
                                 } />
                                 <Route path="/dashboard" element={
-                                        <ProtectedRoute>
+                                        <ProtectedRoute allowedRole='ADMIN'>
                                                 <Dashboard />
                                         </ProtectedRoute>
                                 } />
                                 <Route path="/settings" element={
-                                        <ProtectedRoute>
+                                        <ProtectedRoute allowedRole='ADMIN'>
                                                 <Settings />
                                         </ProtectedRoute>
                                 } />
                         </Route>
+                        <Route path="/unauthorized" element={<Unauthorized />} />
                         <Route path="*" element={<NotFound />} />
                 </Routes>
         );

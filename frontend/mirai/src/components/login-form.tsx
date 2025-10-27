@@ -10,23 +10,23 @@ import { useAuth } from "@/contexts/auth-context";
 import { checkUser } from "@/api/user";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginForm() {
-        const { setIsAuthenticated, setUser } = useAuth();
-        const [email, setEmail] = useState("");
+        const { login, isAuthenticated } = useAuth();
         const navigate = useNavigate();
+        if (isAuthenticated) {
+                navigate("/bookings")
+        }
+        const [email, setEmail] = useState("");
+        const [password, setPassword] = useState("");
+        const [show, setShow] = useState(false);
         const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 const toastDate = new Date;
                 e.preventDefault();
                 try {
-                        const res = await checkUser({ email })
-                        setIsAuthenticated({ isAuthenticated: true });
-                        setUser(res);
-                        navigate("/bookings");
-                        console.log(res)
+                        await login(email, password, "/bookings")
                 } catch (err) {
-                        setIsAuthenticated({ isAuthenticated: false });
-                        console.log("failed")
                         toast("Login failed, either try again or go to sign-up", {
                                 description: toastDate.toLocaleDateString(),
                                 action: {
@@ -34,7 +34,9 @@ export default function LoginForm() {
                                         onClick: () => navigate("/register"),
                                 },
                         })
+                        setPassword("");
                 }
+
         };
         return (
                 <div className="shadow-input my-auto mx-auto w-full max-w-md rounded-none bg-white border border-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
@@ -51,6 +53,27 @@ export default function LoginForm() {
                                 <LabelInputContainer className="mb-4">
                                         <Label htmlFor="email">Email Address</Label>
                                         <Input id="email" placeholder="something@email.com" value={email} type="email" onChange={(e) => setEmail(e.target.value)} />
+                                        <Label htmlFor="password">Password</Label>
+
+                                        <div className="relative">
+                                                <button
+                                                        type="button"
+                                                        tabIndex={-1}
+                                                        onClick={() => setShow(!show)}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                        aria-label={show ? "Hide password" : "Show password"}
+                                                >
+                                                        {show ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+
+                                                <Input
+                                                        id="confirmPassword"
+                                                        placeholder=""
+                                                        value={password}
+                                                        type={show ? "text" : "password"}
+                                                        onChange={(e) => setPassword(e.target.value)}
+                                                />
+                                        </div>
                                 </LabelInputContainer>
 
                                 <button
@@ -68,6 +91,7 @@ export default function LoginForm() {
 
 
                                 >
+
                                         Register &rarr;
                                         <BottomGradient />
                                 </button>

@@ -77,9 +77,10 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                 setPage(pageTitle);
         });
 
+        console.log(user)
 
         const footerUser = {
-                name: (user?.name ?? "" + user?.surname ?? ""),
+                name: "",
                 email: user?.email ?? "",
                 avatar: "some.jpg",
         }

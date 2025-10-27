@@ -26,16 +26,24 @@ export default function App() {
                                 <SidebarLayout />
                         } >
                                 <Route path="/create" element={
-                                        <Create />
+                                        <ProtectedRoute>
+                                                <Create />
+                                        </ProtectedRoute>
                                 } />
                                 <Route path="/scheduler" element={
-                                        <Schedule />
+                                        <ProtectedRoute>
+                                                <Schedule />
+                                        </ProtectedRoute>
                                 } />
                                 <Route path="/dashboard" element={
-                                        <Dashboard />
+                                        <ProtectedRoute>
+                                                <Dashboard />
+                                        </ProtectedRoute>
                                 } />
                                 <Route path="/settings" element={
-                                        <Settings />
+                                        <ProtectedRoute>
+                                                <Settings />
+                                        </ProtectedRoute>
                                 } />
                         </Route>
                         <Route path="*" element={<NotFound />} />

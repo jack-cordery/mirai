@@ -10,20 +10,54 @@ import { useAuth } from "@/contexts/auth-context";
 import { postUser } from "@/api/user";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
+
+function SuccessRegistration() {
+        const navigate = useNavigate();
+        return (
+                <div className="shadow-input my-auto mx-auto w-full max-w-md rounded-none bg-white border border-white p-4 md:rounded-2xl md:p-8 dark:bg-black text-center">
+                        <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                Registration Successful 🎉
+                        </h2>
+                        <p className="mt-2 text-neutral-700 dark:text-neutral-300">
+                                Your account has been created successfully.
+                        </p>
+
+                        <button
+                                className="mt-6 group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-green-600 to-emerald-700 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
+                                onClick={() => navigate("/login")}
+                        >
+                                Go to Login →
+                                <BottomGradient />
+                        </button>
+                </div>
+        )
+}
 
 export default function SignupForm() {
-        const { setIsAuthenticated } = useAuth();
+        const { isAuthenticated, register } = useAuth();
+        const navigate = useNavigate();
+        if (isAuthenticated) {
+                navigate("/booking")
+        }
         const [firstName, setFirstName] = useState("");
         const [surname, setSurname] = useState("");
         const [email, setEmail] = useState("");
-        const navigate = useNavigate();
+        const [password, setPassword] = useState("");
+        const [confirmPassword, setConfirmPassword] = useState("");
+        const [registrationSuccess, setRegistrationSuccess] = useState(false);
+        const [show, setShow] = useState(false);
+        const [showConfirm, setShowConfirm] = useState(false);
         const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 e.preventDefault();
                 const toastDate = new Date;
+                if (password != confirmPassword) {
+                        toast("passwords do not match, please ammend")
+                        return
+                }
                 try {
-                        await postUser({ name: firstName, surname, email })
-                        setIsAuthenticated({ isAuthenticated: true });
-                        navigate("/login");
+                        await register(firstName, surname, email, password)
+                        setRegistrationSuccess(true);
                 } catch (err) {
                         toast("Sign up failed, either try again or login if you already have an account", {
                                 description: toastDate.toLocaleDateString(),
@@ -34,6 +68,12 @@ export default function SignupForm() {
                         })
                 }
         };
+
+        if (registrationSuccess) {
+                return (
+                        <SuccessRegistration />
+                )
+        }
         return (
                 <div className="shadow-input my-auto mx-auto w-full max-w-md rounded-none bg-white border border-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
                         <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
@@ -57,6 +97,58 @@ export default function SignupForm() {
                                 <LabelInputContainer className="mb-4">
                                         <Label htmlFor="email">Email Address</Label>
                                         <Input id="email" placeholder="something@email.com" value={email} type="email" onChange={(e) => setEmail(e.target.value)} />
+                                </LabelInputContainer>
+                                <LabelInputContainer className="mb-4">
+                                        <Label htmlFor="password">Password</Label>
+
+                                        <div className="relative">
+                                                <button
+                                                        type="button"
+                                                        tabIndex={-1}
+                                                        onClick={() => setShow(!show)}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                        aria-label={show ? "Hide password" : "Show password"}
+                                                >
+                                                        {show ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+
+                                                <Input
+                                                        id="password"
+                                                        placeholder=""
+                                                        value={password}
+                                                        type={show ? "text" : "password"}
+                                                        onChange={(e) => setPassword(e.target.value)}
+                                                />
+                                        </div>
+
+                                </LabelInputContainer>
+                                <LabelInputContainer className="mb-4">
+                                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+
+                                        <div className="relative">
+                                                <button
+                                                        type="button"
+                                                        tabIndex={-1}
+                                                        onClick={() => setShowConfirm(!showConfirm)}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                        aria-label={showConfirm ? "Hide password" : "Show password"}
+                                                >
+                                                        {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+
+                                                <Input
+                                                        id="confirmPassword"
+                                                        placeholder=""
+                                                        value={confirmPassword}
+                                                        type={showConfirm ? "text" : "password"}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                />
+                                        </div>
+
+                                        {confirmPassword && confirmPassword !== password && (
+                                                <p className="text-sm text-red-500 mt-1">Passwords do not match</p>
+                                        )}
+
                                 </LabelInputContainer>
 
                                 <button

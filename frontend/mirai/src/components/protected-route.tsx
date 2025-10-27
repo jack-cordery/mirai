@@ -1,7 +1,14 @@
 import { useAuth } from "@/contexts/auth-context";
-import { Navigate } from "react-router-dom";
+import { useEffect } from "react";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-        const { isAuthenticated } = useAuth();
-        return isAuthenticated ? children : <Navigate to="/login" />
+        const { validate } = useAuth();
+        useEffect(() => {
+                const checkAuth = async () => {
+                        await validate("/login");
+                };
+                checkAuth();
+        }, [validate]);
+
+        return children
 }

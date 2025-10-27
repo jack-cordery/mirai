@@ -17,7 +17,7 @@ const AuthContext = createContext<{
         login: (email: string, password: string, redirect: string) => Promise<void>,
         register: (name: string, surname: string, email: string, password: string) => Promise<void>,
         logout: (redirect: string) => Promise<void>,
-        validate: (redirect: string) => Promise<void>,
+        validate: (allowedRole: ("ADMIN" | "USER"), redirect: string, redirectUnauth: string) => Promise<void>,
         title: string,
         setTitle: (title: string) => void,
 }>(
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 try {
                         const res: LoginResponse = await postLogin({ email, password });
                         setIsAuthenticated(true);
-                        setUser({ id: res.id, email: res.email, role: res.permissions });
+                        setUser({ id: res.id, email: res.email, role: res.permissions.role });
                         setLoading(false);
                         navigate(redirect);
                 } catch (err) {
@@ -76,12 +76,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
         }, []);
 
-        const validate = useCallback(async (redirect: string) => {
+        const validate = useCallback(async (allowedRole: ("ADMIN" | "USER"), redirect: string, redirectUnauth: string) => {
                 try {
                         const res: SessionStatusResponse = await getSessionStatus();
-                        setUser({ id: res.userID, email: res.email, role: res.permissions });
-                        setLoading(false);
-                        setIsAuthenticated(true);
+                        const roles = res?.permissions?.role ?? [];
+                        setUser({ id: res.userID, email: res.email, role: roles });
+                        console.log(`roles is ${JSON.stringify(roles)}`)
+                        console.log(`allowedRole is ${allowedRole}`)
+                        if (roles && roles.includes(allowedRole)) {
+                                setIsAuthenticated(true);
+                        } else {
+                                console.warn("User lacks required role:", allowedRole);
+                                navigate(redirectUnauth);
+                        }
                 } catch (err) {
                         console.log(err);
                         setLoading(false);

@@ -17,12 +17,12 @@ export default function App() {
                 <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/register" element={
-                                <ProtectedRoute allowedRole=''>
+                                <ProtectedRoute allowedRole='USER'>
                                         <SignUp />
                                 </ProtectedRoute>
                         } />
                         <Route path="/login" element={
-                                <ProtectedRoute allowedRole=''>
+                                <ProtectedRoute allowedRole='USER'>
                                         <Login />
                                 </ProtectedRoute>
                         } />

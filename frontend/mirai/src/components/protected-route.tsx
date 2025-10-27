@@ -1,18 +1,16 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 type ProtectedRouteProps = {
         children: React.ReactNode;
-        allowedRole: ("ADMIN" | "USER" | "");
+        allowedRole: ("ADMIN" | "USER");
 }
 
 export default function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
-        const { validate, user } = useAuth();
-        const navigate = useNavigate();
+        const { validate } = useAuth();
         useEffect(() => {
                 const checkAuth = async () => {
-                        await validate("/login");
+                        await validate(allowedRole, "/login", "/unauthorized");
                 };
                 checkAuth();
         }, [validate]);

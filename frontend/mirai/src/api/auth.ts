@@ -17,11 +17,15 @@ export async function postLogin(postRequest: {
   return res.json();
 }
 
+export type Permissions = {
+  role: ("USER" | "ADMIN")[];
+};
+
 export type LoginResponse = {
   message: string;
   email: string;
   id: number;
-  permissions: string[];
+  permissions: Permissions;
 };
 
 export async function postLogout() {
@@ -80,7 +84,7 @@ export async function getSessionStatus() {
 export type SessionStatusResponse = {
   userID: number;
   email: string;
-  permissions: string[];
+  permissions: Permissions;
 };
 
 export async function postSessionRefresh() {

@@ -5,8 +5,54 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type RoleRequestStatus string
+
+const (
+	RoleRequestStatusPENDING  RoleRequestStatus = "PENDING"
+	RoleRequestStatusAPPROVED RoleRequestStatus = "APPROVED"
+	RoleRequestStatusREJECTED RoleRequestStatus = "REJECTED"
+)
+
+func (e *RoleRequestStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RoleRequestStatus(s)
+	case string:
+		*e = RoleRequestStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RoleRequestStatus: %T", src)
+	}
+	return nil
+}
+
+type NullRoleRequestStatus struct {
+	RoleRequestStatus RoleRequestStatus `json:"role_request_status"`
+	Valid             bool              `json:"valid"` // Valid is true if RoleRequestStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRoleRequestStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.RoleRequestStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RoleRequestStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRoleRequestStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RoleRequestStatus), nil
+}
 
 type Availability struct {
 	ID         int32            `json:"id"`
@@ -58,6 +104,17 @@ type Role struct {
 	ID          int32       `json:"id"`
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
+}
+
+type RoleRequest struct {
+	ID              int32             `json:"id"`
+	UserID          int32             `json:"user_id"`
+	RequestedRoleID int32             `json:"requested_role_id"`
+	Status          RoleRequestStatus `json:"status"`
+	Comment         pgtype.Text       `json:"comment"`
+	ApprovedBy      pgtype.Int4       `json:"approved_by"`
+	CreatedAt       pgtype.Timestamp  `json:"created_at"`
+	ApprovedAt      pgtype.Timestamp  `json:"approved_at"`
 }
 
 type Session struct {

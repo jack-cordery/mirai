@@ -1,12 +1,12 @@
 import { Outlet } from "react-router-dom";
-import { AdminSidebar } from "./admin-sidebar";
 import { SidebarProvider, SidebarTrigger } from "./ui/sidebar";
+import { AppSidebar } from "./app-sidebar";
 
-export default function AdminSidebarLayout() {
+export default function AppSidebarLayout() {
         return (
                 <SidebarProvider>
                         <div className="flex w-full min-h-screen">
-                                <AdminSidebar />
+                                <AppSidebar />
 
                                 <main className="relative flex-1 h-screen overflow-hidden bg-background">
                                         <div className="absolute top-4 left-4 z-30">

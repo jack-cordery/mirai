@@ -7,9 +7,10 @@ import Create from './pages/create';
 import NotFound from './pages/not-found';
 import ProtectedRoute from './components/protected-route';
 import Schedule from './pages/scheduler';
-import SidebarLayout from './components/admin-sidebar-layout';
+import AdminSidebarLayout from './components/admin-sidebar-layout';
 import Settings from './pages/settings';
 import Unauthorized from './pages/unauthorized';
+import AppSidebarLayout from './components/app-sidebar-layout';
 
 export default function App() {
 
@@ -26,13 +27,17 @@ export default function App() {
                                         <Login />
                                 </ProtectedRoute>
                         } />
-                        <Route path="/bookings" element={
-                                <ProtectedRoute allowedRole='USER'>
-                                        <Booking />
-                                </ProtectedRoute>
-                        } />
                         <Route element={
-                                <SidebarLayout />
+                                <AppSidebarLayout />
+                        }>
+                                <Route path="/bookings" element={
+                                        <ProtectedRoute allowedRole='USER'>
+                                                <Booking />
+                                        </ProtectedRoute>
+                                } />
+                        </Route >
+                        <Route element={
+                                <AdminSidebarLayout />
                         } >
                                 <Route path="/create" element={
                                         <ProtectedRoute allowedRole='ADMIN'>

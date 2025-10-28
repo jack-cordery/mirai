@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS role_requests (
   approved_by INT REFERENCES users (id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   approved_at TIMESTAMP,
-  UNIQUE (user_id, requested_role_id)
+  UNIQUE (user_id, requested_role_id, status)
 );
 
 CREATE TABLE IF NOT EXISTS booking_types (

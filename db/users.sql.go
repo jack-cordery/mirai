@@ -28,6 +28,28 @@ func (q *Queries) AssignRoleToUser(ctx context.Context, arg AssignRoleToUserPara
 	return err
 }
 
+const createNewRoleRequest = `-- name: CreateNewRoleRequest :one
+INSERT INTO
+  role_requests (user_id, requested_role_id, comment)
+VALUES
+  ($1, $2, $3)
+RETURNING
+  id
+`
+
+type CreateNewRoleRequestParams struct {
+	UserID          int32       `json:"user_id"`
+	RequestedRoleID int32       `json:"requested_role_id"`
+	Comment         pgtype.Text `json:"comment"`
+}
+
+func (q *Queries) CreateNewRoleRequest(ctx context.Context, arg CreateNewRoleRequestParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createNewRoleRequest, arg.UserID, arg.RequestedRoleID, arg.Comment)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createSession = `-- name: CreateSession :one
 INSERT INTO
   sessions (user_id, session_token, expires_at)
@@ -161,6 +183,29 @@ func (q *Queries) GetAllEmployees(ctx context.Context) ([]Employee, error) {
 	return items, nil
 }
 
+const getAllRoleRequests = `-- name: GetAllRoleRequests :one
+SELECT
+  id, user_id, requested_role_id, status, comment, approved_by, created_at, approved_at
+FROM
+  role_requests
+`
+
+func (q *Queries) GetAllRoleRequests(ctx context.Context) (RoleRequest, error) {
+	row := q.db.QueryRow(ctx, getAllRoleRequests)
+	var i RoleRequest
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RequestedRoleID,
+		&i.Status,
+		&i.Comment,
+		&i.ApprovedBy,
+		&i.CreatedAt,
+		&i.ApprovedAt,
+	)
+	return i, err
+}
+
 const getEmployeeById = `-- name: GetEmployeeById :one
 SELECT
   id, name, surname, email, title, description, created_at, last_login
@@ -228,6 +273,66 @@ func (q *Queries) GetRoleByName(ctx context.Context, name string) (int32, error)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getRoleRequestByID = `-- name: GetRoleRequestByID :one
+SELECT
+  id, user_id, requested_role_id, status, comment, approved_by, created_at, approved_at
+FROM
+  role_requests
+WHERE
+  id = $1
+LIMIT
+  1
+`
+
+func (q *Queries) GetRoleRequestByID(ctx context.Context, id int32) (RoleRequest, error) {
+	row := q.db.QueryRow(ctx, getRoleRequestByID, id)
+	var i RoleRequest
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RequestedRoleID,
+		&i.Status,
+		&i.Comment,
+		&i.ApprovedBy,
+		&i.CreatedAt,
+		&i.ApprovedAt,
+	)
+	return i, err
+}
+
+const getRoleRequestByUser = `-- name: GetRoleRequestByUser :one
+SELECT
+  id, user_id, requested_role_id, status, comment, approved_by, created_at, approved_at
+FROM
+  role_requests
+WHERE
+  user_id = $1
+  AND requested_role_id = $2
+LIMIT
+  1
+`
+
+type GetRoleRequestByUserParams struct {
+	UserID          int32 `json:"user_id"`
+	RequestedRoleID int32 `json:"requested_role_id"`
+}
+
+func (q *Queries) GetRoleRequestByUser(ctx context.Context, arg GetRoleRequestByUserParams) (RoleRequest, error) {
+	row := q.db.QueryRow(ctx, getRoleRequestByUser, arg.UserID, arg.RequestedRoleID)
+	var i RoleRequest
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RequestedRoleID,
+		&i.Status,
+		&i.Comment,
+		&i.ApprovedBy,
+		&i.CreatedAt,
+		&i.ApprovedAt,
+	)
+	return i, err
 }
 
 const getRolesForUser = `-- name: GetRolesForUser :many
@@ -332,6 +437,37 @@ func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
 		&i.LastLogin,
 	)
 	return i, err
+}
+
+const updateRoleRequest = `-- name: UpdateRoleRequest :one
+UPDATE role_requests
+SET
+  status = $2,
+  approved_at = $3,
+  comment = $4
+WHERE
+  id = $1
+RETURNING
+  id
+`
+
+type UpdateRoleRequestParams struct {
+	ID         int32             `json:"id"`
+	Status     RoleRequestStatus `json:"status"`
+	ApprovedAt pgtype.Timestamp  `json:"approved_at"`
+	Comment    pgtype.Text       `json:"comment"`
+}
+
+func (q *Queries) UpdateRoleRequest(ctx context.Context, arg UpdateRoleRequestParams) (int32, error) {
+	row := q.db.QueryRow(ctx, updateRoleRequest,
+		arg.ID,
+		arg.Status,
+		arg.ApprovedAt,
+		arg.Comment,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }
 
 const updateUser = `-- name: UpdateUser :one

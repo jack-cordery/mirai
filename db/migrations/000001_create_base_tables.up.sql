@@ -49,6 +49,20 @@ CREATE TABLE IF NOT EXISTS user_roles (
   FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
 );
 
+CREATE TYPE role_request_status AS ENUM('PENDING', 'APPROVED', 'REJECTED');
+
+CREATE TABLE IF NOT EXISTS role_requests (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  requested_role_id INT NOT NULL REFERENCES roles (id) ON DELETE CASCADE,
+  status role_request_status NOT NULL DEFAULT 'PENDING',
+  comment TEXT,
+  approved_by INT REFERENCES users (id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  approved_at TIMESTAMP,
+  UNIQUE (user_id, requested_role_id)
+);
+
 CREATE TABLE IF NOT EXISTS booking_types (
   id serial PRIMARY KEY,
   title VARCHAR(40) NOT NULL,

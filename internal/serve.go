@@ -104,6 +104,8 @@ func SetupServer() {
 
 	log.Printf("appURL for CORS is %s \n", appUrl)
 
+	log.Printf("inital admin email is %s \n", os.Getenv("INITIAL_ADMIN_EMAIL"))
+
 	pool, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Println(err)
@@ -137,6 +139,7 @@ func SetupServer() {
 	mux.HandleFunc("POST /auth/register", postRegister(pool, ctx, a))
 	mux.HandleFunc("GET /auth/session/status", getSessionStatus(pool, ctx, a))
 	mux.HandleFunc("POST /auth/session/refresh", postSessionRefresh(pool, ctx, a))
+	mux.HandleFunc("POST /auth/raise", postRaise(pool, ctx, a))
 	// mux.HandleFunc("POST /auth/change-password", postChangePassword())
 	// mux.HandleFunc("POST /auth/reset-password", postResetPassword())
 	// mux.HandleFunc("POST /auth/forgot-password", postForgotPassword())

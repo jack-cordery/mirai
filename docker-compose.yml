@@ -11,6 +11,7 @@ services:
         DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@psql:5432/${POSTGRES_DB}?sslmode=disable
         APP_URL: http://localhost:5173
         RANDOM_HEX: ${RANDOM_HEX}
+        INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL}
     depends_on:
       - migrate
     networks:

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -343,6 +344,85 @@ func HandleSessionStatus(w http.ResponseWriter, r *http.Request, ctx context.Con
 			return err
 		}
 		return nil
+	}
+}
+
+func HandleRaise(w http.ResponseWriter, r *http.Request, ctx context.Context, queries *db.Queries, a *AuthParams) error {
+	initialAdminEmail := os.Getenv("INITIAL_ADMIN_EMAIL")
+	token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
+	if err != nil {
+		log.Printf("The token provided failed: %v", token)
+		w.WriteHeader(http.StatusUnauthorized)
+		err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return err
+		}
+		return err
+	}
+
+	valid, err := VerifySession(ctx, queries, token)
+	if err != nil {
+		log.Printf("verifying session in HandleRaise failed with %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return err
+	}
+
+	if !valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+		if err != nil {
+			log.Printf("writing json in HandleRaise failed with %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return err
+		}
+		return nil
+	} else {
+		session, err := queries.GetSessionByToken(ctx, token)
+		if err != nil {
+			log.Printf("getting session by token in HandleRaise failed with %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return err
+		}
+
+		user, err := queries.GetUserById(ctx, session.UserID)
+		if err != nil {
+			log.Printf("getting employee by id for user in HandleSessionStatus failed with %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return err
+		}
+
+		role, err := queries.GetRoleByName(ctx, RoleAdmin)
+		if err != nil {
+			log.Printf("error getting role by name in HandleRaise with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		if user.Email == initialAdminEmail {
+			err := queries.AssignRoleToUser(ctx, db.AssignRoleToUserParams{
+				UserID: user.ID,
+				RoleID: role,
+			})
+			if err != nil {
+				log.Printf("error assigning role by name in HandleRaise with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return err
+			}
+			w.WriteHeader(http.StatusCreated)
+			return nil
+		} else {
+			_, err := queries.CreateNewRoleRequest(ctx, db.CreateNewRoleRequestParams{
+				UserID:          user.ID,
+				RequestedRoleID: role,
+			})
+			if err != nil {
+				log.Printf("error creating new role request in HandleRaise with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return err
+			}
+			w.WriteHeader(http.StatusAccepted)
+			return nil
+		}
 	}
 }
 

@@ -129,3 +129,49 @@ FROM
   roles
 WHERE
   name = $1;
+
+-- name: CreateNewRoleRequest :one
+INSERT INTO
+  role_requests (user_id, requested_role_id, comment)
+VALUES
+  ($1, $2, $3)
+RETURNING
+  id;
+
+-- name: UpdateRoleRequest :one
+UPDATE role_requests
+SET
+  status = $2,
+  approved_at = $3,
+  comment = $4
+WHERE
+  id = $1
+RETURNING
+  id;
+
+-- name: GetRoleRequestByID :one
+SELECT
+  *
+FROM
+  role_requests
+WHERE
+  id = $1
+LIMIT
+  1;
+
+-- name: GetRoleRequestByUser :one
+SELECT
+  *
+FROM
+  role_requests
+WHERE
+  user_id = $1
+  AND requested_role_id = $2
+LIMIT
+  1;
+
+-- name: GetAllRoleRequests :one
+SELECT
+  *
+FROM
+  role_requests;

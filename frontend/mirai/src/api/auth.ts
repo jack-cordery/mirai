@@ -99,3 +99,16 @@ export async function postSessionRefresh() {
   }
   return res.json();
 }
+
+export async function postRaise() {
+  const res = await fetch(`${apiUrl}/auth/raise`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Raise request failed with ${res.status}`);
+  }
+  return res.status;
+}

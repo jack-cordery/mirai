@@ -4,7 +4,9 @@ import { AppSidebar } from "./app-sidebar";
 
 export default function AppSidebarLayout() {
         return (
-                <SidebarProvider>
+                <SidebarProvider
+                        defaultOpen={false}
+                >
                         <div className="flex w-full min-h-screen">
                                 <AppSidebar />
 

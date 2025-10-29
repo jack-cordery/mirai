@@ -11,6 +11,7 @@ import AdminSidebarLayout from './components/admin-sidebar-layout';
 import Settings from './pages/settings';
 import Unauthorized from './pages/unauthorized';
 import AppSidebarLayout from './components/app-sidebar-layout';
+import AdminSettings from './pages/admin-settings';
 
 export default function App() {
 
@@ -35,6 +36,11 @@ export default function App() {
                                                 <Booking />
                                         </ProtectedRoute>
                                 } />
+                                <Route path="/settings" element={
+                                        <ProtectedRoute allowedRole='USER'>
+                                                <Settings />
+                                        </ProtectedRoute>
+                                } />
                         </Route >
                         <Route element={
                                 <AdminSidebarLayout />
@@ -55,9 +61,9 @@ export default function App() {
                                                 <Dashboard />
                                         </ProtectedRoute>
                                 } />
-                                <Route path="/settings" element={
+                                <Route path="/admin-settings" element={
                                         <ProtectedRoute allowedRole='ADMIN'>
-                                                <Settings />
+                                                <AdminSettings />
                                         </ProtectedRoute>
                                 } />
                         </Route>

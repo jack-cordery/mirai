@@ -19,7 +19,7 @@ import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
 
 
-export function SettingsFormCard() {
+export function AdminSettingsFormCard() {
         const { title, setTitle } = useAuth();
         const [formData, setFormData] = useState({
                 title: title,
@@ -45,11 +45,12 @@ export function SettingsFormCard() {
 
                                 <CardContent className="grid gap-6">
                                         <div className="grid gap-3">
-                                                <Label htmlFor="title">Change Password</Label>
-                                                <Button
-                                                >
-                                                        ChangePassword
-                                                </Button>
+                                                <Label htmlFor="title">Title</Label>
+                                                <Input
+                                                        id="title"
+                                                        value={formData.title}
+                                                        onChange={(e) => handleChange("title", e.target.value)}
+                                                />
                                         </div>
                                 </CardContent>
 
@@ -61,16 +62,16 @@ export function SettingsFormCard() {
         );
 }
 
-export default function SettingsForm() {
+export default function AdminSettingsForm() {
         return (
                 <div className="flex w-full max-w-sm flex-col gap-6">
                         <Tabs defaultValue="booking_type">
                                 <TabsList>
-                                        <TabsTrigger value="booking_type">Settings</TabsTrigger>
+                                        <TabsTrigger value="booking_type">Admin Settings</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="booking_type">
-                                        <SettingsFormCard
+                                        <AdminSettingsFormCard
                                         />
                                 </TabsContent>
 

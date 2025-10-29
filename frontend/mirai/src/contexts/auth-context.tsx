@@ -20,6 +20,8 @@ const AuthContext = createContext<{
         validate: (allowedRole: ("ADMIN" | "USER"), redirect: string, redirectUnauth: string) => Promise<void>,
         title: string,
         setTitle: (title: string) => void,
+        admin: boolean,
+        setAdmin: (b: boolean) => void,
 }>(
         {
                 user: null,
@@ -32,6 +34,8 @@ const AuthContext = createContext<{
                 validate: async () => { },
                 title: "",
                 setTitle: () => { },
+                admin: false,
+                setAdmin: () => { },
         });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -39,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const [isAuthenticated, setIsAuthenticated] = useState(false);
         const [user, setUser] = useState<User | null>(null);
         const [loading, setLoading] = useState(false);
+        const [admin, setAdmin] = useState(false);
         const navigate = useNavigate();
 
         const login = useCallback(async (email: string, password: string, redirect: string) => {
@@ -98,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
         return (
-                <AuthContext.Provider value={{ user, isAuthenticated, loading, setLoading, login, register, logout, validate, title, setTitle }}>
+                <AuthContext.Provider value={{ user, isAuthenticated, loading, setLoading, login, register, logout, validate, title, setTitle, admin, setAdmin }}>
                         {children}
                 </AuthContext.Provider>
         )

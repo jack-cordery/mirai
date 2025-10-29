@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { type Icon } from "@tabler/icons-react"
+import { IconLock, IconUser, type Icon } from "@tabler/icons-react"
 
 import {
         SidebarGroup,
@@ -11,6 +11,7 @@ import {
         SidebarMenuItem,
         useSidebar,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/contexts/auth-context"
 
 export function NavSecondary({
         items,
@@ -23,6 +24,8 @@ export function NavSecondary({
         }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
         const { page } = useSidebar();
+        const { admin } = useAuth();
+
         return (
                 <SidebarGroup {...props}>
                         <SidebarGroupContent>
@@ -40,6 +43,23 @@ export function NavSecondary({
                                                         </SidebarMenuButton>
                                                 </SidebarMenuItem>
                                         ))}
+                                        <SidebarMenuItem key="admin">
+                                                <SidebarMenuButton
+                                                        className=""
+                                                        asChild>
+                                                        {admin ?
+                                                                <a href="/bookings">
+                                                                        <IconUser />
+                                                                        <span>User</span>
+                                                                </a>
+                                                                :
+                                                                <a href="/create">
+                                                                        <IconLock />
+                                                                        <span>Admin</span>
+                                                                </a>
+                                                        }
+                                                </SidebarMenuButton>
+                                        </SidebarMenuItem>
                                 </SidebarMenu>
                         </SidebarGroupContent>
                 </SidebarGroup>

@@ -31,7 +31,7 @@ export default function App() {
                         <Route element={
                                 <AppSidebarLayout />
                         }>
-                                <Route path="/bookings" element={
+                                <Route path="/create-booking" element={
                                         <ProtectedRoute allowedRole='USER'>
                                                 <Booking />
                                         </ProtectedRoute>

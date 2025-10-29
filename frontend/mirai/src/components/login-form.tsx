@@ -7,7 +7,6 @@ import {
         IconBrandGoogle,
 } from "@tabler/icons-react";
 import { useAuth } from "@/contexts/auth-context";
-import { checkUser } from "@/api/user";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
@@ -16,7 +15,7 @@ export default function LoginForm() {
         const { login, isAuthenticated } = useAuth();
         const navigate = useNavigate();
         if (isAuthenticated) {
-                navigate("/bookings")
+                navigate("/create-booking")
         }
         const [email, setEmail] = useState("");
         const [password, setPassword] = useState("");

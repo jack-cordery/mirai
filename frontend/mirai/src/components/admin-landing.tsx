@@ -1,5 +1,4 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
 import { LayoutDashboard, CalendarPlus, Users } from "lucide-react"
 
@@ -9,7 +8,7 @@ export default function AdminLanding() {
         return (
                 <Card className="max-w-xl w-full text-center">
                         <CardHeader>
-                                <CardTitle className="text-2xl font-semibold">Admin Home🧭</CardTitle>
+                                <CardTitle className="text-2xl font-semibold">Admin Home 🧭</CardTitle>
                                 <CardDescription>Manage your team, schedule, and booking types from one place.</CardDescription>
                         </CardHeader>
 

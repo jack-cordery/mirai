@@ -47,12 +47,12 @@ export function NavSecondary({
                                                         className=""
                                                         asChild>
                                                         {admin ?
-                                                                <a href="/bookings">
+                                                                <a href="/user">
                                                                         <IconUser />
                                                                         <span>User</span>
                                                                 </a>
                                                                 :
-                                                                <a href="/create">
+                                                                <a href="/admin">
                                                                         <IconLock />
                                                                         <span>Admin</span>
                                                                 </a>

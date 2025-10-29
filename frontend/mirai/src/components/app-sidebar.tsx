@@ -4,6 +4,7 @@ import {
         IconInnerShadowTop,
         IconSettings,
         IconCirclePlusFilled,
+        IconHome,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -26,12 +27,17 @@ const data = {
         navMain: [
                 {
                         title: "Quick Create",
-                        url: "/create-booking",
+                        url: "/user/create-booking",
                         icon: IconCirclePlusFilled,
                 },
                 {
+                        title: "Home",
+                        url: "/user",
+                        icon: IconHome,
+                },
+                {
                         title: "Bookings",
-                        url: "/bookings",
+                        url: "/user/bookings",
                         icon: IconDashboard,
                 },
         ],

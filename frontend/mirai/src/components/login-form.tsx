@@ -15,7 +15,7 @@ export default function LoginForm() {
         const { login, isAuthenticated } = useAuth();
         const navigate = useNavigate();
         if (isAuthenticated) {
-                navigate("/create-booking")
+                navigate("/user")
         }
         const [email, setEmail] = useState("");
         const [password, setPassword] = useState("");

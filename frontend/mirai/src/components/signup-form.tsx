@@ -38,7 +38,7 @@ export default function SignupForm() {
         const { isAuthenticated, register } = useAuth();
         const navigate = useNavigate();
         if (isAuthenticated) {
-                navigate("/create-booking")
+                navigate("/user")
         }
         const [firstName, setFirstName] = useState("");
         const [surname, setSurname] = useState("");

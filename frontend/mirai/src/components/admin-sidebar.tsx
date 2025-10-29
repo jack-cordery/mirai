@@ -5,6 +5,7 @@ import {
         IconSettings,
         IconCalendarWeek,
         IconCirclePlusFilled,
+        IconHome,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -27,24 +28,29 @@ const data = {
         navMain: [
                 {
                         title: "Quick Create",
-                        url: "/create",
+                        url: "/admin/create",
                         icon: IconCirclePlusFilled,
                 },
                 {
+                        title: "Home",
+                        url: "/admin",
+                        icon: IconHome,
+                },
+                {
                         title: "Dashboard",
-                        url: "/dashboard",
+                        url: "/admin/dashboard",
                         icon: IconDashboard,
                 },
                 {
                         title: "Scheduler",
-                        url: "/scheduler",
+                        url: "/admin/scheduler",
                         icon: IconCalendarWeek,
                 },
         ],
         navSecondary: [
                 {
                         title: "Settings",
-                        url: "/settings",
+                        url: "/admin/settings",
                         icon: IconSettings,
                 },
         ],

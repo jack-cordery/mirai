@@ -13,6 +13,8 @@ import Unauthorized from './pages/unauthorized';
 import AppSidebarLayout from './components/app-sidebar-layout';
 import AdminSettings from './pages/admin-settings';
 import UserBookings from './pages/user-bookings';
+import AdminLandingPage from './pages/admin-landing';
+import UserLandingPage from './pages/user-landing';
 
 export default function App() {
 
@@ -29,45 +31,61 @@ export default function App() {
                                         <Login />
                                 </ProtectedRoute>
                         } />
-                        <Route element={
+                        <Route path="/user" element={
                                 <AppSidebarLayout />
                         }>
-                                <Route path="/create-booking" element={
+                                <Route
+                                        index
+                                        element={
+                                                <ProtectedRoute allowedRole='USER'>
+                                                        <UserLandingPage />
+                                                </ProtectedRoute>
+                                        }
+                                />
+                                <Route path="create-booking" element={
                                         <ProtectedRoute allowedRole='USER'>
                                                 <Booking />
                                         </ProtectedRoute>
                                 } />
-                                <Route path="/bookings" element={
+                                <Route path="bookings" element={
                                         <ProtectedRoute allowedRole='USER'>
                                                 <UserBookings />
                                         </ProtectedRoute>
                                 } />
-                                <Route path="/settings" element={
+                                <Route path="settings" element={
                                         <ProtectedRoute allowedRole='USER'>
                                                 <Settings />
                                         </ProtectedRoute>
                                 } />
                         </Route >
-                        <Route element={
+                        <Route path="/admin" element={
                                 <AdminSidebarLayout />
                         } >
-                                <Route path="/create" element={
+                                <Route
+                                        index
+                                        element={
+                                                <ProtectedRoute allowedRole="ADMIN">
+                                                        <AdminLandingPage />
+                                                </ProtectedRoute>
+                                        }
+                                />
+                                <Route path="create" element={
                                         <ProtectedRoute allowedRole='ADMIN'>
                                                 <Create />
                                         </ProtectedRoute>
                                 } />
-                                <Route path="/scheduler" element={
+                                <Route path="scheduler" element={
 
                                         <ProtectedRoute allowedRole='ADMIN'>
                                                 <Schedule />
                                         </ProtectedRoute>
                                 } />
-                                <Route path="/dashboard" element={
+                                <Route path="dashboard" element={
                                         <ProtectedRoute allowedRole='ADMIN'>
                                                 <Dashboard />
                                         </ProtectedRoute>
                                 } />
-                                <Route path="/admin-settings" element={
+                                <Route path="admin-settings" element={
                                         <ProtectedRoute allowedRole='ADMIN'>
                                                 <AdminSettings />
                                         </ProtectedRoute>

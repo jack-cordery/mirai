@@ -12,6 +12,7 @@ import Settings from './pages/settings';
 import Unauthorized from './pages/unauthorized';
 import AppSidebarLayout from './components/app-sidebar-layout';
 import AdminSettings from './pages/admin-settings';
+import UserBookings from './pages/user-bookings';
 
 export default function App() {
 
@@ -34,6 +35,11 @@ export default function App() {
                                 <Route path="/create-booking" element={
                                         <ProtectedRoute allowedRole='USER'>
                                                 <Booking />
+                                        </ProtectedRoute>
+                                } />
+                                <Route path="/bookings" element={
+                                        <ProtectedRoute allowedRole='USER'>
+                                                <UserBookings />
                                         </ProtectedRoute>
                                 } />
                                 <Route path="/settings" element={

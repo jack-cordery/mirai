@@ -9,31 +9,26 @@ export default function AdminLanding() {
         return (
                 <Card className="max-w-xl w-full text-center">
                         <CardHeader>
-                                <CardTitle className="text-2xl font-semibold">Admin Dashboard 🧭</CardTitle>
+                                <CardTitle className="text-2xl font-semibold">Admin Home🧭</CardTitle>
                                 <CardDescription>Manage your team, schedule, and booking types from one place.</CardDescription>
                         </CardHeader>
 
                         <CardContent className="grid gap-6 mt-4">
                                 <div className="grid grid-cols-3 gap-4">
-                                        <div className="flex flex-col items-center gap-2">
+                                        <button onClick={() => navigate("/admin/dashboard")} className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-muted cursor-pointer transition">
                                                 <LayoutDashboard className="h-6 w-6 text-muted-foreground" />
                                                 <p className="text-sm font-medium">Overview</p>
-                                        </div>
-                                        <div className="flex flex-col items-center gap-2">
+                                        </button>
+                                        <button onClick={() => navigate("/admin/scheduler")} className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-muted cursor-pointer transition">
                                                 <CalendarPlus className="h-6 w-6 text-muted-foreground" />
                                                 <p className="text-sm font-medium">Manage Schedule</p>
-                                        </div>
-                                        <div className="flex flex-col items-center gap-2">
+                                        </button>
+                                        <button onClick={() => navigate("/admin/create")} className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-muted cursor-pointer transition">
                                                 <Users className="h-6 w-6 text-muted-foreground" />
                                                 <p className="text-sm font-medium">Employees</p>
-                                        </div>
+                                        </button>
                                 </div>
                         </CardContent>
-
-                        <CardFooter className="flex justify-center gap-4">
-                                <Button onClick={() => navigate("/admin/dashboard")}>Go to Dashboard</Button>
-                                <Button variant="outline" onClick={() => navigate("/admin/create")}>Create Booking Type</Button>
-                        </CardFooter>
-                </Card>
+                </Card >
         );
 }

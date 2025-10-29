@@ -1,7 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { CalendarDays, Clock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { CalendarDays, Clock, CreditCard } from "lucide-react"
 
 export default function UserLanding() {
         const navigate = useNavigate()
@@ -14,26 +13,17 @@ export default function UserLanding() {
                         </CardHeader>
 
                         <CardContent className="grid gap-6 mt-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                        <div className="flex flex-col items-center gap-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                        <button onClick={() => navigate("/user/bookings")} className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-muted cursor-pointer transition">
                                                 <CalendarDays className="h-6 w-6 text-muted-foreground" />
-                                                <p className="text-sm font-medium">View Bookings</p>
-                                        </div>
-                                        <div className="flex flex-col items-center gap-2">
+                                                <p className="text-sm font-medium">View Booking History</p>
+                                        </button>
+                                        <button onClick={() => navigate("/user/create-booking")} className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-muted cursor-pointer transition">
                                                 <Clock className="h-6 w-6 text-muted-foreground" />
-                                                <p className="text-sm font-medium">Upcoming Sessions</p>
-                                        </div>
-                                        <div className="flex flex-col items-center gap-2">
-                                                <CreditCard className="h-6 w-6 text-muted-foreground" />
-                                                <p className="text-sm font-medium">Payment History</p>
-                                        </div>
+                                                <p className="text-sm font-medium">Make Booking</p>
+                                        </button>
                                 </div>
                         </CardContent>
-
-                        <CardFooter className="flex justify-center gap-4">
-                                <Button onClick={() => navigate("/user/bookings")}>My Bookings</Button>
-                                <Button variant="outline" onClick={() => navigate("/user/settings")}>Settings</Button>
-                        </CardFooter>
                 </Card>
         )
 }

@@ -9,6 +9,7 @@ import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type
 import { generateOptionsFromSlots, loadWorkingDayTimes } from "@/lib/utils"
 import { getAllBookingTypes } from "@/api/booking-type"
 import { getAllAvailability } from "@/api/availability"
+import { toast } from "sonner"
 
 export default function BookingCalendar() {
 
@@ -87,8 +88,7 @@ export default function BookingCalendar() {
                                 setBookingTypes(resBookingTypes)
                                 setAvailabilitySlots(resAvailabilitySlots)
                         } catch (err) {
-                                console.log(`error fetching data ${err}`)
-
+                                toast(`error fetching data ${err}`)
                         }
                 }
                 fetchData()

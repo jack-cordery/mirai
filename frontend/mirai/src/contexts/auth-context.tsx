@@ -54,7 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setLoading(false);
                         navigate(redirect);
                 } catch (err) {
-                        console.log(err)
                         throw new Error(`login failed with ${err}`)
                 }
 
@@ -64,7 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 try {
                         await postRegister({ name, surname, email, password });
                 } catch (err) {
-                        console.log(err)
                         throw new Error(`login failed with ${err}`)
                 }
 
@@ -77,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setIsAuthenticated(false);
                         navigate(redirect);
                 } catch (err) {
-                        console.log(err)
+                        throw new Error(`logout failed with ${err}`)
                 }
         }, []);
 
@@ -86,8 +84,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         const res: SessionStatusResponse = await getSessionStatus();
                         const roles = res?.permissions?.role ?? [];
                         setUser({ id: res.userID, email: res.email, role: roles });
-                        console.log(`roles is ${JSON.stringify(roles)}`)
-                        console.log(`allowedRole is ${allowedRole}`)
                         if (roles && roles.includes(allowedRole)) {
                                 setIsAuthenticated(true);
                         } else {
@@ -95,7 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 navigate(redirectUnauth);
                         }
                 } catch (err) {
-                        console.log(err);
                         setLoading(false);
                         navigate(redirect);
                 }

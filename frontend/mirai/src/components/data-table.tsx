@@ -172,12 +172,13 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof RequestDataSchema>> }) 
 
 async function handleApprove(
         requestID: number,
-        setData: React.Dispatch<React.SetStateAction<z.infer<typeof RequestDataSchema>[]>>
+        setData: React.Dispatch<React.SetStateAction<GetAllRequestsResponse[]>>
 ) {
         try {
-                await postApprove(requestID)
+                const new_row: GetAllRequestsResponse = await postApprove(requestID)
+
                 setData(prev => prev.map(row =>
-                        row.id === requestID ? { ...row, status: "APPROVED" } : row
+                        row.id === requestID ? { ...new_row } : row
                 ));
         } catch (err) {
                 toast("approval failed, please try again or refresh your page")
@@ -189,21 +190,21 @@ async function handleReject(
         setData: React.Dispatch<React.SetStateAction<z.infer<typeof RequestDataSchema>[]>>
 ) {
         try {
-                await postReject(requestID)
+                const new_row: GetAllRequestsResponse = await postReject(requestID)
+
                 setData(prev => prev.map(row =>
-                        row.id === requestID ? { ...row, status: "REJECT" } : row
+                        row.id === requestID ? { ...new_row } : row
                 ));
         } catch (err) {
-                toast("reject failed, please try again or refresh your page")
+                toast("rejection failed, please try again or refresh your page")
         }
-
 }
 
 export function DataTable() {
-        const [data, setData] = React.useState<z.infer<typeof RequestDataSchema>[]>([])
+        const [data, setData] = React.useState<GetAllRequestsResponse[]>([])
         const fetchData = async () => {
                 try {
-                        const res = await getAllRequests()
+                        const res: GetAllRequestsResponse[] = await getAllRequests()
                         setData(res)
                 } catch (err) {
                         toast("data fetch failed, please try again later")

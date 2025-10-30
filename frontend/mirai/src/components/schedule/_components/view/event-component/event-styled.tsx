@@ -124,7 +124,6 @@ export default function EventStyled({
                                                 onDelete?.(event?.id);
                                         } catch (err) {
                                                 toast('delete failed')
-                                                console.log(err)
                                         }
                                 }}
                                 variant="destructive"

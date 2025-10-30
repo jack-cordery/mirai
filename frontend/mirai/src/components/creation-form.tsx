@@ -38,7 +38,7 @@ export function BookingTypeFormCard() {
         const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 e.preventDefault();
                 try {
-                        const res = await postBookingType({
+                        await postBookingType({
                                 title: formData.title,
                                 description: formData.description,
                                 cost: formData.cost * 100,
@@ -51,10 +51,8 @@ export function BookingTypeFormCard() {
                                 cost: 0,
                                 fixed: false,
                         })
-                        console.log(res)
                 } catch (err) {
                         toast("creation failed")
-                        console.log(err)
                 }
         };
 
@@ -145,10 +143,8 @@ export function EmployeeFormCard() {
                                 title: "",
                                 description: "",
                         })
-                        console.log(res)
                 } catch (err) {
                         toast("creation failed")
-                        console.log(err)
                 }
         };
 

@@ -99,8 +99,6 @@ export function generateOptionsFromSlots(
     .map((s) => datetimeToTime(s.datetime))
     .filter((opt): opt is TimeOfDay => !!opt);
 
-  console.log(options);
-
   return options.filter((opt) => {
     if (opt.hour < start.hour || opt.hour > end.hour) return false;
     if (opt.hour === start.hour && opt.minute < start.minute) return false;

@@ -65,7 +65,6 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                 setPage(pageTitle);
         });
 
-        console.log(user)
 
         const footerUser = {
                 name: "",

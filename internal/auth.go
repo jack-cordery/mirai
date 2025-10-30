@@ -506,11 +506,6 @@ func HandleGetAllRequests(w http.ResponseWriter, r *http.Request, ctx context.Co
 
 func HandleRequestReview(w http.ResponseWriter, r *http.Request, ctx context.Context, queries *db.Queries, a *AuthParams, review db.RoleRequestStatus) error {
 
-	// path id is the id we want to approve and then
-	// also need to check that the user is admin
-	// it should justoken, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
-	// so i need the approver id and the request id and rthe change
-	// i also actually need to update the users role
 	id := r.PathValue("request_id")
 	if id == "" {
 		log.Printf("request_id is empty")

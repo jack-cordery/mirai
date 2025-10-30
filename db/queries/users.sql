@@ -182,6 +182,39 @@ SELECT
 FROM
   role_requests;
 
+-- name: GetRoleRequestsWithJoinByID :one
+SELECT
+  rr.id AS id,
+  rr.user_id AS requesting_user_id,
+  rr.requested_role_id AS requested_role_id,
+  rr.status AS status,
+  rr.comment AS comment,
+  rr.approved_by AS approving_user_id,
+  rr.created_at AS created_at,
+  rr.approved_at AS approved_at,
+  -- Requesting user info
+  ru.name AS requesting_user_name,
+  ru.surname AS requesting_user_surname,
+  ru.email AS requesting_user_email,
+  ru.created_at AS requesting_user_created_at,
+  ru.last_login AS requesting_user_last_login,
+  -- Requested role info
+  r.name AS requested_role_name,
+  r.description AS requested_role_description,
+  -- Approving user info
+  au.name AS approving_user_name,
+  au.surname AS approving_user_surname,
+  au.email AS approving_user_email,
+  au.created_at AS approving_user_created_at,
+  au.last_login AS approving_user_last_login
+FROM
+  role_requests rr
+  LEFT JOIN users ru ON rr.user_id = ru.id
+  LEFT JOIN roles r ON rr.requested_role_id = r.id
+  LEFT JOIN users au ON rr.approved_by = au.id
+WHERE
+  rr.id = $1;
+
 -- name: GetAllRoleRequestsWithJoin :many
 SELECT
   rr.id AS id,

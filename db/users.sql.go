@@ -444,6 +444,91 @@ func (q *Queries) GetRoleRequestByUser(ctx context.Context, arg GetRoleRequestBy
 	return i, err
 }
 
+const getRoleRequestsWithJoinByID = `-- name: GetRoleRequestsWithJoinByID :one
+SELECT
+  rr.id AS id,
+  rr.user_id AS requesting_user_id,
+  rr.requested_role_id AS requested_role_id,
+  rr.status AS status,
+  rr.comment AS comment,
+  rr.approved_by AS approving_user_id,
+  rr.created_at AS created_at,
+  rr.approved_at AS approved_at,
+  -- Requesting user info
+  ru.name AS requesting_user_name,
+  ru.surname AS requesting_user_surname,
+  ru.email AS requesting_user_email,
+  ru.created_at AS requesting_user_created_at,
+  ru.last_login AS requesting_user_last_login,
+  -- Requested role info
+  r.name AS requested_role_name,
+  r.description AS requested_role_description,
+  -- Approving user info
+  au.name AS approving_user_name,
+  au.surname AS approving_user_surname,
+  au.email AS approving_user_email,
+  au.created_at AS approving_user_created_at,
+  au.last_login AS approving_user_last_login
+FROM
+  role_requests rr
+  LEFT JOIN users ru ON rr.user_id = ru.id
+  LEFT JOIN roles r ON rr.requested_role_id = r.id
+  LEFT JOIN users au ON rr.approved_by = au.id
+WHERE
+  rr.id = $1
+`
+
+type GetRoleRequestsWithJoinByIDRow struct {
+	ID                       int32             `json:"id"`
+	RequestingUserID         int32             `json:"requesting_user_id"`
+	RequestedRoleID          int32             `json:"requested_role_id"`
+	Status                   RoleRequestStatus `json:"status"`
+	Comment                  pgtype.Text       `json:"comment"`
+	ApprovingUserID          pgtype.Int4       `json:"approving_user_id"`
+	CreatedAt                pgtype.Timestamp  `json:"created_at"`
+	ApprovedAt               pgtype.Timestamp  `json:"approved_at"`
+	RequestingUserName       pgtype.Text       `json:"requesting_user_name"`
+	RequestingUserSurname    pgtype.Text       `json:"requesting_user_surname"`
+	RequestingUserEmail      pgtype.Text       `json:"requesting_user_email"`
+	RequestingUserCreatedAt  pgtype.Timestamp  `json:"requesting_user_created_at"`
+	RequestingUserLastLogin  pgtype.Timestamp  `json:"requesting_user_last_login"`
+	RequestedRoleName        pgtype.Text       `json:"requested_role_name"`
+	RequestedRoleDescription pgtype.Text       `json:"requested_role_description"`
+	ApprovingUserName        pgtype.Text       `json:"approving_user_name"`
+	ApprovingUserSurname     pgtype.Text       `json:"approving_user_surname"`
+	ApprovingUserEmail       pgtype.Text       `json:"approving_user_email"`
+	ApprovingUserCreatedAt   pgtype.Timestamp  `json:"approving_user_created_at"`
+	ApprovingUserLastLogin   pgtype.Timestamp  `json:"approving_user_last_login"`
+}
+
+func (q *Queries) GetRoleRequestsWithJoinByID(ctx context.Context, id int32) (GetRoleRequestsWithJoinByIDRow, error) {
+	row := q.db.QueryRow(ctx, getRoleRequestsWithJoinByID, id)
+	var i GetRoleRequestsWithJoinByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.RequestingUserID,
+		&i.RequestedRoleID,
+		&i.Status,
+		&i.Comment,
+		&i.ApprovingUserID,
+		&i.CreatedAt,
+		&i.ApprovedAt,
+		&i.RequestingUserName,
+		&i.RequestingUserSurname,
+		&i.RequestingUserEmail,
+		&i.RequestingUserCreatedAt,
+		&i.RequestingUserLastLogin,
+		&i.RequestedRoleName,
+		&i.RequestedRoleDescription,
+		&i.ApprovingUserName,
+		&i.ApprovingUserSurname,
+		&i.ApprovingUserEmail,
+		&i.ApprovingUserCreatedAt,
+		&i.ApprovingUserLastLogin,
+	)
+	return i, err
+}
+
 const getRolesForUser = `-- name: GetRolesForUser :many
 SELECT
   r.name

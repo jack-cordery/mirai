@@ -183,27 +183,136 @@ func (q *Queries) GetAllEmployees(ctx context.Context) ([]Employee, error) {
 	return items, nil
 }
 
-const getAllRoleRequests = `-- name: GetAllRoleRequests :one
+const getAllRoleRequests = `-- name: GetAllRoleRequests :many
 SELECT
   id, user_id, requested_role_id, status, comment, approved_by, created_at, approved_at
 FROM
   role_requests
 `
 
-func (q *Queries) GetAllRoleRequests(ctx context.Context) (RoleRequest, error) {
-	row := q.db.QueryRow(ctx, getAllRoleRequests)
-	var i RoleRequest
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.RequestedRoleID,
-		&i.Status,
-		&i.Comment,
-		&i.ApprovedBy,
-		&i.CreatedAt,
-		&i.ApprovedAt,
-	)
-	return i, err
+func (q *Queries) GetAllRoleRequests(ctx context.Context) ([]RoleRequest, error) {
+	rows, err := q.db.Query(ctx, getAllRoleRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RoleRequest
+	for rows.Next() {
+		var i RoleRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.RequestedRoleID,
+			&i.Status,
+			&i.Comment,
+			&i.ApprovedBy,
+			&i.CreatedAt,
+			&i.ApprovedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllRoleRequestsWithJoin = `-- name: GetAllRoleRequestsWithJoin :many
+SELECT
+  rr.id AS id,
+  rr.user_id AS requesting_user_id,
+  rr.requested_role_id AS requested_role_id,
+  rr.status AS status,
+  rr.comment AS comment,
+  rr.approved_by AS approving_user_id,
+  rr.created_at AS created_at,
+  rr.approved_at AS approved_at,
+  -- Requesting user info
+  ru.name AS requesting_user_name,
+  ru.surname AS requesting_user_surname,
+  ru.email AS requesting_user_email,
+  ru.created_at AS requesting_user_created_at,
+  ru.last_login AS requesting_user_last_login,
+  -- Requested role info
+  r.name AS requested_role_name,
+  r.description AS requested_role_description,
+  -- Approving user info
+  au.name AS approving_user_name,
+  au.surname AS approving_user_surname,
+  au.email AS approving_user_email,
+  au.created_at AS approving_user_created_at,
+  au.last_login AS approving_user_last_login
+FROM
+  role_requests rr
+  LEFT JOIN users ru ON rr.user_id = ru.id
+  LEFT JOIN roles r ON rr.requested_role_id = r.id
+  LEFT JOIN users au ON rr.approved_by = au.id
+`
+
+type GetAllRoleRequestsWithJoinRow struct {
+	ID                       int32             `json:"id"`
+	RequestingUserID         int32             `json:"requesting_user_id"`
+	RequestedRoleID          int32             `json:"requested_role_id"`
+	Status                   RoleRequestStatus `json:"status"`
+	Comment                  pgtype.Text       `json:"comment"`
+	ApprovingUserID          pgtype.Int4       `json:"approving_user_id"`
+	CreatedAt                pgtype.Timestamp  `json:"created_at"`
+	ApprovedAt               pgtype.Timestamp  `json:"approved_at"`
+	RequestingUserName       pgtype.Text       `json:"requesting_user_name"`
+	RequestingUserSurname    pgtype.Text       `json:"requesting_user_surname"`
+	RequestingUserEmail      pgtype.Text       `json:"requesting_user_email"`
+	RequestingUserCreatedAt  pgtype.Timestamp  `json:"requesting_user_created_at"`
+	RequestingUserLastLogin  pgtype.Timestamp  `json:"requesting_user_last_login"`
+	RequestedRoleName        pgtype.Text       `json:"requested_role_name"`
+	RequestedRoleDescription pgtype.Text       `json:"requested_role_description"`
+	ApprovingUserName        pgtype.Text       `json:"approving_user_name"`
+	ApprovingUserSurname     pgtype.Text       `json:"approving_user_surname"`
+	ApprovingUserEmail       pgtype.Text       `json:"approving_user_email"`
+	ApprovingUserCreatedAt   pgtype.Timestamp  `json:"approving_user_created_at"`
+	ApprovingUserLastLogin   pgtype.Timestamp  `json:"approving_user_last_login"`
+}
+
+func (q *Queries) GetAllRoleRequestsWithJoin(ctx context.Context) ([]GetAllRoleRequestsWithJoinRow, error) {
+	rows, err := q.db.Query(ctx, getAllRoleRequestsWithJoin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllRoleRequestsWithJoinRow
+	for rows.Next() {
+		var i GetAllRoleRequestsWithJoinRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.RequestingUserID,
+			&i.RequestedRoleID,
+			&i.Status,
+			&i.Comment,
+			&i.ApprovingUserID,
+			&i.CreatedAt,
+			&i.ApprovedAt,
+			&i.RequestingUserName,
+			&i.RequestingUserSurname,
+			&i.RequestingUserEmail,
+			&i.RequestingUserCreatedAt,
+			&i.RequestingUserLastLogin,
+			&i.RequestedRoleName,
+			&i.RequestedRoleDescription,
+			&i.ApprovingUserName,
+			&i.ApprovingUserSurname,
+			&i.ApprovingUserEmail,
+			&i.ApprovingUserCreatedAt,
+			&i.ApprovingUserLastLogin,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getEmployeeById = `-- name: GetEmployeeById :one
@@ -435,6 +544,57 @@ func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
 		&i.HashedPassword,
 		&i.CreatedAt,
 		&i.LastLogin,
+	)
+	return i, err
+}
+
+const removeRoleToUser = `-- name: RemoveRoleToUser :exec
+DELETE FROM user_roles
+WHERE
+  user_id = $1
+  AND role_id = $2
+`
+
+type RemoveRoleToUserParams struct {
+	UserID int32 `json:"user_id"`
+	RoleID int32 `json:"role_id"`
+}
+
+func (q *Queries) RemoveRoleToUser(ctx context.Context, arg RemoveRoleToUserParams) error {
+	_, err := q.db.Exec(ctx, removeRoleToUser, arg.UserID, arg.RoleID)
+	return err
+}
+
+const reviewRequest = `-- name: ReviewRequest :one
+UPDATE role_requests
+SET
+  status = $2,
+  approved_by = $3,
+  approved_at = CURRENT_TIMESTAMP
+WHERE
+  id = $1
+RETURNING
+  id, user_id, requested_role_id, status, comment, approved_by, created_at, approved_at
+`
+
+type ReviewRequestParams struct {
+	ID         int32             `json:"id"`
+	Status     RoleRequestStatus `json:"status"`
+	ApprovedBy pgtype.Int4       `json:"approved_by"`
+}
+
+func (q *Queries) ReviewRequest(ctx context.Context, arg ReviewRequestParams) (RoleRequest, error) {
+	row := q.db.QueryRow(ctx, reviewRequest, arg.ID, arg.Status, arg.ApprovedBy)
+	var i RoleRequest
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RequestedRoleID,
+		&i.Status,
+		&i.Comment,
+		&i.ApprovedBy,
+		&i.CreatedAt,
+		&i.ApprovedAt,
 	)
 	return i, err
 }

@@ -140,6 +140,10 @@ func SetupServer() {
 	mux.HandleFunc("GET /auth/session/status", getSessionStatus(pool, ctx, a))
 	mux.HandleFunc("POST /auth/session/refresh", postSessionRefresh(pool, ctx, a))
 	mux.HandleFunc("POST /auth/raise", postRaise(pool, ctx, a))
+	mux.HandleFunc("GET /auth/requests", getAllRequests(pool, ctx, a))
+	mux.HandleFunc("POST /auth/request/approve/{request_id}", postApproveRequest(pool, ctx, a))
+	mux.HandleFunc("POST /auth/request/reject/{request_id}", postRejectRequest(pool, ctx, a))
+
 	// mux.HandleFunc("POST /auth/change-password", postChangePassword())
 	// mux.HandleFunc("POST /auth/reset-password", postResetPassword())
 	// mux.HandleFunc("POST /auth/forgot-password", postForgotPassword())

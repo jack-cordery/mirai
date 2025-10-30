@@ -343,9 +343,6 @@ export function DataTable() {
                                                         }
                                                 }
                                                 }>❌ Reject</DropdownMenuItem>
-                                                <DropdownMenuItem>Comment</DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
                                         </DropdownMenuContent>
                                 </DropdownMenu>
                         ),

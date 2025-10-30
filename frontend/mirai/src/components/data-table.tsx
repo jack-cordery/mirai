@@ -296,7 +296,7 @@ export function DataTable() {
                 },
                 {
                         accessorKey: "approved_at",
-                        header: "Approved At",
+                        header: "Reviewed At",
                         cell: ({ row }) => {
                                 if (!row.original.approved_at) {
                                         return <p> - </p>
@@ -306,7 +306,7 @@ export function DataTable() {
                 },
                 {
                         accessorKey: "approving_user_email",
-                        header: "Approved By",
+                        header: "Reviewed By",
                         cell: ({ row }) => {
                                 if (!row.original.approved_at) {
                                         return <p> - </p>

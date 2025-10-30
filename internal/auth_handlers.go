@@ -115,3 +115,46 @@ func postRaise(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.Hand
 		_ = HandleRaise(w, r, ctx, queries, a)
 	}
 }
+
+func getAllRequests(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		conn, err := pool.Acquire(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Release()
+
+		queries := db.New(conn)
+		_ = HandleGetAllRequests(w, r, ctx, queries, a)
+	}
+}
+
+func postApproveRequest(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		conn, err := pool.Acquire(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Release()
+
+		queries := db.New(conn)
+		_ = HandleRequestReview(w, r, ctx, queries, a, db.RoleRequestStatusAPPROVED)
+
+	}
+}
+
+func postRejectRequest(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		conn, err := pool.Acquire(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Release()
+
+		queries := db.New(conn)
+		_ = HandleRequestReview(w, r, ctx, queries, a, db.RoleRequestStatusREJECTED)
+	}
+}

@@ -11,6 +11,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -423,6 +425,210 @@ func HandleRaise(w http.ResponseWriter, r *http.Request, ctx context.Context, qu
 			w.WriteHeader(http.StatusAccepted)
 			return nil
 		}
+	}
+}
+
+func HandleGetAllRequests(w http.ResponseWriter, r *http.Request, ctx context.Context, queries *db.Queries, a *AuthParams) error {
+	token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
+	if err != nil {
+		log.Printf("The token provided failed: %v", token)
+		w.WriteHeader(http.StatusUnauthorized)
+		err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+		if err != nil {
+			log.Printf("encoding response in HandleGetAllRequests failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		return err
+	}
+
+	valid, err := VerifySession(ctx, queries, token)
+	if err != nil {
+		log.Printf("verifying session in HandleGetAllRequests failed with %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	if !valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+		if err != nil {
+			log.Printf("writing json in HandleGetAllRequests failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		return nil
+	} else {
+		session, err := queries.GetSessionByToken(ctx, token)
+		if err != nil {
+			log.Printf("getting session by token in HandleRaise failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		user, err := queries.GetUserById(ctx, session.UserID)
+		if err != nil {
+			log.Printf("getting user by id for user in HandleGetAllRequests failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		userRoles, err := queries.GetRolesForUser(ctx, user.ID)
+		if err != nil {
+			log.Printf("getting user roles by id for user in HandleGetAllRequests failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		isAdmin := slices.Contains(userRoles, RoleAdmin)
+
+		if !isAdmin {
+			log.Printf("user %d has requests HandleGetAllRequests and doesnt have permission to", user.ID)
+			w.WriteHeader(http.StatusUnauthorized)
+			return errors.New("unauthorised request")
+		}
+
+		data, err := queries.GetAllRoleRequestsWithJoin(ctx)
+		if err != nil {
+			log.Printf("getting all role requests with join in HandleGetAllRequests failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		err = json.NewEncoder(w).Encode(data)
+		if err != nil {
+			log.Printf("encoding all role requests with join in HandleGetAllRequests failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		return nil
+	}
+}
+
+func HandleRequestReview(w http.ResponseWriter, r *http.Request, ctx context.Context, queries *db.Queries, a *AuthParams, review db.RoleRequestStatus) error {
+
+	id := r.PathValue("request_id")
+	if id == "" {
+		log.Printf("request_id is empty")
+		w.WriteHeader(http.StatusBadRequest)
+		return errors.New("request_id is empty")
+	}
+	request_id, err := strconv.ParseInt(id, 10, 32)
+	if err != nil {
+		log.Printf("request_id is not an integer")
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
+	if err != nil {
+		log.Printf("The token provided failed: %v", token)
+		w.WriteHeader(http.StatusUnauthorized)
+		err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+		if err != nil {
+			log.Printf("encoding response in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		return err
+	}
+
+	valid, err := VerifySession(ctx, queries, token)
+	if err != nil {
+		log.Printf("verifying session in HandleRequestReview failed with %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	if !valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+		if err != nil {
+			log.Printf("writing json in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		return nil
+	} else {
+		session, err := queries.GetSessionByToken(ctx, token)
+		if err != nil {
+			log.Printf("getting session by token in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		approver, err := queries.GetUserById(ctx, session.UserID)
+		if err != nil {
+			log.Printf("getting user by id for user in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		userRoles, err := queries.GetRolesForUser(ctx, approver.ID)
+		if err != nil {
+			log.Printf("getting user roles by id for user in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		isAdmin := slices.Contains(userRoles, RoleAdmin)
+
+		if !isAdmin {
+			log.Printf("user %d has requests HandleRequestReview and doesnt have permission to", approver.ID)
+			w.WriteHeader(http.StatusUnauthorized)
+			return errors.New("unauthorised request")
+		}
+
+		new_row, err := queries.ReviewRequest(ctx, db.ReviewRequestParams{
+			ID:     int32(request_id),
+			Status: review,
+			ApprovedBy: pgtype.Int4{
+				Int32: int32(approver.ID),
+				Valid: true,
+			},
+		})
+		if err != nil {
+			log.Printf("updating row for request in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		adminID, err := queries.GetRoleByName(ctx, RoleAdmin)
+		if err != nil {
+			log.Printf("getting adminId in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		if review == db.RoleRequestStatusAPPROVED {
+			err = queries.AssignRoleToUser(ctx, db.AssignRoleToUserParams{
+				UserID: new_row.UserID,
+				RoleID: adminID,
+			})
+			if err != nil {
+				log.Printf("error assigning role by name in HandleRequestReview with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return err
+			}
+		}
+		if review == db.RoleRequestStatusREJECTED {
+			err = queries.RemoveRoleToUser(ctx, db.RemoveRoleToUserParams{
+				UserID: new_row.UserID,
+				RoleID: adminID,
+			})
+			if err != nil {
+				log.Printf("error removing role by name in HandleRequestReview with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return err
+			}
+		}
+
+		err = json.NewEncoder(w).Encode(new_row)
+		if err != nil {
+			log.Printf("encoding new row in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		return nil
 	}
 }
 

@@ -283,13 +283,6 @@ export function DataTable() {
                         ),
                 },
                 {
-                        accessorKey: "comment",
-                        header: "Comment",
-                        cell: ({ row }) => {
-                                return <p> {row.original.comment} </p>
-                        },
-                },
-                {
                         accessorKey: "created_at",
                         header: "Created At",
                         cell: ({ row }) => {

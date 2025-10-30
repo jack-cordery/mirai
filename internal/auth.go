@@ -622,7 +622,15 @@ func HandleRequestReview(w http.ResponseWriter, r *http.Request, ctx context.Con
 			}
 		}
 
-		err = json.NewEncoder(w).Encode(new_row)
+		new_row_with_join, err := queries.GetRoleRequestsWithJoinByID(ctx, int32(request_id))
+		if err != nil {
+			log.Printf("getting new row with join in HandleRequestReview failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		err = json.NewEncoder(w).Encode(new_row_with_join)
+
 		if err != nil {
 			log.Printf("encoding new row in HandleRequestReview failed with %v", err)
 			w.WriteHeader(http.StatusInternalServerError)

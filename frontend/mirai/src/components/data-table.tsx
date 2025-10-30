@@ -176,7 +176,6 @@ async function handleApprove(
 ) {
         try {
                 const new_row: GetAllRequestsResponse = await postApprove(requestID)
-
                 setData(prev => prev.map(row =>
                         row.id === requestID ? { ...new_row } : row
                 ));
@@ -338,7 +337,6 @@ export function DataTable() {
                                                 <DropdownMenuItem onClick={async () => {
                                                         const prevStatus = row.original.status;
                                                         const success = await handleApprove(row.original.id, setData);
-                                                        handleApprove(row.original.id, setData);
                                                         if (prevStatus === "PENDING" && success) {
                                                                 setNumPending(numPending - 1);
                                                         }

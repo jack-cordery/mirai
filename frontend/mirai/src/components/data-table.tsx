@@ -180,14 +180,16 @@ async function handleApprove(
                 setData(prev => prev.map(row =>
                         row.id === requestID ? { ...new_row } : row
                 ));
+                return true
         } catch (err) {
                 toast("approval failed, please try again or refresh your page")
+                return false
         }
 
 }
 async function handleReject(
         requestID: number,
-        setData: React.Dispatch<React.SetStateAction<z.infer<typeof RequestDataSchema>[]>>
+        setData: React.Dispatch<React.SetStateAction<GetAllRequestsResponse[]>>
 ) {
         try {
                 const new_row: GetAllRequestsResponse = await postReject(requestID)
@@ -195,17 +197,21 @@ async function handleReject(
                 setData(prev => prev.map(row =>
                         row.id === requestID ? { ...new_row } : row
                 ));
+                return true
         } catch (err) {
                 toast("rejection failed, please try again or refresh your page")
+                return false
         }
 }
 
 export function DataTable() {
-        const [data, setData] = React.useState<GetAllRequestsResponse[]>([])
+        const [data, setData] = React.useState<GetAllRequestsResponse[]>([]);
+        const [numPending, setNumPending] = React.useState(0);
         const fetchData = async () => {
                 try {
                         const res: GetAllRequestsResponse[] = await getAllRequests()
                         setData(res)
+                        setNumPending(res.filter(r => r.status === "PENDING").length)
                 } catch (err) {
                         toast("data fetch failed, please try again later")
                 }
@@ -329,8 +335,23 @@ export function DataTable() {
                                                 </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-32">
-                                                <DropdownMenuItem onClick={() => handleApprove(row.original.id, setData)}>✅ Approve</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleReject(row.original.id, setData)}>❌ Reject</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={async () => {
+                                                        const prevStatus = row.original.status;
+                                                        const success = await handleApprove(row.original.id, setData);
+                                                        handleApprove(row.original.id, setData);
+                                                        if (prevStatus === "PENDING" && success) {
+                                                                setNumPending(numPending - 1);
+                                                        }
+                                                }
+                                                }>✅ Approve</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={async () => {
+                                                        const prevStatus = row.original.status;
+                                                        const success = await handleReject(row.original.id, setData);
+                                                        if (prevStatus === "PENDING" && success) {
+                                                                setNumPending(numPending - 1);
+                                                        }
+                                                }
+                                                }>❌ Reject</DropdownMenuItem>
                                                 <DropdownMenuItem>Comment</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
@@ -401,7 +422,10 @@ export function DataTable() {
                                         </SelectContent>
                                 </Select>
                                 <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-                                        <TabsTrigger value="outline">Outline</TabsTrigger>
+                                        <TabsTrigger value="outline">
+                                                Outline <Badge variant="secondary">{numPending}</Badge>
+
+                                        </TabsTrigger>
                                         <TabsTrigger value="past-performance">
                                                 Past Performance <Badge variant="secondary">3</Badge>
                                         </TabsTrigger>

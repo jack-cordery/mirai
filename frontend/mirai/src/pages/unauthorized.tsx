@@ -58,7 +58,7 @@ export default function Unauthorized() {
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-3">
-                                        <Button variant="ghost" onClick={() => navigate("/auth")}>
+                                        <Button variant="ghost" onClick={() => navigate("/admin")}>
                                                 → Proceed
                                         </Button>
                                 </div>

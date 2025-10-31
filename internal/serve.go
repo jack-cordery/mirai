@@ -124,7 +124,7 @@ func SetupServer() {
 	mux.HandleFunc("GET /livez", liveHandler)
 
 	mux.HandleFunc("POST /booking", postBooking(pool, ctx))
-	mux.HandleFunc("GET /booking/", getBooking(pool, ctx))
+	mux.HandleFunc("GET /booking", getBooking(pool, ctx))
 	mux.HandleFunc("GET /booking/{booking_id}", getBooking(pool, ctx))
 	mux.HandleFunc("PUT /booking/{booking_id}", putBooking(pool, ctx))
 	mux.HandleFunc("DELETE /booking/{booking_id}", deleteBooking(pool, ctx))

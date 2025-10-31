@@ -350,13 +350,13 @@ SELECT
   b.notes,
   b.created_at,
   b.last_edited,
-  MIN(a.datetime) AS start_time,
-  MAX(a.datetime) + (
+  MIN(a.datetime)::timestamp AS start_time,
+  (MAX(a.datetime) + (
     SELECT
       minutes
     FROM
       unit
-  ) * INTERVAL '1 minute' AS end_time
+  ) * INTERVAL '1 minute')::timestamp AS end_time
 FROM
   bookings b
   JOIN users u ON b.user_id = u.id
@@ -395,8 +395,8 @@ type GetAllBookingsWithJoinRow struct {
 	Notes         pgtype.Text      `json:"notes"`
 	CreatedAt     pgtype.Timestamp `json:"created_at"`
 	LastEdited    pgtype.Timestamp `json:"last_edited"`
-	StartTime     interface{}      `json:"start_time"`
-	EndTime       int32            `json:"end_time"`
+	StartTime     pgtype.Timestamp `json:"start_time"`
+	EndTime       pgtype.Timestamp `json:"end_time"`
 }
 
 func (q *Queries) GetAllBookingsWithJoin(ctx context.Context, dollar_1 int32) ([]GetAllBookingsWithJoinRow, error) {

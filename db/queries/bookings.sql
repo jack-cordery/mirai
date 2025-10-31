@@ -24,13 +24,15 @@ SELECT
   b.notes,
   b.created_at,
   b.last_edited,
-  MIN(a.datetime) AS start_time,
-  MAX(a.datetime) + (
-    SELECT
-      minutes
-    FROM
-      unit
-  ) * INTERVAL '1 minute' AS end_time
+  MIN(a.datetime)::timestamp AS start_time,
+  (
+    MAX(a.datetime) + (
+      SELECT
+        minutes
+      FROM
+        unit
+    ) * INTERVAL '1 minute'
+  )::timestamp AS end_time
 FROM
   bookings b
   JOIN users u ON b.user_id = u.id

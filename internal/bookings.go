@@ -71,6 +71,7 @@ type PutBookingRequest struct {
 	Paid   bool        `json:"bool"`
 	Slots  []int32     `json:"availability_slots"`
 }
+
 type PutBookingResponse struct {
 	BookingID int32 `json:"booking_id"`
 }
@@ -192,13 +193,6 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 func getBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookingId := r.PathValue("booking_id")
-		id, err := strconv.ParseInt(bookingId, 10, 32)
-		if err != nil {
-			log.Printf("error: %v converting booking id to int in getBooking: %s", err, bookingId)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
 		conn, err := pool.Acquire(ctx)
 		if err != nil {
 			log.Printf("error aquiring pool in getBooking: %v", err)
@@ -206,9 +200,37 @@ func getBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			return
 		}
 		defer conn.Release()
-
 		queries := db.New(conn)
 
+		if bookingId == "" {
+			// we just want to return all bookings
+			// TODO:
+			// - add filtering and pagination through query params
+			// - merge return types to be the same
+
+			bookings, err := queries.GetAllBookingsWithJoin(ctx, Unit)
+			if err != nil {
+				log.Printf("error querying GetAllBookingsWithJoin in getBooking: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			err = json.NewEncoder(w).Encode(bookings)
+			if err != nil {
+				log.Printf("error encoding json in all branch of getBooking: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+
+		}
+
+		id, err := strconv.ParseInt(bookingId, 10, 32)
+		if err != nil {
+			log.Printf("error: %v converting booking id to int in getBooking: %s", err, bookingId)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		booking, err := queries.GetBookingById(ctx, int32(id))
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			log.Printf("error querying bookings table in getBooking: %v", err)

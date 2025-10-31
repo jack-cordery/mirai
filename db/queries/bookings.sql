@@ -4,6 +4,58 @@ SELECT
 FROM
   bookings;
 
+-- name: GetAllBookingsWithJoin :many
+WITH
+  unit AS (
+    SELECT
+      $1::integer AS minutes
+  )
+SELECT
+  b.id,
+  b.user_id,
+  u.name AS user_name,
+  u.surname AS user_surname,
+  u.email AS user_email,
+  u.last_login AS user_last_login,
+  b.type_id,
+  bt.title AS type_title,
+  b.paid,
+  b.cost,
+  b.notes,
+  b.created_at,
+  b.last_edited,
+  MIN(a.datetime)::timestamp AS start_time,
+  (
+    MAX(a.datetime) + (
+      SELECT
+        minutes
+      FROM
+        unit
+    ) * INTERVAL '1 minute'
+  )::timestamp AS end_time
+FROM
+  bookings b
+  JOIN users u ON b.user_id = u.id
+  JOIN booking_types bt ON b.type_id = bt.id
+  LEFT JOIN booking_slots bs ON b.id = bs.booking_id
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+GROUP BY
+  b.id,
+  b.user_id,
+  u.name,
+  u.surname,
+  u.email,
+  u.last_login,
+  b.type_id,
+  bt.title,
+  b.paid,
+  b.cost,
+  b.notes,
+  b.created_at,
+  b.last_edited
+ORDER BY
+  b.created_at DESC;
+
 -- name: GetBookingById :one
 SELECT
   b.id,

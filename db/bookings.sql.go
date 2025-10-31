@@ -330,6 +330,111 @@ func (q *Queries) GetAllBookings(ctx context.Context) ([]Booking, error) {
 	return items, nil
 }
 
+const getAllBookingsWithJoin = `-- name: GetAllBookingsWithJoin :many
+WITH
+  unit AS (
+    SELECT
+      $1::integer AS minutes
+  )
+SELECT
+  b.id,
+  b.user_id,
+  u.name AS user_name,
+  u.surname AS user_surname,
+  u.email AS user_email,
+  u.last_login AS user_last_login,
+  b.type_id,
+  bt.title AS type_title,
+  b.paid,
+  b.cost,
+  b.notes,
+  b.created_at,
+  b.last_edited,
+  MIN(a.datetime)::timestamp AS start_time,
+  (MAX(a.datetime) + (
+    SELECT
+      minutes
+    FROM
+      unit
+  ) * INTERVAL '1 minute')::timestamp AS end_time
+FROM
+  bookings b
+  JOIN users u ON b.user_id = u.id
+  JOIN booking_types bt ON b.type_id = bt.id
+  LEFT JOIN booking_slots bs ON b.id = bs.booking_id
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+GROUP BY
+  b.id,
+  b.user_id,
+  u.name,
+  u.surname,
+  u.email,
+  u.last_login,
+  b.type_id,
+  bt.title,
+  b.paid,
+  b.cost,
+  b.notes,
+  b.created_at,
+  b.last_edited
+ORDER BY
+  b.created_at DESC
+`
+
+type GetAllBookingsWithJoinRow struct {
+	ID            int32            `json:"id"`
+	UserID        int32            `json:"user_id"`
+	UserName      string           `json:"user_name"`
+	UserSurname   string           `json:"user_surname"`
+	UserEmail     string           `json:"user_email"`
+	UserLastLogin pgtype.Timestamp `json:"user_last_login"`
+	TypeID        int32            `json:"type_id"`
+	TypeTitle     string           `json:"type_title"`
+	Paid          bool             `json:"paid"`
+	Cost          int32            `json:"cost"`
+	Notes         pgtype.Text      `json:"notes"`
+	CreatedAt     pgtype.Timestamp `json:"created_at"`
+	LastEdited    pgtype.Timestamp `json:"last_edited"`
+	StartTime     pgtype.Timestamp `json:"start_time"`
+	EndTime       pgtype.Timestamp `json:"end_time"`
+}
+
+func (q *Queries) GetAllBookingsWithJoin(ctx context.Context, dollar_1 int32) ([]GetAllBookingsWithJoinRow, error) {
+	rows, err := q.db.Query(ctx, getAllBookingsWithJoin, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllBookingsWithJoinRow
+	for rows.Next() {
+		var i GetAllBookingsWithJoinRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.UserName,
+			&i.UserSurname,
+			&i.UserEmail,
+			&i.UserLastLogin,
+			&i.TypeID,
+			&i.TypeTitle,
+			&i.Paid,
+			&i.Cost,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.LastEdited,
+			&i.StartTime,
+			&i.EndTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAvailabilitySlotById = `-- name: GetAvailabilitySlotById :one
 SELECT
   id, employee_id, datetime, type_id, created_at, last_edited

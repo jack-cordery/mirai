@@ -2,8 +2,7 @@ import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
 
-import { getAllRequests } from "@/api/auth"
-import { useEffect, useState } from "react"
+import { TableProvider } from "@/contexts/table-context"
 
 export default function Dashboard() {
 
@@ -15,7 +14,9 @@ export default function Dashboard() {
                                         <div className="px-4 lg:px-6">
                                                 <ChartAreaInteractive />
                                         </div>
-                                        <DataTable />
+                                        <TableProvider>
+                                                <DataTable />
+                                        </TableProvider>
                                 </div>
                         </div>
                 </div>

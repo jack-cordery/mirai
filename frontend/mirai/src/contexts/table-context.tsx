@@ -1,4 +1,5 @@
 import { getAllRequests } from "@/api/auth";
+import { getAllBookings, type GetAllBookingsResponse } from "@/api/bookings";
 import type { GetAllRequestsResponse } from "@/types/user";
 import React, { createContext, useContext, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -8,6 +9,8 @@ type TableContextType = {
         setNumPending: React.Dispatch<React.SetStateAction<number>>
         requestData: GetAllRequestsResponse[];
         setRequestData: React.Dispatch<React.SetStateAction<GetAllRequestsResponse[]>>
+        bookingData: GetAllBookingsResponse[];
+        setBookingData: React.Dispatch<React.SetStateAction<GetAllBookingsResponse[]>>
 }
 
 const TableContext = createContext<TableContextType | undefined>(undefined);
@@ -19,11 +22,16 @@ type TableProviderProps = {
 export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
         const [numPending, setNumPending] = useState(0);
         const [requestData, setRequestData] = React.useState<GetAllRequestsResponse[]>([]);
+        const [bookingData, setBookingData] = React.useState<GetAllBookingsResponse[]>([]);
         const fetchData = async () => {
                 try {
-                        const res: GetAllRequestsResponse[] = await getAllRequests()
-                        setRequestData(res)
-                        setNumPending(res.filter(r => r.status === "PENDING").length)
+                        const [requestRes, bookingRes]: [GetAllRequestsResponse[], GetAllBookingsResponse[]]
+                                = await Promise.all(
+                                        [getAllRequests(), getAllBookings()]
+                                );
+                        setRequestData(requestRes);
+                        setNumPending(requestRes.filter(r => r.status === "PENDING").length);
+                        setBookingData(bookingRes);
                 } catch (err) {
                         toast("data fetch failed, please try again later")
                 }
@@ -34,7 +42,14 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
         }, []);
 
         return (
-                <TableContext.Provider value={{ numPending, setNumPending, requestData, setRequestData }}>
+                <TableContext.Provider value={{
+                        numPending,
+                        setNumPending,
+                        requestData,
+                        setRequestData,
+                        bookingData,
+                        setBookingData
+                }}>
                         {children}
                 </TableContext.Provider>
         );

@@ -72,11 +72,29 @@ import {
         TabsContent,
 } from "@/components/ui/tabs"
 import { useTableContext } from "@/contexts/table-context"
-import { DraggableRow, DragHandle, handleApprove, handleReject, type RequestDataSchema } from "./data-table"
+import { DraggableRow } from "./data-table"
+import { Checkbox } from "@/components/ui/checkbox"
 
+export const BookingDataSchema = z.object({
+        id: z.number(),
+        user_id: z.number(),
+        user_name: z.string(),
+        user_surname: z.string(),
+        user_email: z.string(),
+        user_last_login: z.string(),
+        type_id: z.number(),
+        type_title: z.string(),
+        paid: z.boolean(),
+        cost: z.number(),
+        notes: z.string(),
+        created_at: z.string(),
+        last_edited: z.string(),
+        start_time: z.string(),
+        end_time: z.string(),
+});
 
 export function BookingsTable() {
-        const { numPending, setNumPending, requestData, setRequestData } = useTableContext();
+        const { bookingData, setBookingData } = useTableContext();
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =
                 React.useState<VisibilityState>({})
@@ -96,78 +114,122 @@ export function BookingsTable() {
         )
 
         const dataIds = React.useMemo<UniqueIdentifier[]>(
-                () => requestData?.map(({ id }) => id) || [],
-                [requestData]
+                () => bookingData?.map(({ id }) => id) || [],
+                [bookingData]
         )
-        const columns: ColumnDef<z.infer<typeof RequestDataSchema>>[] = [
+        const columns: ColumnDef<z.infer<typeof BookingDataSchema>>[] = [
                 {
-                        id: "drag",
-                        header: () => null,
-                        cell: ({ row }) => <DragHandle id={row.original.id} />,
+                        id: 'select-col',
+                        header: ({ table }) => (
+                                <Checkbox
+                                        checked={
+                                                table.getIsAllRowsSelected()
+                                                        ? true
+                                                        : table.getIsSomeRowsSelected()
+                                                                ? "indeterminate"
+                                                                : false
+                                        }
+                                        onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+                                />
+                        ),
+                        cell: ({ row }) => (
+                                <Checkbox
+                                        checked={row.getIsSelected()}
+                                        disabled={!row.getCanSelect()}
+                                        onCheckedChange={(value) => row.toggleSelected(!!value)}
+                                />
+                        ),
                 },
                 {
-                        accessorKey: "requesting_user_email",
-                        header: "Email",
+                        accessorKey: "date",
+                        header: "Date",
                         cell: ({ row }) => {
-                                return <p> {row.original.requesting_user_email} </p>
+                                if (!row.original.start_time) {
+                                        return <p> NULL </p>
+                                }
+                                return <p> {new Date(row.original.start_time).toDateString()} </p>
+                        },
+                },
+                {
+                        accessorKey: "starting_time",
+                        header: "Start Time",
+                        cell: ({ row }) => {
+                                if (!row.original.start_time) {
+                                        return <p> NULL </p>
+                                }
+                                return <p> {new Date(row.original.start_time).toLocaleTimeString()} </p>
+                        },
+                },
+                {
+                        accessorKey: "end_time",
+                        header: "End Time",
+                        cell: ({ row }) => {
+                                if (!row.original.end_time) {
+                                        return <p> NULL </p>
+                                }
+                                return <p> {new Date(row.original.end_time).toLocaleTimeString()} </p>
+                        },
+                },
+                {
+                        accessorKey: "user_name",
+                        header: "Name",
+                        cell: ({ row }) => {
+                                const styledName = row.original.user_name.charAt(0).toUpperCase()
+                                        + row.original.user_name.slice(1).toLowerCase()
+                                        + " "
+                                        + row.original.user_surname.charAt(0).toUpperCase()
+                                        + row.original.user_surname.slice(1).toLowerCase();
+                                return <p> {styledName} </p>
                         },
                         enableHiding: false,
                 },
                 {
-                        accessorKey: "requested_role_name",
-                        header: "Requested Role",
-                        cell: ({ row }) => (
-                                <div className="w-32">
-                                        <Badge variant="outline" className="text-muted-foreground px-1.5">
-                                                {row.original.requested_role_name}
-                                        </Badge>
-                                </div>
-                        ),
+                        accessorKey: "user_email",
+                        header: "Email",
+                        cell: ({ row }) => {
+                                return <p> {row.original.user_email} </p>
+                        },
                 },
                 {
-                        accessorKey: "status",
-                        header: "Status",
-                        cell: ({ row }) => (
-                                <Badge variant="outline" className="text-muted-foreground px-1.5">
-                                        {row.original.status === "APPROVED" ? (
-                                                <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-                                        ) : row.original.status === "REJECTED" ? (
-                                                <IconCircleXFilled className="fill-red-500 dark:fill-red-400" />
-                                        ) : (
-                                                <IconLoader />
-                                        )}
-                                        {row.original.status}
-                                </Badge>
-                        ),
+                        accessorKey: "type_title",
+                        header: "Type",
+                        cell: ({ row }) => {
+                                return <p> {row.original.type_title} </p>
+                        },
+                },
+                {
+                        accessorKey: "paid",
+                        header: "Paid",
+                        cell: ({ row }) => {
+                                if (!row.original.paid) {
+                                        return <p> ❌ </p>
+                                }
+                                return <p> ✅ </p>
+                        },
+                },
+                {
+                        accessorKey: "cost",
+                        header: "Cost",
+                        cell: ({ row }) => {
+                                const costPounds = row.original.cost / 100
+                                return <p> £{costPounds.toFixed(2)} </p>
+                        },
+                },
+                {
+                        accessorKey: "notes",
+                        header: "Notes",
+                        cell: ({ row }) => {
+                                return <p> {row.original.notes} </p>
+                        },
                 },
                 {
                         accessorKey: "created_at",
-                        header: "Created At",
+                        header: "Created At ",
                         cell: ({ row }) => {
                                 if (!row.original.created_at) {
                                         return <p> NULL </p>
                                 }
                                 return <p> {new Date(row.original.created_at).toDateString()} </p>
-                        },
-                },
-                {
-                        accessorKey: "approved_at",
-                        header: "Reviewed At",
-                        cell: ({ row }) => {
-                                if (!row.original.approved_at) {
-                                        return <p> - </p>
-                                }
-                                return <p> {new Date(row.original.approved_at).toDateString()} </p>
-                        },
-                },
-                {
-                        accessorKey: "approving_user_email",
-                        header: "Reviewed By",
-                        cell: ({ row }) => {
-                                if (!row.original.approved_at) {
-                                        return <p> - </p>
-                                }
-                                return <p> {row.original.approving_user_email} </p>
                         },
                 },
                 {
@@ -185,29 +247,18 @@ export function BookingsTable() {
                                                 </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-32">
-                                                <DropdownMenuItem onClick={async () => {
-                                                        const prevStatus = row.original.status;
-                                                        const success = await handleApprove(row.original.id, setRequestData);
-                                                        if (prevStatus === "PENDING" && success) {
-                                                                setNumPending(numPending - 1);
-                                                        }
-                                                }
-                                                }>✅ Approve</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={async () => {
-                                                        const prevStatus = row.original.status;
-                                                        const success = await handleReject(row.original.id, setRequestData);
-                                                        if (prevStatus === "PENDING" && success) {
-                                                                setNumPending(numPending - 1);
-                                                        }
-                                                }
-                                                }>❌ Reject</DropdownMenuItem>
+                                                <DropdownMenuItem >Toggle Paid</DropdownMenuItem>
+                                                <DropdownMenuItem >Reschedule</DropdownMenuItem>
+                                                <DropdownMenuItem >Cancel</DropdownMenuItem>
                                         </DropdownMenuContent>
                                 </DropdownMenu>
                         ),
                 },
+
+
         ]
         const table = useReactTable({
-                data: requestData,
+                data: bookingData,
                 columns: columns,
                 state: {
                         sorting,
@@ -234,7 +285,7 @@ export function BookingsTable() {
         function handleDragEnd(event: DragEndEvent) {
                 const { active, over } = event
                 if (active && over && active.id !== over.id) {
-                        setRequestData((data) => {
+                        setBookingData((data) => {
                                 const oldIndex = dataIds.indexOf(active.id)
                                 const newIndex = dataIds.indexOf(over.id)
                                 return arrayMove(data, oldIndex, newIndex)

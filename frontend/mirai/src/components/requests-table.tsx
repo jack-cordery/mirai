@@ -72,7 +72,18 @@ import {
         TabsContent,
 } from "@/components/ui/tabs"
 import { useTableContext } from "@/contexts/table-context"
-import { DraggableRow, DragHandle, handleApprove, handleReject, type RequestDataSchema } from "./data-table"
+import { DraggableRow, DragHandle, handleApprove, handleReject } from "./data-table"
+
+export const RequestDataSchema = z.object({
+        id: z.number(),
+        status: z.string(),
+        comment: z.string(),
+        created_at: z.string(),
+        approved_at: z.string(),
+        requesting_user_email: z.string(),
+        requested_role_name: z.string(),
+        approving_user_email: z.string(),
+});
 
 export function RequestDataTable() {
         const { numPending, setNumPending, requestData, setRequestData } = useTableContext();

@@ -109,18 +109,6 @@ export function DragHandle({ id }: { id: number }) {
         )
 }
 
-export const RequestDataSchema = z.object({
-        id: z.number(),
-        status: z.string(),
-        comment: z.string(),
-        created_at: z.string(),
-        approved_at: z.string(),
-        requesting_user_email: z.string(),
-        requested_role_name: z.string(),
-        approving_user_email: z.string(),
-});
-
-
 
 export function DraggableRow({ row }: { row: Row<z.infer<typeof RequestDataSchema>> }) {
         const { transform, transition, setNodeRef, isDragging } = useSortable({

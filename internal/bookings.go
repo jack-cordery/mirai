@@ -17,28 +17,32 @@ import (
 )
 
 type GetBookingResponse struct {
-	BookingID  int32            `json:"booking_id"`
-	UserID     int32            `json:"user_id"`
-	TypeID     int32            `json:"type_id"`
-	Paid       bool             `json:"paid"`
-	Cost       int32            `json:"cost"`
-	Notes      pgtype.Text      `json:"notes"`
-	SlotIDs    []int32          `json:"slot_ids"`
-	CreatedAt  pgtype.Timestamp `json:"created_at"`
-	LastEdited pgtype.Timestamp `json:"last_edited"`
+	BookingID       int32            `json:"booking_id"`
+	UserID          int32            `json:"user_id"`
+	TypeID          int32            `json:"type_id"`
+	Paid            bool             `json:"paid"`
+	Cost            int32            `json:"cost"`
+	Status          db.BookingStatus `json:"status"`
+	StatusUpdatedAt pgtype.Timestamp `json:"status_updated_at"`
+	Notes           pgtype.Text      `json:"notes"`
+	SlotIDs         []int32          `json:"slot_ids"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	LastEdited      pgtype.Timestamp `json:"last_edited"`
 }
 
 func responseFromDBBooking(booking db.GetBookingByIdRow) GetBookingResponse {
 	return GetBookingResponse{
-		BookingID:  booking.ID,
-		UserID:     booking.UserID,
-		TypeID:     booking.TypeID,
-		Paid:       booking.Paid,
-		Cost:       booking.Cost,
-		Notes:      booking.Notes,
-		SlotIDs:    booking.SlotIds,
-		CreatedAt:  booking.CreatedAt,
-		LastEdited: booking.LastEdited,
+		BookingID:       booking.ID,
+		UserID:          booking.UserID,
+		TypeID:          booking.TypeID,
+		Paid:            booking.Paid,
+		Cost:            booking.Cost,
+		Status:          booking.Status,
+		StatusUpdatedAt: booking.StatusUpdatedAt,
+		Notes:           booking.Notes,
+		SlotIDs:         booking.SlotIds,
+		CreatedAt:       booking.CreatedAt,
+		LastEdited:      booking.LastEdited,
 	}
 }
 
@@ -517,6 +521,133 @@ func postManualPayment(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) h
 			err = tx.Commit(ctx)
 			if err != nil {
 				log.Printf("error commiting tx in postManualPayment: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			return
+		}
+	}
+}
+
+func postManualStatus(pool *pgxpool.Pool, ctx context.Context, a *AuthParams, newStatus db.BookingStatus) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("booking_id")
+		if id == "" {
+			log.Printf("booking_id in postManualStatus is empty")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		booking_id, err := strconv.ParseInt(id, 10, 32)
+		if err != nil {
+			log.Printf("booking_id is not an integer")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		conn, err := pool.Acquire(ctx)
+		if err != nil {
+			log.Printf("error aquiring pool in deleteBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Release()
+
+		tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			log.Printf("error beginning tx in deleteBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		defer func() {
+			err := tx.Rollback(ctx)
+			if err != nil && err != pgx.ErrTxClosed {
+				panic(err)
+			}
+		}()
+
+		queries := db.New(conn)
+		qtx := queries.WithTx(tx)
+
+		token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
+		if err != nil {
+			log.Printf("The token provided failed in postManualStatus: %v", token)
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("encoding response in postManualStatus failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		valid, err := VerifySession(ctx, qtx, token)
+		if err != nil {
+			log.Printf("verifying session in postManualStatus failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !valid {
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("writing json in postManualStatus failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		} else {
+			session, err := qtx.GetSessionByToken(ctx, token)
+			if err != nil {
+				log.Printf("getting session by token in postManualStatus failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			approver, err := qtx.GetUserById(ctx, session.UserID)
+			if err != nil {
+				log.Printf("getting user by id for user in postManualStatus failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			userRoles, err := qtx.GetRolesForUser(ctx, approver.ID)
+			if err != nil {
+				log.Printf("getting user roles by id for user in postManualStatus failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			isAdmin := slices.Contains(userRoles, RoleAdmin)
+
+			if !isAdmin {
+				log.Printf("user %d has requested to post a manual payment and doesnt have permission to", approver.ID)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			err = qtx.UpdateBookingStatus(ctx, db.UpdateBookingStatusParams{
+				ID:     int32(booking_id),
+				Status: newStatus,
+			})
+			if err != nil {
+				log.Printf("updating booking status failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if newStatus == db.BookingStatusCancelled {
+				err = qtx.FreeAvailabilitySlot(ctx, int32(booking_id))
+				if err != nil {
+					log.Printf("freeing availability slots failed with %v", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			}
+			err = tx.Commit(ctx)
+			if err != nil {
+				log.Printf("error commiting tx in postManualStatus: %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}

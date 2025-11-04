@@ -11,6 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type BookingStatus string
+
+const (
+	BookingStatusConfirmed BookingStatus = "confirmed"
+	BookingStatusCancelled BookingStatus = "cancelled"
+	BookingStatusCompleted BookingStatus = "completed"
+)
+
+func (e *BookingStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = BookingStatus(s)
+	case string:
+		*e = BookingStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for BookingStatus: %T", src)
+	}
+	return nil
+}
+
+type NullBookingStatus struct {
+	BookingStatus BookingStatus `json:"booking_status"`
+	Valid         bool          `json:"valid"` // Valid is true if BookingStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullBookingStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.BookingStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.BookingStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullBookingStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.BookingStatus), nil
+}
+
 type RoleRequestStatus string
 
 const (
@@ -64,14 +107,16 @@ type Availability struct {
 }
 
 type Booking struct {
-	ID         int32            `json:"id"`
-	UserID     int32            `json:"user_id"`
-	TypeID     int32            `json:"type_id"`
-	Paid       bool             `json:"paid"`
-	Cost       int32            `json:"cost"`
-	Notes      pgtype.Text      `json:"notes"`
-	CreatedAt  pgtype.Timestamp `json:"created_at"`
-	LastEdited pgtype.Timestamp `json:"last_edited"`
+	ID              int32            `json:"id"`
+	UserID          int32            `json:"user_id"`
+	TypeID          int32            `json:"type_id"`
+	Paid            bool             `json:"paid"`
+	Cost            int32            `json:"cost"`
+	Status          BookingStatus    `json:"status"`
+	StatusUpdatedAt pgtype.Timestamp `json:"status_updated_at"`
+	Notes           pgtype.Text      `json:"notes"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	LastEdited      pgtype.Timestamp `json:"last_edited"`
 }
 
 type BookingSlot struct {

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/jack-cordery/mirai/db"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 )
@@ -129,6 +130,8 @@ func SetupServer() {
 	mux.HandleFunc("PUT /booking/{booking_id}", putBooking(pool, ctx))
 	mux.HandleFunc("DELETE /booking/{booking_id}", deleteBooking(pool, ctx))
 	mux.HandleFunc("POST /booking/{booking_id}/payment/manual", postManualPayment(pool, ctx, a))
+	mux.HandleFunc("POST /booking/{booking_id}/cancel", postManualStatus(pool, ctx, a, db.BookingStatusCancelled))
+	mux.HandleFunc("POST /booking/{booking_id}/complete", postManualStatus(pool, ctx, a, db.BookingStatusCompleted))
 
 	mux.HandleFunc("POST /user", postUser(pool, ctx))
 	mux.HandleFunc("GET /user/{user_id}", getUser(pool, ctx))

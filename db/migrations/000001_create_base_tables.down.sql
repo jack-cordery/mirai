@@ -2,6 +2,8 @@ DROP TABLE IF EXISTS booking_slots;
 
 DROP TABLE IF EXISTS bookings;
 
+DROP TYPE IF EXISTS booking_status;
+
 DROP TABLE IF EXISTS availability;
 
 DROP TABLE IF EXISTS booking_types;

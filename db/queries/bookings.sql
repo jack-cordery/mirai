@@ -21,6 +21,8 @@ SELECT
   bt.title AS type_title,
   b.paid,
   b.cost,
+  b.status,
+  b.status_updated_at,
   b.notes,
   b.created_at,
   b.last_edited,
@@ -50,6 +52,8 @@ GROUP BY
   bt.title,
   b.paid,
   b.cost,
+  b.status,
+  b.status_updated_at,
   b.notes,
   b.created_at,
   b.last_edited
@@ -63,6 +67,8 @@ SELECT
   b.type_id,
   b.paid,
   b.cost,
+  b.status,
+  b.status_updated_at,
   b.notes,
   b.created_at,
   b.last_edited,
@@ -154,6 +160,14 @@ WHERE
 RETURNING
   id;
 
+-- name: UpdateBookingStatus :exec
+UPDATE bookings
+SET
+  status = $2,
+  status_updated_at = DEFAULT
+WHERE
+  id = $1;
+
 -- name: DeleteBooking :one
 DELETE FROM bookings
 WHERE
@@ -181,6 +195,11 @@ DELETE FROM booking_slots
 WHERE
   booking_id = $1
   AND availability_slot_id = $2;
+
+-- name: FreeAvailabilitySlot :exec
+DELETE FROM booking_slots
+WHERE
+  booking_id = $1;
 
 -- name: CreateEmployee :one 
 INSERT INTO

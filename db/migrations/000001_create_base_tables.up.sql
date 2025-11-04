@@ -84,12 +84,16 @@ CREATE TABLE IF NOT EXISTS availability (
   UNIQUE (employee_id, datetime)
 );
 
+CREATE TYPE booking_status AS ENUM ('confirmed', 'cancelled', 'completed');
+
 CREATE TABLE IF NOT EXISTS bookings (
   id serial PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   type_id INT NOT NULL REFERENCES booking_types (id) ON DELETE CASCADE,
   paid BOOL NOT NULL,
   cost INT NOT NULL,
+  status booking_status NOT NULL DEFAULT 'confirmed',
+  status_updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP

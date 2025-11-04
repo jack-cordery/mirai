@@ -225,6 +225,17 @@ func (q *Queries) DeleteEmployee(ctx context.Context, id int32) (int32, error) {
 	return id, err
 }
 
+const freeAvailabilitySlot = `-- name: FreeAvailabilitySlot :exec
+DELETE FROM booking_slots
+WHERE
+  booking_id = $1
+`
+
+func (q *Queries) FreeAvailabilitySlot(ctx context.Context, bookingID int32) error {
+	_, err := q.db.Exec(ctx, freeAvailabilitySlot, bookingID)
+	return err
+}
+
 const getAllAvailabilitySlots = `-- name: GetAllAvailabilitySlots :many
 SELECT
   id, employee_id, datetime, type_id, created_at, last_edited
@@ -296,7 +307,7 @@ func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error)
 
 const getAllBookings = `-- name: GetAllBookings :many
 SELECT
-  id, user_id, type_id, paid, cost, notes, created_at, last_edited
+  id, user_id, type_id, paid, cost, status, status_updated_at, notes, created_at, last_edited
 FROM
   bookings
 `
@@ -316,6 +327,8 @@ func (q *Queries) GetAllBookings(ctx context.Context) ([]Booking, error) {
 			&i.TypeID,
 			&i.Paid,
 			&i.Cost,
+			&i.Status,
+			&i.StatusUpdatedAt,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.LastEdited,
@@ -347,6 +360,8 @@ SELECT
   bt.title AS type_title,
   b.paid,
   b.cost,
+  b.status,
+  b.status_updated_at,
   b.notes,
   b.created_at,
   b.last_edited,
@@ -376,6 +391,8 @@ GROUP BY
   bt.title,
   b.paid,
   b.cost,
+  b.status,
+  b.status_updated_at,
   b.notes,
   b.created_at,
   b.last_edited
@@ -384,21 +401,23 @@ ORDER BY
 `
 
 type GetAllBookingsWithJoinRow struct {
-	ID            int32            `json:"id"`
-	UserID        int32            `json:"user_id"`
-	UserName      string           `json:"user_name"`
-	UserSurname   string           `json:"user_surname"`
-	UserEmail     string           `json:"user_email"`
-	UserLastLogin pgtype.Timestamp `json:"user_last_login"`
-	TypeID        int32            `json:"type_id"`
-	TypeTitle     string           `json:"type_title"`
-	Paid          bool             `json:"paid"`
-	Cost          int32            `json:"cost"`
-	Notes         pgtype.Text      `json:"notes"`
-	CreatedAt     pgtype.Timestamp `json:"created_at"`
-	LastEdited    pgtype.Timestamp `json:"last_edited"`
-	StartTime     pgtype.Timestamp `json:"start_time"`
-	EndTime       pgtype.Timestamp `json:"end_time"`
+	ID              int32            `json:"id"`
+	UserID          int32            `json:"user_id"`
+	UserName        string           `json:"user_name"`
+	UserSurname     string           `json:"user_surname"`
+	UserEmail       string           `json:"user_email"`
+	UserLastLogin   pgtype.Timestamp `json:"user_last_login"`
+	TypeID          int32            `json:"type_id"`
+	TypeTitle       string           `json:"type_title"`
+	Paid            bool             `json:"paid"`
+	Cost            int32            `json:"cost"`
+	Status          BookingStatus    `json:"status"`
+	StatusUpdatedAt pgtype.Timestamp `json:"status_updated_at"`
+	Notes           pgtype.Text      `json:"notes"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	LastEdited      pgtype.Timestamp `json:"last_edited"`
+	StartTime       pgtype.Timestamp `json:"start_time"`
+	EndTime         pgtype.Timestamp `json:"end_time"`
 }
 
 func (q *Queries) GetAllBookingsWithJoin(ctx context.Context, dollar_1 int32) ([]GetAllBookingsWithJoinRow, error) {
@@ -421,6 +440,8 @@ func (q *Queries) GetAllBookingsWithJoin(ctx context.Context, dollar_1 int32) ([
 			&i.TypeTitle,
 			&i.Paid,
 			&i.Cost,
+			&i.Status,
+			&i.StatusUpdatedAt,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.LastEdited,
@@ -469,6 +490,8 @@ SELECT
   b.type_id,
   b.paid,
   b.cost,
+  b.status,
+  b.status_updated_at,
   b.notes,
   b.created_at,
   b.last_edited,
@@ -489,15 +512,17 @@ LIMIT
 `
 
 type GetBookingByIdRow struct {
-	ID         int32            `json:"id"`
-	UserID     int32            `json:"user_id"`
-	TypeID     int32            `json:"type_id"`
-	Paid       bool             `json:"paid"`
-	Cost       int32            `json:"cost"`
-	Notes      pgtype.Text      `json:"notes"`
-	CreatedAt  pgtype.Timestamp `json:"created_at"`
-	LastEdited pgtype.Timestamp `json:"last_edited"`
-	SlotIds    []int32          `json:"slot_ids"`
+	ID              int32            `json:"id"`
+	UserID          int32            `json:"user_id"`
+	TypeID          int32            `json:"type_id"`
+	Paid            bool             `json:"paid"`
+	Cost            int32            `json:"cost"`
+	Status          BookingStatus    `json:"status"`
+	StatusUpdatedAt pgtype.Timestamp `json:"status_updated_at"`
+	Notes           pgtype.Text      `json:"notes"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	LastEdited      pgtype.Timestamp `json:"last_edited"`
+	SlotIds         []int32          `json:"slot_ids"`
 }
 
 func (q *Queries) GetBookingById(ctx context.Context, id int32) (GetBookingByIdRow, error) {
@@ -509,6 +534,8 @@ func (q *Queries) GetBookingById(ctx context.Context, id int32) (GetBookingByIdR
 		&i.TypeID,
 		&i.Paid,
 		&i.Cost,
+		&i.Status,
+		&i.StatusUpdatedAt,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.LastEdited,
@@ -652,6 +679,25 @@ func (q *Queries) UpdateBookingSlot(ctx context.Context, arg UpdateBookingSlotPa
 		arg.BookingID_2,
 		arg.AvailabilitySlotID_2,
 	)
+	return err
+}
+
+const updateBookingStatus = `-- name: UpdateBookingStatus :exec
+UPDATE bookings
+SET
+  status = $2,
+  status_updated_at = DEFAULT
+WHERE
+  id = $1
+`
+
+type UpdateBookingStatusParams struct {
+	ID     int32         `json:"id"`
+	Status BookingStatus `json:"status"`
+}
+
+func (q *Queries) UpdateBookingStatus(ctx context.Context, arg UpdateBookingStatusParams) error {
+	_, err := q.db.Exec(ctx, updateBookingStatus, arg.ID, arg.Status)
 	return err
 }
 

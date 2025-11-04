@@ -3,6 +3,12 @@ export type TimeOfDay = {
   minute: number;
 };
 
+export type SlotTimeOfDay = {
+  id: number;
+  hour: number;
+  minute: number;
+};
+
 export type SelectedTimes = {
   startTime: TimeOfDay | null;
   endTime: TimeOfDay | null;

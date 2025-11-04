@@ -5,28 +5,36 @@ import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import TimeSelection from "@/components/time-selection"
 import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/components/ui/select"
-import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, type TimeOfDay, valueToTime, datetimeToTime } from "@/types/booking"
+import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, type TimeOfDay, valueToTime, datetimeToTime, type SlotTimeOfDay } from "@/types/booking"
 import { generateOptionsFromSlots, loadWorkingDayTimes } from "@/lib/utils"
 import { getAllBookingTypes } from "@/api/booking-type"
 import { getAllAvailability } from "@/api/availability"
 import { toast } from "sonner"
+import { Dialog, DialogClose } from "@radix-ui/react-dialog"
+import { DialogContent, DialogFooter, DialogHeader, DialogOverlay, DialogTitle } from "./ui/dialog"
+import { format } from "date-fns"
+import { postBooking } from "@/api/bookings"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function BookingCalendar() {
 
         const { startTime, endTime } = loadWorkingDayTimes()
+        const { user } = useAuth();
         const today = new Date()
 
         const [date, setDate] = React.useState<Date | undefined>(
                 new Date()
         );
-        const [selectedTime, setSelectedTime] = React.useState<TimeOfDay | null>(null)
+        const [selectedTime, setSelectedTime] = React.useState<SlotTimeOfDay | null>(null)
         const [selectedTimes, setSelectedTimes] = React.useState<SelectedTimes>({
                 startTime: null,
                 endTime: null
         });
         const [bookingTypes, setBookingTypes] = React.useState<BookingType[]>([])
         const [availabilitySlots, setAvailabilitySlots] = React.useState<AvailabilitySlot[]>([])
-        const [selectedBookingType, setSelectedBookingType] = React.useState<string | null>(null)
+        const [selectedBookingType, setSelectedBookingType] = React.useState<BookingType | null>(null)
+
+        const [isBookingModalOpen, setIsBookingModalOpen] = React.useState<boolean>(false);
 
         const handleChange = (times: SelectedTimes) => { setSelectedTimes(times) }
 
@@ -94,6 +102,30 @@ export default function BookingCalendar() {
                 fetchData()
         }, [])
 
+
+        const handleConfirmBooking = async () => {
+                const user_id = user?.id;
+                const slot_ids = selectedTime?.id ? [selectedTime.id] : [];
+                const type_id = selectedBookingType?.type_id;
+                try {
+                        if (user_id === undefined || type_id === undefined) {
+                                throw new Error("invalid inputs")
+                        }
+                        const res = await postBooking({
+                                user_id,
+                                availability_slots: slot_ids,
+                                type_id,
+                                notes: "",
+                        })
+                        setSelectedTime(null);
+                        toast("booking created!")
+                        setIsBookingModalOpen(false)
+
+                } catch (err) {
+                        toast("failed to confirm booking, please try again");
+                }
+        }
+
         return (
                 <Card className="gap-0 p-0">
                         <CardContent className="relative p-0 md:pr-48">
@@ -103,8 +135,11 @@ export default function BookingCalendar() {
                                                         Select Booking Type
                                                 </h1>
                                                 <Select
-                                                        value={selectedBookingType ? selectedBookingType : ""}
-                                                        onValueChange={setSelectedBookingType}
+                                                        value={selectedBookingType?.title ? selectedBookingType.title : ""}
+                                                        onValueChange={(title) => {
+                                                                const type = bookingTypes.find(t => t.title === title) || null;
+                                                                setSelectedBookingType(type);
+                                                        }}
                                                 >
                                                         <SelectTrigger className="w-[180px]">
                                                                 <SelectValue placeholder="Booking Type" />
@@ -186,20 +221,54 @@ export default function BookingCalendar() {
                                                                 })}{" "}
                                                         </span>
                                                         at <span className="font-medium">{timeToValue(selectedTime)}</span> {" "}
-                                                        for a {selectedBookingType}
+                                                        for a {selectedBookingType?.title}
                                                 </>
                                         ) : (
                                                 <>Select a date and time for your meeting.</>
                                         )}
                                 </div>
                                 <Button
-                                        disabled={!date || !selectedTime}
+                                        disabled={!date || !selectedTime || !selectedBookingType}
                                         className="w-full md:ml-auto md:w-auto"
                                         variant="outline"
+                                        onClick={() => setIsBookingModalOpen(true)}
                                 >
                                         Continue
                                 </Button>
                         </CardFooter>
+                        <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
+                                <DialogOverlay className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                                <DialogContent className="sm:max-w-[425px]">
+                                        <DialogHeader>
+                                                <DialogTitle>Confirm Booking</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="grid gap-6 py-2">
+                                                <div className="bg-muted/50 rounded-lg p-4 flex flex-col gap-3">
+                                                        <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Date</span>
+                                                                <span className="font-medium">{format(date ?? 0, "dd MMM yyyy")}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Start Time</span>
+                                                                <span className="font-medium">
+                                                                        {selectedTime?.hour}:{selectedTime?.minute.toString().padStart(2, "0")}
+                                                                </span>
+                                                        </div>
+                                                        <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Amount</span>
+                                                                <span className="font-medium">£{((selectedBookingType?.cost ?? 0) / 100).toFixed(2)}</span >
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <DialogFooter>
+                                                <DialogClose asChild>
+                                                        <Button variant="outline">Cancel</Button>
+                                                </DialogClose>
+                                                <Button type="button" onClick={handleConfirmBooking}>Confirm</Button>
+                                        </DialogFooter>
+                                </DialogContent>
+
+                        </Dialog>
                 </Card>
         )
 }

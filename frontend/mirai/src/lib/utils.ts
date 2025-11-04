@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import {
   datetimeToTime,
   type AvailabilitySlot,
+  type SlotTimeOfDay,
   type TimeOfDay,
 } from "@/types/booking";
 
@@ -84,7 +85,7 @@ export function generateOptionsFromSlots(
   end: TimeOfDay,
   slots: AvailabilitySlot[],
   date?: Date,
-): TimeOfDay[] {
+): SlotTimeOfDay[] {
   const filteredSlots = date
     ? slots.filter((s) => {
         const slotDate = new Date(s.datetime);
@@ -96,8 +97,11 @@ export function generateOptionsFromSlots(
       })
     : slots;
   const options = filteredSlots
-    .map((s) => datetimeToTime(s.datetime))
-    .filter((opt): opt is TimeOfDay => !!opt);
+    .map((s) => {
+      const time = datetimeToTime(s.datetime);
+      return time ? { id: s.availability_slot_id, ...time } : null;
+    })
+    .filter((opt): opt is SlotTimeOfDay => !!opt);
 
   return options.filter((opt) => {
     if (opt.hour < start.hour || opt.hour > end.hour) return false;

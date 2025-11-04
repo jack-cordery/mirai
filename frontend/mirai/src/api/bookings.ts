@@ -88,3 +88,15 @@ export async function postManualPayment(id: number) {
     throw new Error(`post manual payment failed iwth ${res.status}`);
   }
 }
+
+export async function postCancellation(id: number) {
+  const res = await fetch(`${apiUrl}/booking/${id}/cancel`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`post manual cancellation failed iwth ${res.status}`);
+  }
+}

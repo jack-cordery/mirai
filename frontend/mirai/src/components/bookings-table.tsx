@@ -75,7 +75,7 @@ import { useTableContext } from "@/contexts/table-context"
 import { DraggableRow } from "./data-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog } from "@/components/ui/dialog"
-import { PaidModal } from "./paid-modal"
+import { CancelModal, PaidModal } from "./booking-table-modals"
 
 export const BookingDataSchema = z.object({
         id: z.number(),
@@ -98,7 +98,14 @@ export const BookingDataSchema = z.object({
 });
 
 export function BookingsTable() {
-        const { bookingData, setBookingData, setIsPaidModalOpen, setPaidModalRow } = useTableContext();
+        const {
+                bookingData,
+                setBookingData,
+                setIsPaidModalOpen,
+                setPaidModalRow,
+                setCancelModalRow,
+                setIsCancelModalOpen
+        } = useTableContext();
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =
                 React.useState<VisibilityState>({})
@@ -222,9 +229,18 @@ export function BookingsTable() {
                 {
                         accessorKey: "status",
                         header: "Status",
-                        cell: ({ row }) => {
-                                return <p> {row.original.status} </p>
-                        },
+                        cell: ({ row }) => (
+                                <Badge variant="outline" className="text-muted-foreground px-1.5">
+                                        {row.original.status === "completed" ? (
+                                                <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
+                                        ) : row.original.status === "cancelled" ? (
+                                                <IconCircleXFilled className="fill-red-500 dark:fill-red-400" />
+                                        ) : (
+                                                <IconLoader />
+                                        )}
+                                        {row.original.status}
+                                </Badge>
+                        ),
                 },
                 {
                         accessorKey: "status_updated_at",
@@ -277,17 +293,16 @@ export function BookingsTable() {
                                                                 }>Payment</DropdownMenuItem>
                                                         }
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem >Reschedule</DropdownMenuItem>
                                                 <DropdownMenuItem >
-                                                        {(row.original.status !== "confirmed") &&
+                                                        {(row.original.status === "confirmed") &&
                                                                 < DropdownMenuItem onClick={async () => {
-                                                                        setIsPaidModalOpen(true);
-                                                                        setPaidModalRow(row.original);
+                                                                        setIsCancelModalOpen(true);
+                                                                        setCancelModalRow(row.original);
                                                                 }
-                                                                }>Payment</DropdownMenuItem>
+                                                                }>Cancel</DropdownMenuItem>
                                                         }
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem >Reschedule</DropdownMenuItem>
-                                                <DropdownMenuItem >Cancel</DropdownMenuItem>
                                         </DropdownMenuContent>
                                 </DropdownMenu >
                         ),
@@ -465,6 +480,7 @@ export function BookingsTable() {
                                 </div>
                         </div>
                         <PaidModal />
+                        <CancelModal />
                 </TabsContent>
         )
 }

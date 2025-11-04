@@ -13,8 +13,12 @@ type TableContextType = {
         setBookingData: React.Dispatch<React.SetStateAction<GetAllBookingsResponse[]>>;
         isPaidModalOpen: boolean;
         setIsPaidModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+        isCancelModalOpen: boolean;
+        setIsCancelModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         paidModalRow: GetAllBookingsResponse | null
         setPaidModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
+        cancelModalRow: GetAllBookingsResponse | null
+        setCancelModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
 }
 
 const TableContext = createContext<TableContextType | undefined>(undefined);
@@ -28,7 +32,9 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
         const [requestData, setRequestData] = React.useState<GetAllRequestsResponse[]>([]);
         const [bookingData, setBookingData] = React.useState<GetAllBookingsResponse[]>([]);
         const [isPaidModalOpen, setIsPaidModalOpen] = React.useState<boolean>(false);
+        const [isCancelModalOpen, setIsCancelModalOpen] = React.useState<boolean>(false);
         const [paidModalRow, setPaidModalRow] = React.useState<GetAllBookingsResponse | null>(null);
+        const [cancelModalRow, setCancelModalRow] = React.useState<GetAllBookingsResponse | null>(null);
 
         const fetchData = async () => {
                 try {
@@ -60,8 +66,12 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                         setBookingData,
                         isPaidModalOpen,
                         setIsPaidModalOpen,
+                        isCancelModalOpen,
+                        setIsCancelModalOpen,
                         paidModalRow,
                         setPaidModalRow,
+                        cancelModalRow,
+                        setCancelModalRow,
                 }}>
                         {children}
                 </TableContext.Provider>

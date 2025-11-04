@@ -351,12 +351,14 @@ SELECT
   b.created_at,
   b.last_edited,
   MIN(a.datetime)::timestamp AS start_time,
-  (MAX(a.datetime) + (
-    SELECT
-      minutes
-    FROM
-      unit
-  ) * INTERVAL '1 minute')::timestamp AS end_time
+  (
+    MAX(a.datetime) + (
+      SELECT
+        minutes
+      FROM
+        unit
+    ) * INTERVAL '1 minute'
+  )::timestamp AS end_time
 FROM
   bookings b
   JOIN users u ON b.user_id = u.id
@@ -539,6 +541,19 @@ func (q *Queries) GetBookingTypeById(ctx context.Context, id int32) (BookingType
 		&i.LastEdited,
 	)
 	return i, err
+}
+
+const postManualPayment = `-- name: PostManualPayment :exec
+UPDATE bookings
+SET
+  paid = true
+WHERE
+  id = $1
+`
+
+func (q *Queries) PostManualPayment(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, postManualPayment, id)
+	return err
 }
 
 const updateAvailabilitySlot = `-- name: UpdateAvailabilitySlot :one

@@ -72,3 +72,15 @@ export type GetAllBookingsResponse = {
   start_time: string;
   end_time: string;
 };
+
+export async function postManualPayment(id: number) {
+  const res = await fetch(`${apiUrl}/booking/${id}/payment/manual`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`post manual payment failed iwth ${res.status}`);
+  }
+}

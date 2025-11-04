@@ -110,6 +110,8 @@ export function DragHandle({ id }: { id: number }) {
 }
 
 
+
+
 export function DraggableRow({ row }: { row: Row<z.infer<typeof RequestDataSchema>> }) {
         const { transform, transition, setNodeRef, isDragging } = useSortable({
                 id: row.original.id,
@@ -199,10 +201,10 @@ export function DataTable() {
 
                                         </TabsTrigger>
                                         <TabsTrigger value="bookings">
-                                                Bookings <Badge variant="secondary">3</Badge>
+                                                Bookings
                                         </TabsTrigger>
                                         <TabsTrigger value="updates">
-                                                Updates <Badge variant="secondary">2</Badge>
+                                                Updates
                                         </TabsTrigger>
                                 </TabsList>
 

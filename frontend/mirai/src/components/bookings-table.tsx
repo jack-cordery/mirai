@@ -74,6 +74,8 @@ import {
 import { useTableContext } from "@/contexts/table-context"
 import { DraggableRow } from "./data-table"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog } from "@/components/ui/dialog"
+import { PaidModal } from "./paid-modal"
 
 export const BookingDataSchema = z.object({
         id: z.number(),
@@ -94,7 +96,7 @@ export const BookingDataSchema = z.object({
 });
 
 export function BookingsTable() {
-        const { bookingData, setBookingData } = useTableContext();
+        const { bookingData, setBookingData, isPaidModalOpen, setIsPaidModalOpen, setPaidModalRow } = useTableContext();
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =
                 React.useState<VisibilityState>({})
@@ -247,11 +249,19 @@ export function BookingsTable() {
                                                 </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-32">
-                                                <DropdownMenuItem >Toggle Paid</DropdownMenuItem>
+                                                <DropdownMenuItem >
+                                                        {!row.original.paid &&
+                                                                < DropdownMenuItem onClick={async () => {
+                                                                        setIsPaidModalOpen(true);
+                                                                        setPaidModalRow(row.original);
+                                                                }
+                                                                }>Payment</DropdownMenuItem>
+                                                        }
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem >Reschedule</DropdownMenuItem>
                                                 <DropdownMenuItem >Cancel</DropdownMenuItem>
                                         </DropdownMenuContent>
-                                </DropdownMenu>
+                                </DropdownMenu >
                         ),
                 },
 
@@ -426,6 +436,7 @@ export function BookingsTable() {
                                         </div>
                                 </div>
                         </div>
+                        <PaidModal />
                 </TabsContent>
         )
 }

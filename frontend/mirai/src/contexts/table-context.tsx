@@ -36,11 +36,9 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                                 = await Promise.all(
                                         [getAllRequests(), getAllBookings()]
                                 );
-                        setRequestData(requestRes);
-                        if (requestRes !== null) {
-                                setNumPending(requestRes.filter(r => r.status === "PENDING").length);
-                        }
-                        setBookingData(bookingRes);
+                        setRequestData(requestRes ?? []);
+                        setNumPending(requestRes.filter(r => r.status === "PENDING").length);
+                        setBookingData(bookingRes ?? []);
                 } catch (err) {
                         toast("data fetch failed, please try again later")
                         console.log(err)

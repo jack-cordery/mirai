@@ -40,6 +40,8 @@ export type GetBookingResponse = {
   type_id: number;
   paid: boolean;
   cost: number;
+  status: string;
+  status_updated_at: string;
   notes: string;
   slot_ids: number[];
   created_at: string;
@@ -66,6 +68,8 @@ export type GetAllBookingsResponse = {
   type_title: string;
   paid: boolean;
   cost: number;
+  status: string;
+  status_updated_at: string;
   notes: string;
   created_at: string;
   last_edited: string;

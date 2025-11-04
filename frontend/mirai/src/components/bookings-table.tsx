@@ -88,6 +88,8 @@ export const BookingDataSchema = z.object({
         type_title: z.string(),
         paid: z.boolean(),
         cost: z.number(),
+        status: z.string(),
+        status_updated_at: z.string(),
         notes: z.string(),
         created_at: z.string(),
         last_edited: z.string(),
@@ -96,7 +98,7 @@ export const BookingDataSchema = z.object({
 });
 
 export function BookingsTable() {
-        const { bookingData, setBookingData, isPaidModalOpen, setIsPaidModalOpen, setPaidModalRow } = useTableContext();
+        const { bookingData, setBookingData, setIsPaidModalOpen, setPaidModalRow } = useTableContext();
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =
                 React.useState<VisibilityState>({})
@@ -218,6 +220,23 @@ export function BookingsTable() {
                         },
                 },
                 {
+                        accessorKey: "status",
+                        header: "Status",
+                        cell: ({ row }) => {
+                                return <p> {row.original.status} </p>
+                        },
+                },
+                {
+                        accessorKey: "status_updated_at",
+                        header: "Status Updated At",
+                        cell: ({ row }) => {
+                                if (!row.original.status_updated_at) {
+                                        return <p> NULL </p>
+                                }
+                                return <p> {new Date(row.original.status_updated_at).toDateString()} </p>
+                        },
+                },
+                {
                         accessorKey: "notes",
                         header: "Notes",
                         cell: ({ row }) => {
@@ -251,6 +270,15 @@ export function BookingsTable() {
                                         <DropdownMenuContent align="end" className="w-32">
                                                 <DropdownMenuItem >
                                                         {!row.original.paid &&
+                                                                < DropdownMenuItem onClick={async () => {
+                                                                        setIsPaidModalOpen(true);
+                                                                        setPaidModalRow(row.original);
+                                                                }
+                                                                }>Payment</DropdownMenuItem>
+                                                        }
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem >
+                                                        {(row.original.status !== "confirmed") &&
                                                                 < DropdownMenuItem onClick={async () => {
                                                                         setIsPaidModalOpen(true);
                                                                         setPaidModalRow(row.original);

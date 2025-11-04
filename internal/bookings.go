@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/jack-cordery/mirai/db"
@@ -348,7 +349,6 @@ func putBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			return
 		}
 	}
-
 }
 
 func deleteBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
@@ -408,4 +408,120 @@ func deleteBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		w.WriteHeader(http.StatusNoContent)
 	}
 
+}
+
+func postManualPayment(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("booking_id")
+		if id == "" {
+			log.Printf("booking_id in postManualPayment is empty")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		booking_id, err := strconv.ParseInt(id, 10, 32)
+		if err != nil {
+			log.Printf("booking_id is not an integer")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		conn, err := pool.Acquire(ctx)
+		if err != nil {
+			log.Printf("error aquiring pool in deleteBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Release()
+
+		tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			log.Printf("error beginning tx in deleteBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		defer func() {
+			err := tx.Rollback(ctx)
+			if err != nil && err != pgx.ErrTxClosed {
+				panic(err)
+			}
+		}()
+
+		queries := db.New(conn)
+		qtx := queries.WithTx(tx)
+
+		token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
+		if err != nil {
+			log.Printf("The token provided failed in postManualPayment: %v", token)
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("encoding response in postManualPayment failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		valid, err := VerifySession(ctx, qtx, token)
+		if err != nil {
+			log.Printf("verifying session in postManualPayment failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !valid {
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("writing json in postManualPayment failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		} else {
+			session, err := qtx.GetSessionByToken(ctx, token)
+			if err != nil {
+				log.Printf("getting session by token in postManualPayment failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			approver, err := qtx.GetUserById(ctx, session.UserID)
+			if err != nil {
+				log.Printf("getting user by id for user in postManualPayment failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			userRoles, err := qtx.GetRolesForUser(ctx, approver.ID)
+			if err != nil {
+				log.Printf("getting user roles by id for user in postManualPayment failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			isAdmin := slices.Contains(userRoles, RoleAdmin)
+
+			if !isAdmin {
+				log.Printf("user %d has requested to post a manual payment and doesnt have permission to", approver.ID)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			err = qtx.PostManualPayment(ctx, int32(booking_id))
+			if err != nil {
+				log.Printf("posting manual payment failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			err = tx.Commit(ctx)
+			if err != nil {
+				log.Printf("error commiting tx in postManualPayment: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			return
+		}
+	}
 }

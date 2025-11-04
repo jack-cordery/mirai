@@ -81,6 +81,13 @@ GROUP BY
 LIMIT
   1;
 
+-- name: PostManualPayment :exec 
+UPDATE bookings
+SET
+  paid = true
+WHERE
+  id = $1;
+
 -- name: GetAvailabilitySlotById :one
 SELECT
   *

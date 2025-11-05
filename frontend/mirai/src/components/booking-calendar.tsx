@@ -95,6 +95,7 @@ export default function BookingCalendar() {
                                 const [resBookingTypes, resAvailabilitySlots] = await Promise.all([getAllBookingTypes(), getAllAvailability()])
                                 setBookingTypes(resBookingTypes)
                                 setAvailabilitySlots(resAvailabilitySlots)
+                                setSelectedBookingType(resBookingTypes[0])
                         } catch (err) {
                                 toast(`error fetching data ${err}`)
                         }
@@ -130,7 +131,7 @@ export default function BookingCalendar() {
                 <Card className="gap-0 p-0">
                         <CardContent className="relative p-0 md:pr-48">
                                 <div className="flex flex-col border-b">
-                                        <div className="flex border-b p-4 flex-row  gap-2">
+                                        <div className="flex items-center border-b p-4 flex-row  gap-2">
                                                 <h1>
                                                         Select Booking Type
                                                 </h1>
@@ -142,7 +143,7 @@ export default function BookingCalendar() {
                                                         }}
                                                 >
                                                         <SelectTrigger className="w-[180px]">
-                                                                <SelectValue placeholder="Booking Type" />
+                                                                <SelectValue placeholder={selectedBookingType?.title ?? "Select Booking Type"} />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                                 <SelectGroup>

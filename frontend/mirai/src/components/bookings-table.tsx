@@ -21,6 +21,7 @@ import {
         IconChevronRight,
         IconChevronsLeft,
         IconChevronsRight,
+        IconCircleCheck,
         IconCircleCheckFilled,
         IconCircleXFilled,
         IconDotsVertical,
@@ -76,6 +77,7 @@ import { DraggableRow } from "./data-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog } from "@/components/ui/dialog"
 import { CancelModal, PaidModal } from "./booking-table-modals"
+import { ArrowUpDown } from "lucide-react"
 
 export const BookingDataSchema = z.object({
         id: z.number(),
@@ -235,6 +237,10 @@ export function BookingsTable() {
                                                 <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
                                         ) : row.original.status === "cancelled" ? (
                                                 <IconCircleXFilled className="fill-red-500 dark:fill-red-400" />
+                                        ) : row.original.status === "confirmed" ? (
+                                                <IconCircleCheck className="fill-red-500 dark:fill-red-400" />
+                                        ) : row.original.status === "rescheduled" ? (
+                                                <IconCircleXFilled className="fill-red-500 dark:fill-red-400" />
                                         ) : (
                                                 <IconLoader />
                                         )}
@@ -261,7 +267,18 @@ export function BookingsTable() {
                 },
                 {
                         accessorKey: "created_at",
-                        header: "Created At ",
+                        header: ({ column }) => {
+                                return (
+                                        <Button
+                                                variant="ghost"
+                                                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                                                className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-md cursor-pointer"
+                                        >
+                                                Created At
+                                                <ArrowUpDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                )
+                        },
                         cell: ({ row }) => {
                                 if (!row.original.created_at) {
                                         return <p> NULL </p>
@@ -295,7 +312,7 @@ export function BookingsTable() {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem >Reschedule</DropdownMenuItem>
                                                 <DropdownMenuItem >
-                                                        {(row.original.status === "confirmed") &&
+                                                        {!(row.original.status === "cancelled") &&
                                                                 < DropdownMenuItem onClick={async () => {
                                                                         setIsCancelModalOpen(true);
                                                                         setCancelModalRow(row.original);

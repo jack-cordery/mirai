@@ -84,7 +84,13 @@ CREATE TABLE IF NOT EXISTS availability (
   UNIQUE (employee_id, datetime)
 );
 
-CREATE TYPE booking_status AS ENUM ('confirmed', 'cancelled', 'completed');
+CREATE TYPE booking_status AS ENUM(
+  'created',
+  'confirmed',
+  'rescheduled',
+  'cancelled',
+  'completed'
+);
 
 CREATE TABLE IF NOT EXISTS bookings (
   id serial PRIMARY KEY,
@@ -92,8 +98,9 @@ CREATE TABLE IF NOT EXISTS bookings (
   type_id INT NOT NULL REFERENCES booking_types (id) ON DELETE CASCADE,
   paid BOOL NOT NULL,
   cost INT NOT NULL,
-  status booking_status NOT NULL DEFAULT 'confirmed',
+  status booking_status NOT NULL DEFAULT 'created',
   status_updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  status_updated_by VARCHAR(255) NOT NULL,
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -104,4 +111,14 @@ CREATE TABLE IF NOT EXISTS booking_slots (
   availability_slot_id INT NOT NULL REFERENCES availability (id) ON DELETE CASCADE,
   PRIMARY KEY (booking_id, availability_slot_id),
   UNIQUE (availability_slot_id)
+);
+
+CREATE TABLE IF NOT EXISTS booking_history (
+  id serial PRIMARY KEY,
+  booking_id INT NOT NULL REFERENCES bookings (id),
+  status booking_status NOT NULL,
+  start_time TIMESTAMP NOT NULL,
+  end_time TIMESTAMP NOT NULL,
+  changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  changed_by_email VARCHAR(255) NOT NULL
 );

@@ -15,10 +15,14 @@ type TableContextType = {
         setIsPaidModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         isCancelModalOpen: boolean;
         setIsCancelModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+        isConfirmModalOpen: boolean;
+        setIsConfirmModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         paidModalRow: GetAllBookingsResponse | null
         setPaidModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
         cancelModalRow: GetAllBookingsResponse | null
         setCancelModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
+        confirmModalRow: GetAllBookingsResponse | null
+        setConfirmModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
 }
 
 const TableContext = createContext<TableContextType | undefined>(undefined);
@@ -33,8 +37,10 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
         const [bookingData, setBookingData] = React.useState<GetAllBookingsResponse[]>([]);
         const [isPaidModalOpen, setIsPaidModalOpen] = React.useState<boolean>(false);
         const [isCancelModalOpen, setIsCancelModalOpen] = React.useState<boolean>(false);
+        const [isConfirmModalOpen, setIsConfirmModalOpen] = React.useState<boolean>(false);
         const [paidModalRow, setPaidModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [cancelModalRow, setCancelModalRow] = React.useState<GetAllBookingsResponse | null>(null);
+        const [confirmModalRow, setConfirmModalRow] = React.useState<GetAllBookingsResponse | null>(null);
 
         const fetchData = async () => {
                 try {
@@ -68,10 +74,14 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                         setIsPaidModalOpen,
                         isCancelModalOpen,
                         setIsCancelModalOpen,
+                        isConfirmModalOpen,
+                        setIsConfirmModalOpen,
                         paidModalRow,
                         setPaidModalRow,
                         cancelModalRow,
                         setCancelModalRow,
+                        confirmModalRow,
+                        setConfirmModalRow,
                 }}>
                         {children}
                 </TableContext.Provider>

@@ -76,7 +76,7 @@ import { useTableContext } from "@/contexts/table-context"
 import { DraggableRow } from "./data-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog } from "@/components/ui/dialog"
-import { CancelModal, PaidModal } from "./booking-table-modals"
+import { CancelModal, ConfirmModal, PaidModal } from "./booking-table-modals"
 import { ArrowUpDown } from "lucide-react"
 
 export const BookingDataSchema = z.object({
@@ -92,6 +92,7 @@ export const BookingDataSchema = z.object({
         cost: z.number(),
         status: z.string(),
         status_updated_at: z.string(),
+        status_updated_by: z.string(),
         notes: z.string(),
         created_at: z.string(),
         last_edited: z.string(),
@@ -106,7 +107,9 @@ export function BookingsTable() {
                 setIsPaidModalOpen,
                 setPaidModalRow,
                 setCancelModalRow,
-                setIsCancelModalOpen
+                setIsCancelModalOpen,
+                setConfirmModalRow,
+                setIsConfirmModalOpen,
         } = useTableContext();
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =
@@ -259,6 +262,13 @@ export function BookingsTable() {
                         },
                 },
                 {
+                        accessorKey: "status_updated_by",
+                        header: "Status Updated By",
+                        cell: ({ row }) => {
+                                return <p> {row.original.status_updated_by} </p>
+                        },
+                },
+                {
                         accessorKey: "notes",
                         header: "Notes",
                         cell: ({ row }) => {
@@ -318,6 +328,15 @@ export function BookingsTable() {
                                                                         setCancelModalRow(row.original);
                                                                 }
                                                                 }>Cancel</DropdownMenuItem>
+                                                        }
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem >
+                                                        {!(row.original.status === "complete") &&
+                                                                < DropdownMenuItem onClick={async () => {
+                                                                        setIsConfirmModalOpen(true);
+                                                                        setConfirmModalRow(row.original);
+                                                                }
+                                                                }>Confirm</DropdownMenuItem>
                                                         }
                                                 </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -498,6 +517,8 @@ export function BookingsTable() {
                         </div>
                         <PaidModal />
                         <CancelModal />
+                        <ConfirmModal />
+
                 </TabsContent>
         )
 }

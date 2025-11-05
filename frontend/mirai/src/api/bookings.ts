@@ -42,6 +42,7 @@ export type GetBookingResponse = {
   cost: number;
   status: string;
   status_updated_at: string;
+  status_updated_by: string;
   notes: string;
   slot_ids: number[];
   created_at: string;
@@ -70,6 +71,7 @@ export type GetAllBookingsResponse = {
   cost: number;
   status: string;
   status_updated_at: string;
+  status_updated_by: string;
   notes: string;
   created_at: string;
   last_edited: string;
@@ -98,5 +100,17 @@ export async function postCancellation(id: number) {
 
   if (!res.ok) {
     throw new Error(`post manual cancellation failed iwth ${res.status}`);
+  }
+}
+
+export async function postConfirm(id: number) {
+  const res = await fetch(`${apiUrl}/booking/${id}/confirm`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`post manual confirmation failed iwth ${res.status}`);
   }
 }

@@ -76,7 +76,7 @@ import {
 import { useTableContext } from "@/contexts/table-context"
 import { DraggableRow } from "./data-table"
 import { Checkbox } from "@/components/ui/checkbox"
-import { CancelModal, ConfirmModal, PaidModal } from "./booking-table-modals"
+import { CancelModal, CompleteModal, ConfirmModal, PaidModal } from "./booking-table-modals"
 import { ArrowUpDown } from "lucide-react"
 
 export const BookingDataSchema = z.object({
@@ -110,6 +110,8 @@ export function BookingsTable() {
                 setIsCancelModalOpen,
                 setConfirmModalRow,
                 setIsConfirmModalOpen,
+                setCompleteModalRow,
+                setIsCompleteModalOpen,
         } = useTableContext();
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =
@@ -313,34 +315,37 @@ export function BookingsTable() {
                                                 </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-32">
-                                                <DropdownMenuItem >
-                                                        {!row.original.paid &&
-                                                                < DropdownMenuItem onClick={async () => {
-                                                                        setIsPaidModalOpen(true);
-                                                                        setPaidModalRow(row.original);
-                                                                }
-                                                                }>Payment</DropdownMenuItem>
+                                                {!row.original.paid &&
+                                                        < DropdownMenuItem onClick={async () => {
+                                                                setIsPaidModalOpen(true);
+                                                                setPaidModalRow(row.original);
                                                         }
-                                                </DropdownMenuItem>
+                                                        }>Payment</DropdownMenuItem>
+                                                }
                                                 <DropdownMenuItem >Reschedule</DropdownMenuItem>
-                                                <DropdownMenuItem >
-                                                        {!(row.original.status === "cancelled") &&
-                                                                < DropdownMenuItem onClick={async () => {
-                                                                        setIsCancelModalOpen(true);
-                                                                        setCancelModalRow(row.original);
-                                                                }
-                                                                }>Cancel</DropdownMenuItem>
+                                                {!(row.original.status === "cancelled") &&
+                                                        < DropdownMenuItem onClick={async () => {
+                                                                setIsCancelModalOpen(true);
+                                                                setCancelModalRow(row.original);
                                                         }
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem >
-                                                        {!(row.original.status === "complete") &&
-                                                                < DropdownMenuItem onClick={async () => {
-                                                                        setIsConfirmModalOpen(true);
-                                                                        setConfirmModalRow(row.original);
-                                                                }
-                                                                }>Confirm</DropdownMenuItem>
+                                                        }>Cancel</DropdownMenuItem>
+                                                }
+                                                {(row.original.status === "created")
+                                                        &&
+                                                        < DropdownMenuItem onClick={async () => {
+                                                                setIsConfirmModalOpen(true);
+                                                                setConfirmModalRow(row.original);
                                                         }
-                                                </DropdownMenuItem>
+                                                        }>Confirm</DropdownMenuItem>
+                                                }
+                                                {(row.original.status === "confirmed") && (row.original.paid)
+                                                        &&
+                                                        < DropdownMenuItem onClick={async () => {
+                                                                setIsCompleteModalOpen(true);
+                                                                setCompleteModalRow(row.original);
+                                                        }
+                                                        }>Complete</DropdownMenuItem>
+                                                }
                                         </DropdownMenuContent>
                                 </DropdownMenu >
                         ),
@@ -520,6 +525,7 @@ export function BookingsTable() {
                         <PaidModal />
                         <CancelModal />
                         <ConfirmModal />
+                        <CompleteModal />
 
                 </TabsContent>
         )

@@ -1,45 +1,27 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getAllBookingsUser, type GetAllBookingsResponse } from "@/api/bookings"
+import { toast } from "sonner"
+import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpDown } from "lucide-react"
-
-type Booking = {
-        id: number
-        date: string
-        employee: string
-        service: string
-        status: "Paid" | "Pending" | "Cancelled"
-        amount: string
-}
-
-const mockBookings: Booking[] = [
-        { id: 1, date: "2025-10-22", employee: "Jane Smith", service: "Massage", status: "Paid", amount: "$60.00" },
-        { id: 2, date: "2025-10-24", employee: "Mark Johnson", service: "Physio", status: "Pending", amount: "$80.00" },
-        { id: 3, date: "2025-10-28", employee: "Sarah Lee", service: "Yoga Session", status: "Cancelled", amount: "$30.00" },
-        { id: 4, date: "2025-11-02", employee: "Jane Smith", service: "Massage", status: "Paid", amount: "$60.00" },
-]
+import { IconCircleCheck, IconCircleCheckFilled, IconCircleXFilled, IconLoader, IconRefresh } from "@tabler/icons-react"
 
 export default function UserBookings() {
-        const [search, setSearch] = useState("")
-        const [sortAsc, setSortAsc] = useState(true)
-        const [bookings, setBookings] = useState<Booking[]>(mockBookings)
+        const [bookings, setBookings] = useState<GetAllBookingsResponse[]>([])
 
-        const handleSort = () => {
-                const sorted = [...bookings].sort((a, b) =>
-                        sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
-                )
-                setBookings(sorted)
-                setSortAsc(!sortAsc)
+        async function fetchData() {
+                try {
+                        const res = await getAllBookingsUser();
+                        setBookings(res);
+                } catch (err) {
+                        toast("data fetch failed. Please try again later")
+                }
         }
 
-        const filtered = bookings.filter((b) =>
-                b.employee.toLowerCase().includes(search.toLowerCase()) ||
-                b.service.toLowerCase().includes(search.toLowerCase())
-        )
+        useEffect(() => {
+                fetchData()
+        }, [])
 
         return (
                 <Card className="w-full">
@@ -48,58 +30,60 @@ export default function UserBookings() {
                                 <CardDescription>View your previous and upcoming bookings here.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                        <div className="flex flex-col gap-1 w-full max-w-xs">
-                                                <Label htmlFor="search">Search</Label>
-                                                <Input
-                                                        id="search"
-                                                        placeholder="Search by service or employee..."
-                                                        value={search}
-                                                        onChange={(e) => setSearch(e.target.value)}
-                                                />
-                                        </div>
-                                        <Button variant="outline" onClick={handleSort} className="mt-5">
-                                                Sort by Date <ArrowUpDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                </div>
-
                                 <Table>
                                         <TableHeader>
                                                 <TableRow>
                                                         <TableHead>Date</TableHead>
+                                                        <TableHead>Time</TableHead>
                                                         <TableHead>Service</TableHead>
-                                                        <TableHead>Employee</TableHead>
+                                                        <TableHead>Paid</TableHead>
                                                         <TableHead>Status</TableHead>
                                                         <TableHead>Amount</TableHead>
                                                 </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                                {filtered.length === 0 ? (
+                                                {bookings.length === 0 ? (
                                                         <TableRow>
                                                                 <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
                                                                         No bookings found.
                                                                 </TableCell>
                                                         </TableRow>
                                                 ) : (
-                                                        filtered.map((b) => (
+                                                        bookings.map((b) => (
                                                                 <TableRow key={b.id}>
-                                                                        <TableCell>{b.date}</TableCell>
-                                                                        <TableCell>{b.service}</TableCell>
-                                                                        <TableCell>{b.employee}</TableCell>
+                                                                        <TableCell>{format(new Date(b.start_time), "dd-MMM-yy")}</TableCell>
+                                                                        <TableCell>{format(new Date(b.start_time), "HH:mm")}</TableCell>
+                                                                        <TableCell>{b.type_title}</TableCell>
                                                                         <TableCell>
-                                                                                <Badge
-                                                                                        variant={
-                                                                                                b.status === "Paid"
-                                                                                                        ? "default"
-                                                                                                        : b.status === "Pending"
-                                                                                                                ? "secondary"
-                                                                                                                : "destructive"
-                                                                                        }
-                                                                                >
+                                                                                {b.paid ? (
+                                                                                        <p>✅</p>
+
+                                                                                ) : (
+
+                                                                                        <p>❌</p>
+                                                                                )}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                                <Badge variant="outline" className="text-muted-foreground px-1.5">
+                                                                                        {b.status === "completed" ? (
+                                                                                                <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
+                                                                                        ) : b.status === "cancelled" ? (
+                                                                                                <IconCircleXFilled className="fill-red-500 dark:fill-red-400" />
+                                                                                        ) : b.status === "confirmed" ? (
+                                                                                                <IconCircleCheck className="stroke-green-500 dark:stroke-green-400" />
+                                                                                        ) : b.status === "rescheduled" ? (
+                                                                                                <IconRefresh className="stroke-yellow-500 dark:stroke-yellow-400" />
+                                                                                        ) : b.status === "completed" ? (
+                                                                                                <IconCircleXFilled className="fill-green-500 dark:fill-green-400" />
+                                                                                        ) : (
+                                                                                                <IconLoader />
+                                                                                        )}
                                                                                         {b.status}
                                                                                 </Badge>
                                                                         </TableCell>
-                                                                        <TableCell>{b.amount}</TableCell>
+                                                                        <TableCell>
+                                                                                £{(b.cost / 100).toFixed(2)}
+                                                                        </TableCell>
                                                                 </TableRow>
                                                         ))
                                                 )}

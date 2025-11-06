@@ -79,6 +79,20 @@ export type GetAllBookingsResponse = {
   end_time: string;
 };
 
+export async function getAllBookingsUser() {
+  const res = await fetch(`${apiUrl}/booking/user`, {
+    method: "GET",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`get all bookings for user failed with ${res.status}`);
+  }
+
+  return res.json();
+}
+
 export async function postManualPayment(id: number) {
   const res = await fetch(`${apiUrl}/booking/${id}/payment/manual`, {
     method: "POST",
@@ -112,5 +126,17 @@ export async function postConfirm(id: number) {
 
   if (!res.ok) {
     throw new Error(`post manual confirmation failed iwth ${res.status}`);
+  }
+}
+
+export async function postComplete(id: number) {
+  const res = await fetch(`${apiUrl}/booking/${id}/complete`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`post manual completion failed iwth ${res.status}`);
   }
 }

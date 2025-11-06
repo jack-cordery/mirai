@@ -17,12 +17,16 @@ type TableContextType = {
         setIsCancelModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         isConfirmModalOpen: boolean;
         setIsConfirmModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+        isCompleteModalOpen: boolean;
+        setIsCompleteModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         paidModalRow: GetAllBookingsResponse | null
         setPaidModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
         cancelModalRow: GetAllBookingsResponse | null
         setCancelModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
         confirmModalRow: GetAllBookingsResponse | null
         setConfirmModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
+        completeModalRow: GetAllBookingsResponse | null
+        setCompleteModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
 }
 
 const TableContext = createContext<TableContextType | undefined>(undefined);
@@ -38,9 +42,11 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
         const [isPaidModalOpen, setIsPaidModalOpen] = React.useState<boolean>(false);
         const [isCancelModalOpen, setIsCancelModalOpen] = React.useState<boolean>(false);
         const [isConfirmModalOpen, setIsConfirmModalOpen] = React.useState<boolean>(false);
+        const [isCompleteModalOpen, setIsCompleteModalOpen] = React.useState<boolean>(false);
         const [paidModalRow, setPaidModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [cancelModalRow, setCancelModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [confirmModalRow, setConfirmModalRow] = React.useState<GetAllBookingsResponse | null>(null);
+        const [completeModalRow, setCompleteModalRow] = React.useState<GetAllBookingsResponse | null>(null);
 
         const fetchData = async () => {
                 try {
@@ -76,12 +82,16 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                         setIsCancelModalOpen,
                         isConfirmModalOpen,
                         setIsConfirmModalOpen,
+                        isCompleteModalOpen,
+                        setIsCompleteModalOpen,
                         paidModalRow,
                         setPaidModalRow,
                         cancelModalRow,
                         setCancelModalRow,
                         confirmModalRow,
                         setConfirmModalRow,
+                        completeModalRow,
+                        setCompleteModalRow,
                 }}>
                         {children}
                 </TableContext.Provider>

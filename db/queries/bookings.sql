@@ -4,6 +4,97 @@ SELECT
 FROM
   bookings;
 
+-- name: GetAllBookingsWithJoinByID :many
+WITH
+  unit AS (
+    SELECT
+      $2::integer AS minutes
+  ),
+  cancelled_history AS (
+    SELECT
+      h.booking_id,
+      (
+        ARRAY_AGG(
+          h.start_time
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_start_time,
+      (
+        ARRAY_AGG(
+          h.end_time
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_end_time
+    FROM
+      booking_history h
+    GROUP BY
+      h.booking_id
+  )
+SELECT
+  b.id,
+  b.user_id,
+  u.name AS user_name,
+  u.surname AS user_surname,
+  u.email AS user_email,
+  u.last_login AS user_last_login,
+  b.type_id,
+  bt.title AS type_title,
+  b.paid,
+  b.cost,
+  b.status,
+  b.status_updated_at,
+  b.status_updated_by,
+  b.notes,
+  b.created_at,
+  b.last_edited,
+  CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_start_time
+    ELSE MIN(a.datetime)::timestamp
+  END AS start_time,
+  CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_end_time
+    ELSE (
+      MAX(a.datetime) + (
+        SELECT
+          minutes
+        FROM
+          unit
+      ) * INTERVAL '1 minute'
+    )::timestamp
+  END AS end_time
+FROM
+  bookings b
+  JOIN users u ON b.user_id = u.id
+  JOIN booking_types bt ON b.type_id = bt.id
+  LEFT JOIN booking_slots bs ON b.id = bs.booking_id
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+  LEFT JOIN cancelled_history ch ON b.id = ch.booking_id
+WHERE
+  b.user_id = $1
+GROUP BY
+  b.id,
+  b.user_id,
+  u.name,
+  u.surname,
+  u.email,
+  u.last_login,
+  b.type_id,
+  bt.title,
+  b.paid,
+  b.cost,
+  b.status,
+  b.status_updated_at,
+  b.status_updated_by,
+  b.notes,
+  b.created_at,
+  b.last_edited,
+  ch.cancelled_start_time,
+  ch.cancelled_end_time
+ORDER BY
+  b.created_at DESC;
+
 -- name: GetAllBookingsWithJoin :many
 WITH
   unit AS (

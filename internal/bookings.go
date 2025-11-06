@@ -280,6 +280,98 @@ func getBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	}
 }
 
+func getBookingUser(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
+		if err != nil {
+			log.Printf("The token provided failed in getBookingUser: %v with %v", token, err)
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("encoding response in getBookingUser failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		conn, err := pool.Acquire(ctx)
+		if err != nil {
+			log.Printf("error aquiring pool in getBookingUser: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Release()
+
+		queries := db.New(conn)
+
+		valid, err := VerifySession(ctx, queries, token)
+		if err != nil {
+			log.Printf("verifying session in getBookingUser failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !valid {
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("writing json in getBookingUser failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		} else {
+			session, err := queries.GetSessionByToken(ctx, token)
+			if err != nil {
+				log.Printf("getting session by token in getBookingUser failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			approver, err := queries.GetUserById(ctx, session.UserID)
+			if err != nil {
+				log.Printf("getting user by id for user in getBookingUser failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			userRoles, err := queries.GetRolesForUser(ctx, approver.ID)
+			if err != nil {
+				log.Printf("getting user roles by id for user in getBookingUser failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			isUser := slices.Contains(userRoles, RoleUser)
+
+			if !isUser {
+				log.Printf("user %d has requested to get booking data and doesnt have permission to", approver.ID)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			bookingData, err := queries.GetAllBookingsWithJoinByID(ctx, db.GetAllBookingsWithJoinByIDParams{
+				UserID:  approver.ID,
+				Column2: Unit,
+			})
+			if err != nil {
+				log.Printf("getting booking data in getBookingUser failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			err = json.NewEncoder(w).Encode(bookingData)
+			if err != nil {
+				log.Printf("encoding booking data in getBookingUser failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+}
+
 func putBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

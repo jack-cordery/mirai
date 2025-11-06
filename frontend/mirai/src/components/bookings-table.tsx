@@ -26,6 +26,7 @@ import {
         IconCircleXFilled,
         IconDotsVertical,
         IconLoader,
+        IconRefresh,
 } from "@tabler/icons-react"
 import {
         flexRender,
@@ -75,7 +76,6 @@ import {
 import { useTableContext } from "@/contexts/table-context"
 import { DraggableRow } from "./data-table"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog } from "@/components/ui/dialog"
 import { CancelModal, ConfirmModal, PaidModal } from "./booking-table-modals"
 import { ArrowUpDown } from "lucide-react"
 
@@ -241,9 +241,11 @@ export function BookingsTable() {
                                         ) : row.original.status === "cancelled" ? (
                                                 <IconCircleXFilled className="fill-red-500 dark:fill-red-400" />
                                         ) : row.original.status === "confirmed" ? (
-                                                <IconCircleCheck className="fill-red-500 dark:fill-red-400" />
+                                                <IconCircleCheck className="stroke-green-500 dark:stroke-green-400" />
                                         ) : row.original.status === "rescheduled" ? (
-                                                <IconCircleXFilled className="fill-red-500 dark:fill-red-400" />
+                                                <IconRefresh className="stroke-yellow-500 dark:stroke-yellow-400" />
+                                        ) : row.original.status === "completed" ? (
+                                                <IconCircleXFilled className="fill-green-500 dark:fill-green-400" />
                                         ) : (
                                                 <IconLoader />
                                         )}

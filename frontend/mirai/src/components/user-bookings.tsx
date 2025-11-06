@@ -57,9 +57,7 @@ export default function UserBookings() {
                                                                         <TableCell>
                                                                                 {b.paid ? (
                                                                                         <p>✅</p>
-
                                                                                 ) : (
-
                                                                                         <p>❌</p>
                                                                                 )}
                                                                         </TableCell>

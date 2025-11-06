@@ -131,6 +131,7 @@ func SetupServer() {
 	mux.HandleFunc("DELETE /booking/{booking_id}", deleteBooking(pool, ctx))
 	mux.HandleFunc("POST /booking/{booking_id}/payment/manual", postManualPayment(pool, ctx, a))
 	mux.HandleFunc("POST /booking/{booking_id}/cancel", postManualStatus(pool, ctx, a, db.BookingStatusCancelled))
+	mux.HandleFunc("POST /booking/{booking_id}/confirm", postManualStatus(pool, ctx, a, db.BookingStatusConfirmed))
 	mux.HandleFunc("POST /booking/{booking_id}/complete", postManualStatus(pool, ctx, a, db.BookingStatusCompleted))
 
 	mux.HandleFunc("POST /user", postUser(pool, ctx))

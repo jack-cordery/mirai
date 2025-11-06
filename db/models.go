@@ -14,9 +14,11 @@ import (
 type BookingStatus string
 
 const (
-	BookingStatusConfirmed BookingStatus = "confirmed"
-	BookingStatusCancelled BookingStatus = "cancelled"
-	BookingStatusCompleted BookingStatus = "completed"
+	BookingStatusCreated     BookingStatus = "created"
+	BookingStatusConfirmed   BookingStatus = "confirmed"
+	BookingStatusRescheduled BookingStatus = "rescheduled"
+	BookingStatusCancelled   BookingStatus = "cancelled"
+	BookingStatusCompleted   BookingStatus = "completed"
 )
 
 func (e *BookingStatus) Scan(src interface{}) error {
@@ -114,9 +116,20 @@ type Booking struct {
 	Cost            int32            `json:"cost"`
 	Status          BookingStatus    `json:"status"`
 	StatusUpdatedAt pgtype.Timestamp `json:"status_updated_at"`
+	StatusUpdatedBy string           `json:"status_updated_by"`
 	Notes           pgtype.Text      `json:"notes"`
 	CreatedAt       pgtype.Timestamp `json:"created_at"`
 	LastEdited      pgtype.Timestamp `json:"last_edited"`
+}
+
+type BookingHistory struct {
+	ID             int32            `json:"id"`
+	BookingID      int32            `json:"booking_id"`
+	Status         BookingStatus    `json:"status"`
+	StartTime      pgtype.Timestamp `json:"start_time"`
+	EndTime        pgtype.Timestamp `json:"end_time"`
+	ChangedAt      pgtype.Timestamp `json:"changed_at"`
+	ChangedByEmail string           `json:"changed_by_email"`
 }
 
 type BookingSlot struct {

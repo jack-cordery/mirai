@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS booking_history;
+
 DROP TABLE IF EXISTS booking_slots;
 
 DROP TABLE IF EXISTS bookings;

@@ -24,6 +24,7 @@ type GetBookingResponse struct {
 	Cost            int32            `json:"cost"`
 	Status          db.BookingStatus `json:"status"`
 	StatusUpdatedAt pgtype.Timestamp `json:"status_updated_at"`
+	StatusUpdatedBy string           `json:"status_updated_by"`
 	Notes           pgtype.Text      `json:"notes"`
 	SlotIDs         []int32          `json:"slot_ids"`
 	CreatedAt       pgtype.Timestamp `json:"created_at"`
@@ -39,6 +40,7 @@ func responseFromDBBooking(booking db.GetBookingByIdRow) GetBookingResponse {
 		Cost:            booking.Cost,
 		Status:          booking.Status,
 		StatusUpdatedAt: booking.StatusUpdatedAt,
+		StatusUpdatedBy: booking.StatusUpdatedBy,
 		Notes:           booking.Notes,
 		SlotIDs:         booking.SlotIds,
 		CreatedAt:       booking.CreatedAt,
@@ -65,6 +67,7 @@ func (r PostBookingRequest) ToDBParams(cost int32, paid bool) db.CreateBookingPa
 		Cost:    cost,
 		Paid:    paid,
 		Column6: r.AvailabilitySlots,
+		Column7: Unit,
 	}
 }
 
@@ -147,7 +150,7 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			)
 		}
 
-		bookingID, err := qtx.CreateBooking(ctx, bookingRequest.ToDBParams(cost, false))
+		bookingRow, err := qtx.CreateBooking(ctx, bookingRequest.ToDBParams(cost, false))
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
@@ -174,6 +177,26 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			return
 		}
 
+		user, err := qtx.GetUserById(ctx, bookingRequest.UserID)
+		if err != nil {
+			log.Printf("error getting user email in postBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
+			BookingID:      bookingRow.BookingID,
+			StartTime:      bookingRow.StartTime,
+			EndTime:        bookingRow.EndTime,
+			Status:         db.BookingStatusCreated,
+			ChangedByEmail: user.Email,
+		})
+		if err != nil {
+			log.Printf("error creating booking history in postBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		err = tx.Commit(ctx)
 		if err != nil {
 			log.Printf("error commiting tx in postBooking: %v", err)
@@ -182,7 +205,7 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		}
 
 		response := PostBookingResponse{
-			BookingID: bookingID,
+			BookingID: bookingRow.BookingID,
 		}
 
 		w.WriteHeader(http.StatusCreated)
@@ -623,20 +646,46 @@ func postManualStatus(pool *pgxpool.Pool, ctx context.Context, a *AuthParams, ne
 			isAdmin := slices.Contains(userRoles, RoleAdmin)
 
 			if !isAdmin {
-				log.Printf("user %d has requested to post a manual payment and doesnt have permission to", approver.ID)
+				log.Printf("user %d has requested to post a manual status and doesnt have permission to", approver.ID)
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 
 			err = qtx.UpdateBookingStatus(ctx, db.UpdateBookingStatusParams{
-				ID:     int32(booking_id),
-				Status: newStatus,
+				ID:              int32(booking_id),
+				Status:          newStatus,
+				StatusUpdatedBy: approver.Email,
 			})
 			if err != nil {
 				log.Printf("updating booking status failed with %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+
+			bookingRow, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{
+				Column1: Unit,
+				ID:      int32(booking_id),
+			})
+
+			if err != nil {
+				log.Printf("getting booking data in post manual status with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
+				BookingID:      bookingRow.ID,
+				StartTime:      bookingRow.StartTime,
+				EndTime:        bookingRow.EndTime,
+				Status:         newStatus,
+				ChangedByEmail: bookingRow.StatusUpdatedBy,
+			})
+			if err != nil {
+				log.Printf("creating booking history in post manual status with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
 			if newStatus == db.BookingStatusCancelled {
 				err = qtx.FreeAvailabilitySlot(ctx, int32(booking_id))
 				if err != nil {

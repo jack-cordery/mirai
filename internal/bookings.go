@@ -185,11 +185,13 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		}
 
 		err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
-			BookingID:      bookingRow.BookingID,
-			StartTime:      bookingRow.StartTime,
-			EndTime:        bookingRow.EndTime,
-			Status:         db.BookingStatusCreated,
-			ChangedByEmail: user.Email,
+			BookingID:       bookingRow.BookingID,
+			StartTime:       bookingRow.StartTime,
+			EmployeeName:    bookingRow.EmployeeName,
+			EmployeeSurname: bookingRow.EmployeeSurname,
+			EndTime:         bookingRow.EndTime,
+			Status:          db.BookingStatusCreated,
+			ChangedByEmail:  user.Email,
 		})
 		if err != nil {
 			log.Printf("error creating booking history in postBooking: %v", err)
@@ -766,11 +768,14 @@ func postManualStatus(pool *pgxpool.Pool, ctx context.Context, a *AuthParams, ne
 			}
 
 			err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
-				BookingID:      bookingRow.ID,
-				StartTime:      bookingRow.StartTime,
-				EndTime:        bookingRow.EndTime,
-				Status:         newStatus,
-				ChangedByEmail: bookingRow.StatusUpdatedBy,
+				BookingID:       bookingRow.ID,
+				EmployeeName:    bookingRow.EmployeeName,
+				EmployeeSurname: bookingRow.EmployeeSurname,
+				EmployeeEmail:   bookingRow.EmployeeEmail,
+				StartTime:       bookingRow.StartTime,
+				EndTime:         bookingRow.EndTime,
+				Status:          newStatus,
+				ChangedByEmail:  bookingRow.StatusUpdatedBy,
 			})
 			if err != nil {
 				log.Printf("creating booking history in post manual status with %v", err)

@@ -216,9 +216,9 @@ func (q *Queries) CreateBookingSlot(ctx context.Context, arg CreateBookingSlotPa
 
 const createBookingType = `-- name: CreateBookingType :one
 INSERT INTO
-  booking_types (title, description, fixed, cost)
+  booking_types (title, description, fixed, cost, duration)
 VALUES
-  ($1, $2, $3, $4)
+  ($1, $2, $3, $4, $5)
 RETURNING
   id
 `
@@ -228,6 +228,7 @@ type CreateBookingTypeParams struct {
 	Description string `json:"description"`
 	Fixed       bool   `json:"fixed"`
 	Cost        int32  `json:"cost"`
+	Duration    int32  `json:"duration"`
 }
 
 func (q *Queries) CreateBookingType(ctx context.Context, arg CreateBookingTypeParams) (int32, error) {
@@ -236,6 +237,7 @@ func (q *Queries) CreateBookingType(ctx context.Context, arg CreateBookingTypePa
 		arg.Description,
 		arg.Fixed,
 		arg.Cost,
+		arg.Duration,
 	)
 	var id int32
 	err := row.Scan(&id)
@@ -392,7 +394,7 @@ func (q *Queries) GetAllAvailabilitySlots(ctx context.Context) ([]Availability, 
 
 const getAllBookingTypes = `-- name: GetAllBookingTypes :many
 SELECT
-  id, title, description, fixed, cost, created_at, last_edited
+  id, title, description, fixed, cost, duration, created_at, last_edited
 FROM
   booking_types
 `
@@ -412,6 +414,7 @@ func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error)
 			&i.Description,
 			&i.Fixed,
 			&i.Cost,
+			&i.Duration,
 			&i.CreatedAt,
 			&i.LastEdited,
 		); err != nil {
@@ -954,7 +957,7 @@ func (q *Queries) GetBookingById(ctx context.Context, id int32) (GetBookingByIdR
 
 const getBookingTypeById = `-- name: GetBookingTypeById :one
 SELECT
-  id, title, description, fixed, cost, created_at, last_edited
+  id, title, description, fixed, cost, duration, created_at, last_edited
 FROM
   booking_types
 WHERE
@@ -972,6 +975,7 @@ func (q *Queries) GetBookingTypeById(ctx context.Context, id int32) (BookingType
 		&i.Description,
 		&i.Fixed,
 		&i.Cost,
+		&i.Duration,
 		&i.CreatedAt,
 		&i.LastEdited,
 	)
@@ -1312,6 +1316,7 @@ SET
   description = $3,
   fixed = $4,
   cost = $5,
+  duration = $6,
   created_at = DEFAULT,
   last_edited = DEFAULT
 WHERE
@@ -1326,6 +1331,7 @@ type UpdateBookingTypeParams struct {
 	Description string `json:"description"`
 	Fixed       bool   `json:"fixed"`
 	Cost        int32  `json:"cost"`
+	Duration    int32  `json:"duration"`
 }
 
 func (q *Queries) UpdateBookingType(ctx context.Context, arg UpdateBookingTypeParams) (int32, error) {
@@ -1335,6 +1341,7 @@ func (q *Queries) UpdateBookingType(ctx context.Context, arg UpdateBookingTypePa
 		arg.Description,
 		arg.Fixed,
 		arg.Cost,
+		arg.Duration,
 	)
 	var id int32
 	err := row.Scan(&id)

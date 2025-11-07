@@ -21,6 +21,7 @@ type GetBookingTypeResponse struct {
 	Description string           `json:"description"`
 	Fixed       bool             `json:"fixed"`
 	Cost        int32            `json:"cost"`
+	Duration    int32            `json:"duration"` // minutes
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	LastEdited  pgtype.Timestamp `json:"last_edited"`
 }
@@ -32,6 +33,7 @@ func responseFromDBBookingType(bookingType db.BookingType) GetBookingTypeRespons
 		Description: bookingType.Description,
 		Fixed:       bookingType.Fixed,
 		Cost:        bookingType.Cost,
+		Duration:    bookingType.Duration,
 		CreatedAt:   bookingType.CreatedAt,
 		LastEdited:  bookingType.LastEdited,
 	}
@@ -43,6 +45,7 @@ type PostBookingTypeRequest struct {
 	Description string `json:"description"`
 	Fixed       bool   `json:"fixed"`
 	Cost        int32  `json:"cost"`
+	Duration    int32  `json:"duration"` // minutes
 }
 
 func (p PostBookingTypeRequest) ToDBParams() db.CreateBookingTypeParams {
@@ -51,6 +54,7 @@ func (p PostBookingTypeRequest) ToDBParams() db.CreateBookingTypeParams {
 		Description: p.Description,
 		Fixed:       p.Fixed,
 		Cost:        p.Cost,
+		Duration:    p.Duration / Unit,
 	}
 }
 
@@ -63,6 +67,7 @@ type PutBookingTypeRequest struct {
 	Description string `json:"description"`
 	Fixed       bool   `json:"fixed"`
 	Cost        int32  `json:"cost"`
+	Duration    int32  `json:"duration"` // minutes
 }
 
 type PutBookingTypeResponse struct {
@@ -77,8 +82,10 @@ func (r PutBookingTypeRequest) ToDBParams(bookingTypeID int32) db.UpdateBookingT
 		Description: r.Description,
 		Fixed:       r.Fixed,
 		Cost:        r.Cost,
+		Duration:    r.Duration / Unit,
 	}
 }
+
 func postBookingType(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var bookingTypeRequest PostBookingTypeRequest

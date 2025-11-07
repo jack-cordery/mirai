@@ -20,6 +20,7 @@ export type BookingType = {
   description: string;
   fixed: boolean;
   cost: number;
+  duration: number;
   created_at: string;
   last_edited: string;
 };

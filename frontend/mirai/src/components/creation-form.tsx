@@ -21,14 +21,27 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { postBookingType } from "@/api/booking-type"
 import { toast } from "sonner"
 import { postEmployee } from "@/api/employee"
-
+import { DurationSelector } from "./ui/duration-selector"
 
 export function BookingTypeFormCard() {
+        const rawUnit = import.meta.env.VITE_TIME_SLOT_DURATION;
+        const unit = rawUnit ? Number(rawUnit) : NaN;
+
+        if (
+                !Number.isInteger(unit)
+        ) {
+                throw new Error(
+                        `invalid config vars unit ${rawUnit}`,
+                );
+        }
+
+
         const [formData, setFormData] = useState({
                 title: "",
                 description: "",
                 cost: 0,
                 fixed: false,
+                duration: unit,
         });
 
         const handleChange = (field: string, value: any) => {
@@ -43,6 +56,7 @@ export function BookingTypeFormCard() {
                                 description: formData.description,
                                 cost: formData.cost * 100,
                                 fixed: formData.fixed,
+                                duration: formData.duration,
                         })
                         toast(`booking type ${formData.title} created`)
                         setFormData({
@@ -50,6 +64,7 @@ export function BookingTypeFormCard() {
                                 description: "",
                                 cost: 0,
                                 fixed: false,
+                                duration: unit,
                         })
                 } catch (err) {
                         toast("creation failed")
@@ -82,6 +97,10 @@ export function BookingTypeFormCard() {
                                                         rows={4}
                                                         onChange={(e) => handleChange("description", e.target.value)}
                                                 />
+                                        </div>
+                                        <div className="grid gap-3">
+                                                <Label htmlFor="cost">Duration</Label>
+                                                <DurationSelector formData={formData} handleChange={handleChange} unit={unit} />
                                         </div>
                                         <div className="grid gap-3">
                                                 <Label htmlFor="cost">Cost</Label>

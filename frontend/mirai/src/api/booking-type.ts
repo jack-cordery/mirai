@@ -5,6 +5,7 @@ export async function postBookingType(postRequest: {
   description: string;
   fixed: boolean;
   cost: number;
+  duration: number;
 }) {
   const res = await fetch(`${apiUrl}/booking_type`, {
     method: "POST",

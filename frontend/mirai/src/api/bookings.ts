@@ -65,6 +65,11 @@ export type GetAllBookingsResponse = {
   user_surname: string;
   user_email: string;
   user_last_login: string;
+  employee_id: number;
+  employee_name: string;
+  employee_surname: string;
+  employee_email: string;
+  employee_title: string;
   type_id: number;
   type_title: string;
   paid: boolean;

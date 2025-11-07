@@ -14,6 +14,7 @@ export default function UserBookings() {
                 try {
                         const res = await getAllBookingsUser();
                         setBookings(res);
+                        console.log(res);
                 } catch (err) {
                         toast("data fetch failed. Please try again later")
                 }
@@ -35,6 +36,7 @@ export default function UserBookings() {
                                                 <TableRow>
                                                         <TableHead>Date</TableHead>
                                                         <TableHead>Time</TableHead>
+                                                        <TableHead>Provider</TableHead>
                                                         <TableHead>Service</TableHead>
                                                         <TableHead>Paid</TableHead>
                                                         <TableHead>Status</TableHead>
@@ -53,6 +55,7 @@ export default function UserBookings() {
                                                                 <TableRow key={b.id}>
                                                                         <TableCell>{format(new Date(b.start_time), "dd-MMM-yy")}</TableCell>
                                                                         <TableCell>{format(new Date(b.start_time), "HH:mm")}</TableCell>
+                                                                        <TableCell>{b.employee_name} {b.employee_surname}</TableCell>
                                                                         <TableCell>{b.type_title}</TableCell>
                                                                         <TableCell>
                                                                                 {b.paid ? (

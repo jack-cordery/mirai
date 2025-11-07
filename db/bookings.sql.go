@@ -99,7 +99,8 @@ WITH
       slot_insert s
       JOIN availability a ON s.availability_slot_id = a.id
     GROUP BY
-      s.booking_id
+      s.booking_id,
+      a.employee_id
   )
 SELECT
   nb.id AS booking_id,
@@ -545,15 +546,15 @@ SELECT
     )::timestamp
   END AS end_time,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_name::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
   END AS employee_name,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_surname::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_surname::text
     ELSE e.surname::text
   END AS employee_surname,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_email::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_email::text
     ELSE e.email::text
   END AS employee_email
 FROM
@@ -581,8 +582,14 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.name,
+  e.surname,
+  e.email,
   ch.cancelled_start_time,
-  ch.cancelled_end_time
+  ch.cancelled_end_time,
+  ch.cancelled_employee_name,
+  ch.cancelled_employee_surname,
+  ch.cancelled_employee_email
 ORDER BY
   b.created_at DESC
 `
@@ -735,15 +742,15 @@ SELECT
     )::timestamp
   END AS end_time,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_name::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
   END AS employee_name,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_surname::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_surname::text
     ELSE e.surname::text
   END AS employee_surname,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_email::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_email::text
     ELSE e.email::text
   END AS employee_email
 FROM
@@ -754,7 +761,8 @@ FROM
   LEFT JOIN availability a ON bs.availability_slot_id = a.id
   LEFT JOIN cancelled_history ch ON b.id = ch.booking_id
   LEFT JOIN employees e ON e.id = a.employee_id
-WHERE b.user_id = $1
+WHERE
+  b.user_id = $1
 GROUP BY
   b.id,
   b.user_id,
@@ -772,8 +780,14 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.name,
+  e.surname,
+  e.email,
   ch.cancelled_start_time,
-  ch.cancelled_end_time
+  ch.cancelled_end_time,
+  ch.cancelled_employee_name,
+  ch.cancelled_employee_surname,
+  ch.cancelled_employee_email
 ORDER BY
   b.created_at DESC
 `
@@ -1046,15 +1060,15 @@ SELECT
     )::timestamp
   END AS end_time,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_name::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
   END AS employee_name,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_surname::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_surname::text
     ELSE e.surname::text
   END AS employee_surname,
   CASE
-    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_email::text
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_email::text
     ELSE e.email::text
   END AS employee_email
 FROM
@@ -1084,8 +1098,14 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.name,
+  e.surname,
+  e.email,
   ch.cancelled_start_time,
-  ch.cancelled_end_time
+  ch.cancelled_end_time,
+  ch.cancelled_employee_name,
+  ch.cancelled_employee_surname,
+  ch.cancelled_employee_email
 ORDER BY
   b.created_at DESC
 `

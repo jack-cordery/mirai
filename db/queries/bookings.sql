@@ -26,7 +26,28 @@ WITH
           ORDER BY
             h.changed_at DESC
         )
-      ) [1] AS cancelled_end_time
+      ) [1] AS cancelled_end_time,
+      (
+        ARRAY_AGG(
+          h.employee_name
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_name,
+      (
+        ARRAY_AGG(
+          h.employee_surname
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_surname,
+      (
+        ARRAY_AGG(
+          h.employee_email
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_email
     FROM
       booking_history h
     GROUP BY
@@ -39,11 +60,6 @@ SELECT
   u.surname AS user_surname,
   u.email AS user_email,
   u.last_login AS user_last_login,
-  e.id AS employee_id,
-  e.email AS employee_email,
-  e.name AS employee_name,
-  e.surname AS employee_surname,
-  e.title AS employee_title,
   b.type_id,
   bt.title AS type_title,
   b.paid,
@@ -68,17 +84,28 @@ SELECT
           unit
       ) * INTERVAL '1 minute'
     )::timestamp
-  END AS end_time
+  END AS end_time,
+  CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_name::text
+    ELSE e.name::text
+  END AS employee_name,
+  CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_surname::text
+    ELSE e.surname::text
+  END AS employee_surname,
+  CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employer_email::text
+    ELSE e.email::text
+  END AS employee_email
 FROM
   bookings b
   JOIN users u ON b.user_id = u.id
   JOIN booking_types bt ON b.type_id = bt.id
   LEFT JOIN booking_slots bs ON b.id = bs.booking_id
   LEFT JOIN availability a ON bs.availability_slot_id = a.id
-  LEFT JOIN employees e ON e.id = a.employee_id
   LEFT JOIN cancelled_history ch ON b.id = ch.booking_id
-WHERE
-  b.user_id = $1
+  LEFT JOIN employees e ON e.id = a.employee_id
+WHERE u.id = $1
 GROUP BY
   b.id,
   b.user_id,
@@ -86,11 +113,6 @@ GROUP BY
   u.surname,
   u.email,
   u.last_login,
-  e.id,
-  e.email,
-  e.name,
-  e.surname,
-  e.title,
   b.type_id,
   bt.title,
   b.paid,

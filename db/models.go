@@ -123,13 +123,16 @@ type Booking struct {
 }
 
 type BookingHistory struct {
-	ID             int32            `json:"id"`
-	BookingID      int32            `json:"booking_id"`
-	Status         BookingStatus    `json:"status"`
-	StartTime      pgtype.Timestamp `json:"start_time"`
-	EndTime        pgtype.Timestamp `json:"end_time"`
-	ChangedAt      pgtype.Timestamp `json:"changed_at"`
-	ChangedByEmail string           `json:"changed_by_email"`
+	ID              int32            `json:"id"`
+	BookingID       int32            `json:"booking_id"`
+	EmployeeName    string           `json:"employee_name"`
+	EmployeeSurname string           `json:"employee_surname"`
+	EmployeeEmail   string           `json:"employee_email"`
+	Status          BookingStatus    `json:"status"`
+	StartTime       pgtype.Timestamp `json:"start_time"`
+	EndTime         pgtype.Timestamp `json:"end_time"`
+	ChangedAt       pgtype.Timestamp `json:"changed_at"`
+	ChangedByEmail  string           `json:"changed_by_email"`
 }
 
 type BookingSlot struct {

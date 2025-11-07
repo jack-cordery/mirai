@@ -39,6 +39,11 @@ SELECT
   u.surname AS user_surname,
   u.email AS user_email,
   u.last_login AS user_last_login,
+  e.id AS employee_id,
+  e.email AS employee_email,
+  e.name AS employee_name,
+  e.surname AS employee_surname,
+  e.title AS employee_title,
   b.type_id,
   bt.title AS type_title,
   b.paid,
@@ -70,6 +75,7 @@ FROM
   JOIN booking_types bt ON b.type_id = bt.id
   LEFT JOIN booking_slots bs ON b.id = bs.booking_id
   LEFT JOIN availability a ON bs.availability_slot_id = a.id
+  LEFT JOIN employees e ON e.id = a.employee_id
   LEFT JOIN cancelled_history ch ON b.id = ch.booking_id
 WHERE
   b.user_id = $1
@@ -80,6 +86,11 @@ GROUP BY
   u.surname,
   u.email,
   u.last_login,
+  e.id,
+  e.email,
+  e.name,
+  e.surname,
+  e.title,
   b.type_id,
   bt.title,
   b.paid,
@@ -130,6 +141,11 @@ SELECT
   u.surname AS user_surname,
   u.email AS user_email,
   u.last_login AS user_last_login,
+  e.id AS employee_id,
+  e.email AS employee_email,
+  e.name AS employee_name,
+  e.surname AS employee_surname,
+  e.title AS employee_title,
   b.type_id,
   bt.title AS type_title,
   b.paid,
@@ -161,6 +177,7 @@ FROM
   JOIN booking_types bt ON b.type_id = bt.id
   LEFT JOIN booking_slots bs ON b.id = bs.booking_id
   LEFT JOIN availability a ON bs.availability_slot_id = a.id
+  LEFT JOIN employees e ON e.id = a.employee_id
   LEFT JOIN cancelled_history ch ON b.id = ch.booking_id
 GROUP BY
   b.id,
@@ -169,6 +186,11 @@ GROUP BY
   u.surname,
   u.email,
   u.last_login,
+  e.id,
+  e.email,
+  e.name,
+  e.surname,
+  e.title,
   b.type_id,
   bt.title,
   b.paid,

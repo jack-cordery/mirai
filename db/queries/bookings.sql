@@ -677,9 +677,9 @@ RETURNING
 
 -- name: CreateBookingType :one 
 INSERT INTO
-  booking_types (title, description, fixed, cost)
+  booking_types (title, description, fixed, cost, duration)
 VALUES
-  ($1, $2, $3, $4)
+  ($1, $2, $3, $4, $5)
 RETURNING
   id;
 
@@ -691,6 +691,7 @@ SET
   description = $3,
   fixed = $4,
   cost = $5,
+  duration = $6,
   created_at = DEFAULT,
   last_edited = DEFAULT
 WHERE

@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS booking_types (
   description TEXT NOT NULL,
   fixed BOOL NOT NULL,
   cost INT NOT NULL,
+  duration INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (title, description)

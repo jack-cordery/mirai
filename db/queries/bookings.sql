@@ -105,7 +105,7 @@ FROM
   LEFT JOIN availability a ON bs.availability_slot_id = a.id
   LEFT JOIN cancelled_history ch ON b.id = ch.booking_id
   LEFT JOIN employees e ON e.id = a.employee_id
-WHERE u.id = $1
+WHERE b.user_id = $1
 GROUP BY
   b.id,
   b.user_id,

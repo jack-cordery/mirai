@@ -1,0 +1,66 @@
+import { getAllAvailability } from "@/api/availability";
+import SchedulerWrapper from "@/components/schedule/_components/view/schedular-view-filteration";
+import { useScheduler } from "@/providers/schedular-provider";
+import type { BookingType, Employee } from "@/types/booking";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { type Option } from "@/types/index"
+import { availabilitySlotsToEvents } from "@/lib/utils";
+import { getAllBookingTypes } from "@/api/booking-type";
+import { getAllEmployees } from "@/api/employee";
+
+const UNIT = 30;
+const FETCH_DURATION = 60; // seconds
+
+function bookingTypesToOptions(bookingTypes: BookingType[]): Option[] {
+        return bookingTypes.map((bookingType) => {
+                return {
+                        id: bookingType.type_id,
+                        label: bookingType.title,
+                }
+        })
+
+}
+function employeesToOptions(employees: Employee[]): Option[] {
+        return employees.map((employee) => {
+                return {
+                        id: employee.employee_id,
+                        label: `${employee.name} ${employee.surname}`,
+                }
+        })
+
+}
+
+
+export default function Scheduler() {
+        const { dispatch, setEmployeeOptions, setTypeOptions } = useScheduler()
+        useEffect(() => {
+                async function fetchEvents() {
+                        try {
+                                const [availabilityData, bookingTypeData, employeeData] = await Promise.all([getAllAvailability(), getAllBookingTypes(), getAllEmployees()])
+                                const events = availabilitySlotsToEvents(availabilityData, UNIT)
+                                const typeOptions = bookingTypesToOptions(bookingTypeData)
+                                const employeeOptions = employeesToOptions(employeeData)
+                                dispatch({ type: "SET_EVENTS", payload: events })
+                                setTypeOptions(typeOptions)
+                                setEmployeeOptions(employeeOptions)
+                        } catch (error) {
+                                toast("failed to fetch availability")
+                        }
+                }
+
+                fetchEvents();
+                const interval = setInterval(fetchEvents, 1_000 * FETCH_DURATION)
+                return () => clearInterval(interval)
+        }, [])
+        return (
+                <SchedulerWrapper
+                        stopDayEventSummary={true}
+                        classNames={{
+                                tabs: {
+                                        panel: "p-0",
+                                },
+                        }}
+                />
+        )
+}

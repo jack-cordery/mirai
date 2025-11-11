@@ -27,6 +27,7 @@ type TableContextType = {
         setConfirmModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
         completeModalRow: GetAllBookingsResponse | null
         setCompleteModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
+        fetchTableData: () => Promise<void>;
 }
 
 const TableContext = createContext<TableContextType | undefined>(undefined);
@@ -48,7 +49,7 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
         const [confirmModalRow, setConfirmModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [completeModalRow, setCompleteModalRow] = React.useState<GetAllBookingsResponse | null>(null);
 
-        const fetchData = async () => {
+        const fetchTableData = async () => {
                 try {
                         const [requestRes, bookingRes]: [GetAllRequestsResponse[], GetAllBookingsResponse[]]
                                 = await Promise.all(
@@ -64,9 +65,6 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                 }
 
         }
-        React.useEffect(() => {
-                fetchData();
-        }, []);
 
         return (
                 <TableContext.Provider value={{
@@ -92,6 +90,7 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                         setConfirmModalRow,
                         completeModalRow,
                         setCompleteModalRow,
+                        fetchTableData,
                 }}>
                         {children}
                 </TableContext.Provider>

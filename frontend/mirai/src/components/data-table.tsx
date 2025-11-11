@@ -171,7 +171,15 @@ export async function handleReject(
 }
 
 export function DataTable() {
-        const { numPending } = useTableContext();
+        const { numPending, fetchTableData } = useTableContext();
+
+        React.useEffect(() => {
+                const fetchData = async () => {
+                        await fetchTableData();
+                };
+
+                fetchData();
+        }, []);
         return (
                 <Tabs
                         defaultValue="admin-requests"

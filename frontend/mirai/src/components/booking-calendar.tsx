@@ -114,7 +114,7 @@ export default function BookingCalendar() {
                         if (user_id === undefined || type_id === undefined) {
                                 throw new Error("invalid inputs")
                         }
-                        const res = await postBooking({
+                        await postBooking({
                                 user_id,
                                 availability_slots: slot_ids,
                                 type_id,

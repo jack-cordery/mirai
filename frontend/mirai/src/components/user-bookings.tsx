@@ -13,7 +13,9 @@ export default function UserBookings() {
         async function fetchData() {
                 try {
                         const res = await getAllBookingsUser();
-                        setBookings(res);
+                        if (!res) {
+                                setBookings(res);
+                        }
                         console.log(res);
                 } catch (err) {
                         toast("data fetch failed. Please try again later")
@@ -44,9 +46,9 @@ export default function UserBookings() {
                                                 </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                                {bookings.length === 0 ? (
+                                                {(bookings.length === 0) ? (
                                                         <TableRow>
-                                                                <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                                                                <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
                                                                         No bookings found.
                                                                 </TableCell>
                                                         </TableRow>

@@ -633,6 +633,47 @@ func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
 	return i, err
 }
 
+const getUserByIdWithRoles = `-- name: GetUserByIdWithRoles :one
+SELECT
+  u.id, u.name, u.surname, u.email, u.hashed_password, u.created_at, u.last_login,
+  COALESCE(array_agg(r.name), '{}')::text[] as role_names
+FROM
+  users u
+  LEFT JOIN user_roles ur ON ur.user_id = u.id
+  LEFT JOIN roles r ON r.id = ur.role_id
+WHERE
+  u.id = $1
+GROUP BY
+  u.id
+`
+
+type GetUserByIdWithRolesRow struct {
+	ID             int32            `json:"id"`
+	Name           string           `json:"name"`
+	Surname        string           `json:"surname"`
+	Email          string           `json:"email"`
+	HashedPassword string           `json:"hashed_password"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	LastLogin      pgtype.Timestamp `json:"last_login"`
+	RoleNames      []string         `json:"role_names"`
+}
+
+func (q *Queries) GetUserByIdWithRoles(ctx context.Context, id int32) (GetUserByIdWithRolesRow, error) {
+	row := q.db.QueryRow(ctx, getUserByIdWithRoles, id)
+	var i GetUserByIdWithRolesRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Surname,
+		&i.Email,
+		&i.HashedPassword,
+		&i.CreatedAt,
+		&i.LastLogin,
+		&i.RoleNames,
+	)
+	return i, err
+}
+
 const removeRoleToUser = `-- name: RemoveRoleToUser :exec
 DELETE FROM user_roles
 WHERE

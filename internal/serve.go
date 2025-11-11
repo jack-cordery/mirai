@@ -168,6 +168,7 @@ func SetupServer() {
 
 	mux.HandleFunc("POST /availability", postAvailabilitySlot(pool, ctx))
 	mux.HandleFunc("GET /availability/{availability_slot_id}", getAvailabilitySlot(pool, ctx))
+	mux.HandleFunc("GET /availability/free", getFreeAvailabilitySlots(pool, ctx, a))
 	mux.HandleFunc("GET /availability/", getAvailabilitySlot(pool, ctx))
 	mux.HandleFunc("PUT /availability/", putAvailabilitySlot(pool, ctx))
 	mux.HandleFunc("DELETE /availability/{availability_slot_id}", deleteAvailabilitySlot(pool, ctx))

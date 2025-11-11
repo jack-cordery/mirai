@@ -8,13 +8,14 @@ import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectVa
 import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, type TimeOfDay, valueToTime, datetimeToTime, type SlotTimeOfDay } from "@/types/booking"
 import { generateOptionsFromSlots, loadWorkingDayTimes } from "@/lib/utils"
 import { getAllBookingTypes } from "@/api/booking-type"
-import { getAllAvailability } from "@/api/availability"
+import { getAllAvailability, getAllFreeAvailability } from "@/api/availability"
 import { toast } from "sonner"
 import { Dialog, DialogClose } from "@radix-ui/react-dialog"
 import { DialogContent, DialogFooter, DialogHeader, DialogOverlay, DialogTitle } from "./ui/dialog"
 import { format } from "date-fns"
 import { postBooking } from "@/api/bookings"
 import { useAuth } from "@/contexts/auth-context"
+import { useNavigate } from "react-router-dom"
 
 export default function BookingCalendar() {
 
@@ -37,6 +38,7 @@ export default function BookingCalendar() {
         const [isBookingModalOpen, setIsBookingModalOpen] = React.useState<boolean>(false);
 
         const handleChange = (times: SelectedTimes) => { setSelectedTimes(times) }
+        const navigate = useNavigate();
 
         const timeSlots = React.useMemo(() => {
                 if (!date) {
@@ -92,7 +94,7 @@ export default function BookingCalendar() {
         React.useEffect(() => {
                 const fetchData = async () => {
                         try {
-                                const [resBookingTypes, resAvailabilitySlots] = await Promise.all([getAllBookingTypes(), getAllAvailability()])
+                                const [resBookingTypes, resAvailabilitySlots] = await Promise.all([getAllBookingTypes(), getAllFreeAvailability()])
                                 setBookingTypes(resBookingTypes)
                                 setAvailabilitySlots(resAvailabilitySlots)
                                 setSelectedBookingType(resBookingTypes[0])
@@ -121,7 +123,7 @@ export default function BookingCalendar() {
                         setSelectedTime(null);
                         toast("booking created!")
                         setIsBookingModalOpen(false)
-
+                        navigate("/user/bookings")
                 } catch (err) {
                         toast("failed to confirm booking, please try again");
                 }

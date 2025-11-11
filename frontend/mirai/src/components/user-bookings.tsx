@@ -13,7 +13,7 @@ export default function UserBookings() {
         async function fetchData() {
                 try {
                         const res = await getAllBookingsUser();
-                        if (!res) {
+                        if (res) {
                                 setBookings(res);
                         }
                         console.log(res);

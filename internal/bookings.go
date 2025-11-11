@@ -724,23 +724,24 @@ func postManualStatus(pool *pgxpool.Pool, ctx context.Context, a *AuthParams, ne
 				return
 			}
 
-			approver, err := qtx.GetUserById(ctx, session.UserID)
+			approver, err := qtx.GetUserByIdWithRoles(ctx, session.UserID)
 			if err != nil {
-				log.Printf("getting user by id for user in postManualStatus failed with %v", err)
+				log.Printf("getting user by id with roles for user in postManualStatus failed with %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			userRoles, err := qtx.GetRolesForUser(ctx, approver.ID)
+			booking, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{Column1: Unit, ID: int32(booking_id)})
 			if err != nil {
-				log.Printf("getting user roles by id for user in postManualStatus failed with %v", err)
+				log.Printf("getting booking by id with join for booking_id in postManualStatus failed with %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			isAdmin := slices.Contains(userRoles, RoleAdmin)
+			isAdmin := slices.Contains(approver.RoleNames, RoleAdmin)
+			isCorrectUser := slices.Contains(approver.RoleNames, RoleUser) && (approver.ID == booking.UserID)
 
-			if !isAdmin {
+			if !isAdmin && !isCorrectUser {
 				log.Printf("user %d has requested to post a manual status and doesnt have permission to", approver.ID)
 				w.WriteHeader(http.StatusUnauthorized)
 				return

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -272,6 +273,97 @@ func getAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func getFreeAvailabilitySlots(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// ok so we first want to check the user is a user and then we just
+		// need a query that gets all availability that doesnt have an entry
+		// in the join table
+		conn, err := pool.Acquire(ctx)
+		if err != nil {
+			log.Printf("error aquiring pool in getFreeAvailabilitySlots: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Release()
+
+		queries := db.New(conn)
+
+		// get session token, validate token, and validate user role
+		token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
+		if err != nil {
+			log.Printf("The token provided failed in getFreeAvailabilitySlots: %v with %v", token, err)
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("encoding response in getFreeAvailabilitySlots failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		valid, err := VerifySession(ctx, queries, token)
+		if err != nil {
+			log.Printf("error verfying session in getFreeAvailabilitySlots failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !valid {
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("writing json in getFreeAvailabilitySlots failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		session, err := queries.GetSessionByToken(ctx, token)
+		if err != nil {
+			log.Printf("error getting session in getFreeAvailabilitySlots failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		user, err := queries.GetUserByIdWithRoles(ctx, session.UserID)
+		if err != nil {
+			log.Printf("error getting user in getFreeAvailabilitySlots failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !(slices.Contains(user.RoleNames, "USER")) {
+			log.Printf("user %v has requested permission to getFreeAvailability without permissions USER", user.ID)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		availabilitySlots, err := queries.GetAllFreeAvailabilitySlots(ctx)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			log.Printf("error querying availability table in getFreeAvailabilitySlots: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		resp := []GetAvailiabilitySlotResponse{}
+
+		for _, a := range availabilitySlots {
+			resp = append(resp, responseFromDBAvailability(a))
+		}
+
+		err = json.NewEncoder(w).Encode(resp)
+		if err != nil {
+			log.Printf("error encoding json in getFreeAvailabilitySlots: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		return
+
 	}
 }
 

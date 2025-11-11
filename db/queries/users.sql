@@ -38,6 +38,19 @@ WHERE
 LIMIT
   1;
 
+-- name: GetUserByIdWithRoles :one
+SELECT
+  u.*,
+  COALESCE(array_agg(r.name), '{}')::text[] as role_names
+FROM
+  users u
+  LEFT JOIN user_roles ur ON ur.user_id = u.id
+  LEFT JOIN roles r ON r.id = ur.role_id
+WHERE
+  u.id = $1
+GROUP BY
+  u.id;
+
 -- name: GetUserByEmail :one
 SELECT
   *

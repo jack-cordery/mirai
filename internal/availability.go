@@ -337,7 +337,7 @@ func getFreeAvailabilitySlots(pool *pgxpool.Pool, ctx context.Context, a *AuthPa
 			return
 		}
 
-		if !(slices.Contains(user.RoleNames, "USER")) {
+		if !(slices.Contains(user.RoleNames, RoleUser)) {
 			log.Printf("user %v has requested permission to getFreeAvailability without permissions USER", user.ID)
 			w.WriteHeader(http.StatusUnauthorized)
 			return

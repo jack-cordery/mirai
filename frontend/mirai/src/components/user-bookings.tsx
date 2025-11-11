@@ -1,20 +1,25 @@
 import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getAllBookingsUser, type GetAllBookingsResponse } from "@/api/bookings"
+import { getAllBookingsUser, postCancellation, type GetAllBookingsResponse } from "@/api/bookings"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
-import { IconCircleCheck, IconCircleCheckFilled, IconCircleXFilled, IconLoader, IconRefresh } from "@tabler/icons-react"
+import { IconCircleCheck, IconCircleCheckFilled, IconCircleXFilled, IconDotsVertical, IconLoader, IconRefresh, IconX } from "@tabler/icons-react"
+import { Button } from "./ui/button"
+import { DropdownMenu, DropdownMenuContent } from "@radix-ui/react-dropdown-menu"
+import { DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { CancelModal } from "./booking-table-modals"
+import { useTableContext } from "@/contexts/table-context"
 
 export default function UserBookings() {
-        const [bookings, setBookings] = useState<GetAllBookingsResponse[]>([])
+        const { isCancelModalOpen, setIsCancelModalOpen, setCancelModalRow, bookingData, setBookingData } = useTableContext();
 
         async function fetchData() {
                 try {
                         const res = await getAllBookingsUser();
                         if (res) {
-                                setBookings(res);
+                                setBookingData(res);
                         }
                         console.log(res);
                 } catch (err) {
@@ -43,17 +48,18 @@ export default function UserBookings() {
                                                         <TableHead>Paid</TableHead>
                                                         <TableHead>Status</TableHead>
                                                         <TableHead>Amount</TableHead>
+                                                        <TableHead>Cancel</TableHead>
                                                 </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                                {(bookings.length === 0) ? (
+                                                {(bookingData.length === 0) ? (
                                                         <TableRow>
-                                                                <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
+                                                                <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
                                                                         No bookings found.
                                                                 </TableCell>
                                                         </TableRow>
                                                 ) : (
-                                                        bookings.map((b) => (
+                                                        bookingData.map((b) => (
                                                                 <TableRow key={b.id}>
                                                                         <TableCell>{format(new Date(b.start_time), "dd-MMM-yy")}</TableCell>
                                                                         <TableCell>{format(new Date(b.start_time), "HH:mm")}</TableCell>
@@ -87,12 +93,29 @@ export default function UserBookings() {
                                                                         <TableCell>
                                                                                 £{(b.cost / 100).toFixed(2)}
                                                                         </TableCell>
+
+                                                                        <TableCell align="center">
+                                                                                {(b.status == "created" || b.status == "confirmed") &&
+                                                                                        <Button
+                                                                                                className="p-1 h-6 w-6 flex items-center justify-center cursor-pointer"
+                                                                                                onClick={() => {
+                                                                                                        setIsCancelModalOpen(true)
+                                                                                                        setCancelModalRow(b)
+                                                                                                }}
+                                                                                        >
+                                                                                                <IconX size={16} />
+                                                                                        </Button>
+                                                                                }
+                                                                        </TableCell>
+
                                                                 </TableRow>
                                                         ))
                                                 )}
                                         </TableBody>
                                 </Table>
+                                <CancelModal />
                         </CardContent>
-                </Card>
+                </Card >
+
         )
 }

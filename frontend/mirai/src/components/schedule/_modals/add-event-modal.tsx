@@ -236,8 +236,8 @@ export function EditEventModal({
                                 <>
                                         <SelectDate
                                                 data={{
-                                                        startDate: data?.default?.startDate || getNearest30MinuteBlock(new Date()),
-                                                        endDate: data?.default?.endDate || getNearest30MinuteBlock(new Date()),
+                                                        startDate: getNearest30MinuteBlock(data?.default?.startDate) || getNearest30MinuteBlock(new Date()),
+                                                        endDate: getNearest30MinuteBlock(data?.default?.endDate) || getNearest30MinuteBlock(new Date()),
                                                 }}
                                                 setValue={setValue}
                                         />

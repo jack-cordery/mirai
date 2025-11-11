@@ -58,3 +58,17 @@ export async function getAllAvailability() {
   }
   return res.json();
 }
+
+export async function getAllFreeAvailability() {
+  const res = await fetch(`${apiUrl}/availability/free`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Get all free availability slots failed with ${res.status}`,
+    );
+  }
+  return res.json();
+}

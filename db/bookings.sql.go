@@ -866,6 +866,49 @@ func (q *Queries) GetAllBookingsWithJoinByID(ctx context.Context, arg GetAllBook
 	return items, nil
 }
 
+const getAllFreeAvailabilitySlots = `-- name: GetAllFreeAvailabilitySlots :many
+SELECT
+  a.id, a.employee_id, a.datetime, a.type_id, a.created_at, a.last_edited
+FROM
+  availability a
+WHERE
+  NOT EXISTS (
+    SELECT
+      1
+    FROM
+      booking_slots bs
+    WHERE
+      bs.availability_slot_id = a.id
+  )
+`
+
+func (q *Queries) GetAllFreeAvailabilitySlots(ctx context.Context) ([]Availability, error) {
+	rows, err := q.db.Query(ctx, getAllFreeAvailabilitySlots)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Availability
+	for rows.Next() {
+		var i Availability
+		if err := rows.Scan(
+			&i.ID,
+			&i.EmployeeID,
+			&i.Datetime,
+			&i.TypeID,
+			&i.CreatedAt,
+			&i.LastEdited,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAvailabilitySlotById = `-- name: GetAvailabilitySlotById :one
 SELECT
   id, employee_id, datetime, type_id, created_at, last_edited

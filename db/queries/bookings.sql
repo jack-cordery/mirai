@@ -446,6 +446,21 @@ SELECT
 FROM
   availability;
 
+-- name: GetAllFreeAvailabilitySlots :many
+SELECT
+  a.*
+FROM
+  availability a
+WHERE
+  NOT EXISTS (
+    SELECT
+      1
+    FROM
+      booking_slots bs
+    WHERE
+      bs.availability_slot_id = a.id
+  );
+
 -- name: GetAllBookingTypes :many
 SELECT
   *

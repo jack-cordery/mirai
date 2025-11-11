@@ -11,7 +11,7 @@ import type { CustomEventModal, Event, Option } from "@/types/index";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CustomModal from "@/components/ui/custom-modal";
-import { loadWorkingDayTimes } from "@/lib/utils";
+import { getNearest30MinuteBlock, loadWorkingDayTimes } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 
 const { startTime, endTime } = loadWorkingDayTimes();
@@ -288,11 +288,12 @@ export default function DailyView({
                 );
 
                 handleAddEvent({
-                        startDate: date,
-                        endDate: new Date(date.getTime() + 60 * 60 * 1000), // 1-hour duration
+                        startDate: getNearest30MinuteBlock(date),
+                        endDate: getNearest30MinuteBlock(new Date(date.getTime() + 60 * 60 * 1000)), // 1-hour duration
                         id: uuidv4.toString(),
                         employeeId: selectedEmployee?.id ?? 0,
                         typeId: selectedType?.id ?? 0,
+                        availability_slot_ids: [],
                 });
         }
 
@@ -413,6 +414,7 @@ export default function DailyView({
                                                                 {Array.from({ length: endTime.hour - startTime.hour + 1 }).map((_, index) => (
                                                                         <div
                                                                                 onClick={() => {
+                                                                                        console.log(`clicked on ${detailedHour}`)
                                                                                         handleAddEventDay(detailedHour as string);
                                                                                 }}
                                                                                 key={`hour-${index + startTime.hour}`}

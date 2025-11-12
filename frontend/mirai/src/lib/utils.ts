@@ -8,6 +8,7 @@ import {
 } from "@/types/booking";
 
 import { type Event } from "@/types/index";
+import type { GetAllBookingsResponse } from "@/api/bookings";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -130,6 +131,20 @@ export function generateOptions(
     }
   }
   return options;
+}
+
+export function bookingsToEvents(bookings: GetAllBookingsResponse[]): Event[] {
+  return bookings.map((b: GetAllBookingsResponse) => {
+    return {
+      id: b.id.toString(),
+      startDate: new Date(b.start_time),
+      endDate: new Date(b.end_time),
+      employeeId: b.employee_id,
+      typeId: b.type_id,
+      isBooking: true,
+      availability_slot_ids: null,
+    };
+  });
 }
 
 export function availabilitySlotsToEvents(

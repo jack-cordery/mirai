@@ -5,9 +5,10 @@ import type { BookingType, Employee } from "@/types/booking";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { type Option } from "@/types/index"
-import { availabilitySlotsToEvents } from "@/lib/utils";
+import { availabilitySlotsToEvents, bookingsToEvents } from "@/lib/utils";
 import { getAllBookingTypes } from "@/api/booking-type";
 import { getAllEmployees } from "@/api/employee";
+import { getAllBookings, type GetAllBookingsResponse } from "@/api/bookings";
 
 const UNIT = 30;
 const FETCH_DURATION = 60; // seconds
@@ -37,15 +38,16 @@ export default function Scheduler() {
         useEffect(() => {
                 async function fetchEvents() {
                         try {
-                                const [availabilityData, bookingTypeData, employeeData] = await Promise.all([getAllAvailability(), getAllBookingTypes(), getAllEmployees()])
-                                const events = availabilitySlotsToEvents(availabilityData, UNIT)
-                                const typeOptions = bookingTypesToOptions(bookingTypeData)
-                                const employeeOptions = employeesToOptions(employeeData)
-                                dispatch({ type: "SET_EVENTS", payload: events })
-                                setTypeOptions(typeOptions)
-                                setEmployeeOptions(employeeOptions)
+                                const [availabilityData, bookingTypeData, employeeData, bookings] = await Promise.all([getAllAvailability(), getAllBookingTypes(), getAllEmployees(), getAllBookings()])
+                                const availabilityEvents = availabilitySlotsToEvents(availabilityData, UNIT);
+                                const bookingEvents = bookings ? bookingsToEvents(bookings.filter((b: GetAllBookingsResponse) => b.status != "cancelled")) : [];
+                                const typeOptions = bookingTypesToOptions(bookingTypeData);
+                                const employeeOptions = employeesToOptions(employeeData);
+                                dispatch({ type: "SET_EVENTS", payload: [...availabilityEvents, ...bookingEvents] });
+                                setTypeOptions(typeOptions);
+                                setEmployeeOptions(employeeOptions);
                         } catch (error) {
-                                toast("failed to fetch availability")
+                                toast("failed to fetch availability");
                         }
                 }
 

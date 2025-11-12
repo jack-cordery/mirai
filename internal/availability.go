@@ -467,7 +467,7 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 
 }
 
-func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
+func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var availabilitySlotIDs []int32
 		availabilitySlotId := r.PathValue("availability_slot_id")
@@ -515,6 +515,105 @@ func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.Handle
 
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
+
+		token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
+		if err != nil {
+			log.Printf("The token provided failed in deleteAvailabilitySlots: %v with %v", token, err)
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("encoding response in deleteAvailabilitySlots failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		valid, err := VerifySession(ctx, queries, token)
+		if err != nil {
+			log.Printf("error verfying session in deleteAvailabilitySlots failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !valid {
+			w.WriteHeader(http.StatusUnauthorized)
+			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
+			if err != nil {
+				log.Printf("writing json in deleteAvailabilitySlots failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		session, err := queries.GetSessionByToken(ctx, token)
+		if err != nil {
+			log.Printf("error getting session in deleteAvailabilitySlots failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		user, err := queries.GetUserByIdWithRoles(ctx, session.UserID)
+		if err != nil {
+			log.Printf("error getting user in deleteAvailabilitySlots failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !(slices.Contains(user.RoleNames, RoleAdmin)) {
+			log.Printf("user %v has requested permission to deleteAvailability without permissions Admin", user.ID)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		// update booking status to cancelled and
+		// need to get booking_id from the join table
+
+		bookingIDs, err := qtx.GetBookingSlotsFromAvailability(ctx, availabilitySlotIDs)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			log.Printf("error getting booking id deleteAvailabilitySlot: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err != nil && errors.Is(err, pgx.ErrNoRows) {
+			// no booking associated to it so no need to delete
+		} else {
+			for _, bookingID := range bookingIDs {
+				booking, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{
+					Column1: Unit,
+					ID:      bookingID,
+				})
+				if err != nil {
+					log.Printf("error getting booking with join in deleteAvailabilitySlots failed with %v", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				err = qtx.UpdateBookingStatus(ctx, db.UpdateBookingStatusParams{
+					ID:              bookingID,
+					Status:          db.BookingStatusCancelled,
+					StatusUpdatedBy: user.Email,
+				})
+				if err != nil {
+					log.Printf("error updating booking booking status in deleteAvailabilitySlot: %v", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
+					BookingID:       bookingID,
+					EmployeeID:      booking.EmployeeID,
+					EmployeeName:    booking.EmployeeName,
+					EmployeeSurname: booking.EmployeeSurname,
+					EmployeeEmail:   booking.EmployeeEmail,
+					StartTime:       booking.StartTime,
+					EndTime:         booking.EndTime,
+					Status:          db.BookingStatusCancelled,
+					ChangedByEmail:  user.Email,
+				})
+			}
+		}
 
 		for _, id := range availabilitySlotIDs {
 			_, err = qtx.DeleteAvailabilitySlot(ctx, int32(id))

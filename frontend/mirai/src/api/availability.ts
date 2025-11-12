@@ -43,6 +43,7 @@ export async function deleteAvailabilitySlot(
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(deleteRequest),
+    credentials: "include",
   });
 
   if (!res.ok) {

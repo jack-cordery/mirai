@@ -110,7 +110,7 @@ export default function EventStyled({
                                 onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
                                         e.stopPropagation();
                                         try {
-                                                await deleteAvailabilitySlot({ availability_slot_ids: event.availability_slot_ids })
+                                                await deleteAvailabilitySlot({ availability_slot_ids: event.availability_slot_ids ?? [] })
                                                 handlers.handleDeleteEvent(event?.id);
                                                 onDelete?.(event?.id);
                                         } catch (err) {
@@ -137,6 +137,8 @@ export default function EventStyled({
                                                         endDate: event?.endDate,
                                                         employeeId: event?.employeeId,
                                                         isBooking: event?.isBooking,
+                                                        bookingId: event?.bookingId,
+                                                        bookingEmail: event?.bookingEmail,
                                                         typeId: event?.typeId,
                                                         availability_slot_ids: event?.availability_slot_ids,
                                                 });
@@ -154,6 +156,8 @@ export default function EventStyled({
                                                         endDate: event?.endDate,
                                                         employeeId: event?.employeeId,
                                                         isBooking: event?.isBooking,
+                                                        bookingId: event?.bookingId,
+                                                        bookingEmail: event?.bookingEmail,
                                                         typeId: event?.typeId,
                                                         availability_slot_ids: event?.availability_slot_ids,
                                                 });
@@ -175,7 +179,7 @@ export default function EventStyled({
                                                                         ? `${capatalise(typeLabel)} booking by ${event.bookingEmail} with ${employeeLabel}`
                                                                         : "Unnamed Booking"
                                                                 : typeLabel && employeeLabel
-                                                                        ? `${capatalise(typeLabel)} with ${employeeLabel}`
+                                                                        ? `${capatalise(typeLabel)} availability with ${employeeLabel}`
                                                                         : "Unnamed Availability"}
                                                 </div>
 

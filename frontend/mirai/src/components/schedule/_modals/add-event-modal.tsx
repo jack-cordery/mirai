@@ -69,6 +69,7 @@ export default function AddEventModal({
                                 employeeId: formData.employee.id,
                                 typeId: formData.type.id,
                                 isBooking: false,
+                                bookingId: null,
                                 availability_slot_ids: res.availability_slot_ids,
                         }
                         handlers.handleAddEvent(newEvent);
@@ -204,7 +205,7 @@ export function EditEventModal({
         const onSubmit: SubmitHandler<EventFormData> = async (formData) => {
                 try {
                         const res: PutAvailabilitySlotResponse = await putAvailabilitySlot({
-                                availability_slot_ids: typedData.default.availability_slot_ids,
+                                availability_slot_ids: typedData.default.availability_slot_ids ?? [],
                                 employee_id: formData.employee.id,
                                 start_time: toLocalISOString(formData.startDate),
                                 end_time: toLocalISOString(formData.endDate),
@@ -213,11 +214,12 @@ export function EditEventModal({
 
                         const updatedEvent: Event = {
                                 id: typedData.default.id,
-                                availability_slot_ids: res.availability_slot_ids,
+                                availability_slot_ids: res.availability_slot_ids ?? [],
                                 startDate: formData.startDate,
                                 endDate: formData.endDate,
                                 typeId: formData.type.id,
                                 isBooking: false,
+                                bookingId: null,
                                 employeeId: formData.employee.id,
                         }
 

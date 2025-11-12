@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS booking_slots (
 CREATE TABLE IF NOT EXISTS booking_history (
   id serial PRIMARY KEY,
   booking_id INT NOT NULL REFERENCES bookings (id),
+  employee_id INT NOT NULL REFERENCES employees (id),
   employee_name VARCHAR(40) NOT NULL,
   employee_surname VARCHAR(40) NOT NULL,
   employee_email VARCHAR(255) NOT NULL,

@@ -68,6 +68,7 @@ export default function AddEventModal({
                                 endDate: formData.endDate,
                                 employeeId: formData.employee.id,
                                 typeId: formData.type.id,
+                                isBooking: false,
                                 availability_slot_ids: res.availability_slot_ids,
                         }
                         handlers.handleAddEvent(newEvent);
@@ -216,6 +217,7 @@ export function EditEventModal({
                                 startDate: formData.startDate,
                                 endDate: formData.endDate,
                                 typeId: formData.type.id,
+                                isBooking: false,
                                 employeeId: formData.employee.id,
                         }
 

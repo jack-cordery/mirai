@@ -37,6 +37,7 @@ test("availabilitySlotsToEvents creates the right object with dates, and merging
       employeeId: 0,
       startDate: new Date(rfcDate1),
       endDate: new Date(new Date(rfcDate1).getTime() + 90 * 60 * 1000), // +30 mins
+      isBooking: false,
       typeId: 0,
       availability_slot_ids: [0, 1, 2],
     },

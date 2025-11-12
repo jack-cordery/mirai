@@ -146,6 +146,7 @@ export function availabilitySlotsToEvents(
       endDate: endDate,
       employeeId: slot.employee_id,
       typeId: slot.type_id,
+      isBooking: false,
       availability_slot_ids: [slot.availability_slot_id],
     };
   });

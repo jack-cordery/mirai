@@ -292,6 +292,7 @@ export default function DailyView({
                         endDate: getNearest30MinuteBlock(new Date(date.getTime() + 60 * 60 * 1000)), // 1-hour duration
                         id: uuidv4.toString(),
                         employeeId: selectedEmployee?.id ?? 0,
+                        isBooking: false,
                         typeId: selectedType?.id ?? 0,
                         availability_slot_ids: [],
                 });

@@ -29,6 +29,13 @@ WITH
       ) [1] AS cancelled_end_time,
       (
         ARRAY_AGG(
+          h.employee_id
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_id,
+      (
+        ARRAY_AGG(
           h.employee_name
           ORDER BY
             h.changed_at DESC
@@ -85,6 +92,10 @@ SELECT
       ) * INTERVAL '1 minute'
     )::timestamp
   END AS end_time,
+  CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_id::int
+    ELSE e.id::int
+  END AS employee_id,
   CASE
     WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
@@ -124,11 +135,13 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.id,
   e.name,
   e.surname,
   e.email,
   ch.cancelled_start_time,
   ch.cancelled_end_time,
+  ch.cancelled_employee_id,
   ch.cancelled_employee_name,
   ch.cancelled_employee_surname,
   ch.cancelled_employee_email
@@ -158,6 +171,13 @@ WITH
             h.changed_at DESC
         )
       ) [1] AS cancelled_end_time,
+      (
+        ARRAY_AGG(
+          h.employee_id
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_id,
       (
         ARRAY_AGG(
           h.employee_name
@@ -216,6 +236,10 @@ SELECT
       ) * INTERVAL '1 minute'
     )::timestamp
   END AS end_time,
+  CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_id::int
+    ELSE e.id::int
+  END AS employee_id,
   CASE
     WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
@@ -253,11 +277,13 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.id,
   e.name,
   e.surname,
   e.email,
   ch.cancelled_start_time,
   ch.cancelled_end_time,
+  ch.cancelled_employee_id,
   ch.cancelled_employee_name,
   ch.cancelled_employee_surname,
   ch.cancelled_employee_email
@@ -287,6 +313,13 @@ WITH
             h.changed_at DESC
         )
       ) [1] AS cancelled_end_time,
+      (
+        ARRAY_AGG(
+          h.employee_id
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_id,
       (
         ARRAY_AGG(
           h.employee_name
@@ -345,6 +378,10 @@ SELECT
       ) * INTERVAL '1 minute'
     )::timestamp
   END AS end_time,
+  CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_id::int
+    ELSE e.id::int
+  END AS employee_id,
   CASE
     WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
@@ -384,11 +421,13 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.id,
   e.name,
   e.surname,
   e.email,
   ch.cancelled_start_time,
   ch.cancelled_end_time,
+  ch.cancelled_employee_id,
   ch.cancelled_employee_name,
   ch.cancelled_employee_surname,
   ch.cancelled_employee_email
@@ -550,6 +589,7 @@ SELECT
   nb.id AS booking_id,
   st.start_time,
   st.end_time,
+  e.id as employee_id,
   e.name as employee_name,
   e.surname as employee_surname,
   e.email as employee_email
@@ -614,6 +654,7 @@ WHERE
 INSERT INTO
   booking_history (
     booking_id,
+    employee_id,
     employee_name,
     employee_surname,
     employee_email,
@@ -623,7 +664,7 @@ INSERT INTO
     changed_by_email
   )
 VALUES
-  ($1, $2, $3, $4, $5, $6, $7, $8);
+  ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 
 -- name: FreeAvailabilitySlot :exec
 DELETE FROM booking_slots

@@ -106,6 +106,7 @@ SELECT
   nb.id AS booking_id,
   st.start_time,
   st.end_time,
+  e.id as employee_id,
   e.name as employee_name,
   e.surname as employee_surname,
   e.email as employee_email
@@ -129,6 +130,7 @@ type CreateBookingRow struct {
 	BookingID       int32            `json:"booking_id"`
 	StartTime       pgtype.Timestamp `json:"start_time"`
 	EndTime         pgtype.Timestamp `json:"end_time"`
+	EmployeeID      int32            `json:"employee_id"`
 	EmployeeName    string           `json:"employee_name"`
 	EmployeeSurname string           `json:"employee_surname"`
 	EmployeeEmail   string           `json:"employee_email"`
@@ -149,6 +151,7 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (C
 		&i.BookingID,
 		&i.StartTime,
 		&i.EndTime,
+		&i.EmployeeID,
 		&i.EmployeeName,
 		&i.EmployeeSurname,
 		&i.EmployeeEmail,
@@ -160,6 +163,7 @@ const createBookingHistory = `-- name: CreateBookingHistory :exec
 INSERT INTO
   booking_history (
     booking_id,
+    employee_id,
     employee_name,
     employee_surname,
     employee_email,
@@ -169,11 +173,12 @@ INSERT INTO
     changed_by_email
   )
 VALUES
-  ($1, $2, $3, $4, $5, $6, $7, $8)
+  ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 `
 
 type CreateBookingHistoryParams struct {
 	BookingID       int32            `json:"booking_id"`
+	EmployeeID      int32            `json:"employee_id"`
 	EmployeeName    string           `json:"employee_name"`
 	EmployeeSurname string           `json:"employee_surname"`
 	EmployeeEmail   string           `json:"employee_email"`
@@ -186,6 +191,7 @@ type CreateBookingHistoryParams struct {
 func (q *Queries) CreateBookingHistory(ctx context.Context, arg CreateBookingHistoryParams) error {
 	_, err := q.db.Exec(ctx, createBookingHistory,
 		arg.BookingID,
+		arg.EmployeeID,
 		arg.EmployeeName,
 		arg.EmployeeSurname,
 		arg.EmployeeEmail,
@@ -492,6 +498,13 @@ WITH
       ) [1] AS cancelled_end_time,
       (
         ARRAY_AGG(
+          h.employee_id
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_id,
+      (
+        ARRAY_AGG(
           h.employee_name
           ORDER BY
             h.changed_at DESC
@@ -549,6 +562,10 @@ SELECT
     )::timestamp
   END AS end_time,
   CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_id::int
+    ELSE e.id::int
+  END AS employee_id,
+  CASE
     WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
   END AS employee_name,
@@ -585,11 +602,13 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.id,
   e.name,
   e.surname,
   e.email,
   ch.cancelled_start_time,
   ch.cancelled_end_time,
+  ch.cancelled_employee_id,
   ch.cancelled_employee_name,
   ch.cancelled_employee_surname,
   ch.cancelled_employee_email
@@ -616,6 +635,7 @@ type GetAllBookingsWithJoinRow struct {
 	LastEdited      pgtype.Timestamp `json:"last_edited"`
 	StartTime       pgtype.Timestamp `json:"start_time"`
 	EndTime         pgtype.Timestamp `json:"end_time"`
+	EmployeeID      int32            `json:"employee_id"`
 	EmployeeName    string           `json:"employee_name"`
 	EmployeeSurname string           `json:"employee_surname"`
 	EmployeeEmail   string           `json:"employee_email"`
@@ -649,6 +669,7 @@ func (q *Queries) GetAllBookingsWithJoin(ctx context.Context, dollar_1 int32) ([
 			&i.LastEdited,
 			&i.StartTime,
 			&i.EndTime,
+			&i.EmployeeID,
 			&i.EmployeeName,
 			&i.EmployeeSurname,
 			&i.EmployeeEmail,
@@ -688,6 +709,13 @@ WITH
       ) [1] AS cancelled_end_time,
       (
         ARRAY_AGG(
+          h.employee_id
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_id,
+      (
+        ARRAY_AGG(
           h.employee_name
           ORDER BY
             h.changed_at DESC
@@ -745,6 +773,10 @@ SELECT
     )::timestamp
   END AS end_time,
   CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_id::int
+    ELSE e.id::int
+  END AS employee_id,
+  CASE
     WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
   END AS employee_name,
@@ -783,11 +815,13 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.id,
   e.name,
   e.surname,
   e.email,
   ch.cancelled_start_time,
   ch.cancelled_end_time,
+  ch.cancelled_employee_id,
   ch.cancelled_employee_name,
   ch.cancelled_employee_surname,
   ch.cancelled_employee_email
@@ -819,6 +853,7 @@ type GetAllBookingsWithJoinByIDRow struct {
 	LastEdited      pgtype.Timestamp `json:"last_edited"`
 	StartTime       pgtype.Timestamp `json:"start_time"`
 	EndTime         pgtype.Timestamp `json:"end_time"`
+	EmployeeID      int32            `json:"employee_id"`
 	EmployeeName    string           `json:"employee_name"`
 	EmployeeSurname string           `json:"employee_surname"`
 	EmployeeEmail   string           `json:"employee_email"`
@@ -852,6 +887,7 @@ func (q *Queries) GetAllBookingsWithJoinByID(ctx context.Context, arg GetAllBook
 			&i.LastEdited,
 			&i.StartTime,
 			&i.EndTime,
+			&i.EmployeeID,
 			&i.EmployeeName,
 			&i.EmployeeSurname,
 			&i.EmployeeEmail,
@@ -1050,6 +1086,13 @@ WITH
       ) [1] AS cancelled_end_time,
       (
         ARRAY_AGG(
+          h.employee_id
+          ORDER BY
+            h.changed_at DESC
+        )
+      ) [1] AS cancelled_employee_id,
+      (
+        ARRAY_AGG(
           h.employee_name
           ORDER BY
             h.changed_at DESC
@@ -1107,6 +1150,10 @@ SELECT
     )::timestamp
   END AS end_time,
   CASE
+    WHEN b.status = 'cancelled' THEN ch.cancelled_employee_id::int
+    ELSE e.id::int
+  END AS employee_id,
+  CASE
     WHEN b.status = 'cancelled' THEN ch.cancelled_employee_name::text
     ELSE e.name::text
   END AS employee_name,
@@ -1145,11 +1192,13 @@ GROUP BY
   b.notes,
   b.created_at,
   b.last_edited,
+  e.id,
   e.name,
   e.surname,
   e.email,
   ch.cancelled_start_time,
   ch.cancelled_end_time,
+  ch.cancelled_employee_id,
   ch.cancelled_employee_name,
   ch.cancelled_employee_surname,
   ch.cancelled_employee_email
@@ -1181,6 +1230,7 @@ type GetBookingWithJoinRow struct {
 	LastEdited      pgtype.Timestamp `json:"last_edited"`
 	StartTime       pgtype.Timestamp `json:"start_time"`
 	EndTime         pgtype.Timestamp `json:"end_time"`
+	EmployeeID      int32            `json:"employee_id"`
 	EmployeeName    string           `json:"employee_name"`
 	EmployeeSurname string           `json:"employee_surname"`
 	EmployeeEmail   string           `json:"employee_email"`
@@ -1208,6 +1258,7 @@ func (q *Queries) GetBookingWithJoin(ctx context.Context, arg GetBookingWithJoin
 		&i.LastEdited,
 		&i.StartTime,
 		&i.EndTime,
+		&i.EmployeeID,
 		&i.EmployeeName,
 		&i.EmployeeSurname,
 		&i.EmployeeEmail,

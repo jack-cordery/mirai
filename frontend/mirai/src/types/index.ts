@@ -14,7 +14,7 @@ export interface Event {
   startDate: Date;
   endDate: Date;
   typeId: number;
-  availability_slot_ids: number[];
+  availability_slot_ids: number[] | null;
   isBooking: boolean;
 }
 

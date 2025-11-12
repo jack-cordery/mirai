@@ -145,6 +145,7 @@ export function bookingsToEvents(bookings: GetAllBookingsResponse[]): Event[] {
       typeId: b.type_id,
       isBooking: true,
       availability_slot_ids: null,
+      bookingEmail: b.user_email,
     };
   });
 }
@@ -166,6 +167,7 @@ export function availabilitySlotsToEvents(
       isBooking: false,
       bookingId: null,
       availability_slot_ids: [slot.availability_slot_id],
+      bookingEmail: null,
     };
   });
   const sorted = mappedSlots.sort(

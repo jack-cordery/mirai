@@ -170,9 +170,13 @@ export default function EventStyled({
                                                 )}
                                         >
                                                 <div className="font-semibold text-xs truncate mb-1">
-                                                        {typeLabel && employeeLabel
-                                                                ? `${capatalise(typeLabel)} with ${employeeLabel}`
-                                                                : "Untitled Event"}
+                                                        {event.isBooking
+                                                                ? event.bookingEmail && employeeLabel && typeLabel
+                                                                        ? `${capatalise(typeLabel)} booking by ${event.bookingEmail} with ${employeeLabel}`
+                                                                        : "Unnamed Booking"
+                                                                : typeLabel && employeeLabel
+                                                                        ? `${capatalise(typeLabel)} with ${employeeLabel}`
+                                                                        : "Unnamed Availability"}
                                                 </div>
 
                                                 {/* Show time in minimized mode */}

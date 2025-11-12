@@ -187,6 +187,7 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
 			BookingID:       bookingRow.BookingID,
 			StartTime:       bookingRow.StartTime,
+			EmployeeID:      bookingRow.EmployeeID,
 			EmployeeName:    bookingRow.EmployeeName,
 			EmployeeSurname: bookingRow.EmployeeSurname,
 			EndTime:         bookingRow.EndTime,

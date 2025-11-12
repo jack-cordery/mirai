@@ -125,6 +125,7 @@ type Booking struct {
 type BookingHistory struct {
 	ID              int32            `json:"id"`
 	BookingID       int32            `json:"booking_id"`
+	EmployeeID      int32            `json:"employee_id"`
 	EmployeeName    string           `json:"employee_name"`
 	EmployeeSurname string           `json:"employee_surname"`
 	EmployeeEmail   string           `json:"employee_email"`

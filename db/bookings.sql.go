@@ -1034,6 +1034,35 @@ func (q *Queries) GetBookingById(ctx context.Context, id int32) (GetBookingByIdR
 	return i, err
 }
 
+const getBookingSlotsFromAvailability = `-- name: GetBookingSlotsFromAvailability :many
+SELECT DISTINCT
+  booking_id
+FROM
+  booking_slots
+WHERE
+  availability_slot_id = ANY($1::int[])
+`
+
+func (q *Queries) GetBookingSlotsFromAvailability(ctx context.Context, dollar_1 []int32) ([]int32, error) {
+	rows, err := q.db.Query(ctx, getBookingSlotsFromAvailability, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var booking_id int32
+		if err := rows.Scan(&booking_id); err != nil {
+			return nil, err
+		}
+		items = append(items, booking_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getBookingTypeById = `-- name: GetBookingTypeById :one
 SELECT
   id, title, description, fixed, cost, duration, created_at, last_edited

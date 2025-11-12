@@ -86,7 +86,7 @@ import { postApprove, postReject } from "@/api/auth"
 import type { GetAllRequestsResponse } from "@/types/user"
 import { useTableContext } from "@/contexts/table-context"
 import { BookingsTable } from "./bookings-table"
-import { RequestDataTable } from "./requests-table"
+import { RequestDataSchema, RequestDataTable } from "./requests-table"
 
 
 // Create a separate component for the drag handle
@@ -108,9 +108,6 @@ export function DragHandle({ id }: { id: number }) {
                 </Button>
         )
 }
-
-
-
 
 export function DraggableRow({ row }: { row: Row<z.infer<typeof RequestDataSchema>> }) {
         const { transform, transition, setNodeRef, isDragging } = useSortable({

@@ -35,25 +35,15 @@ const formatTime = (date: Date) => {
 
 // Color variants based on event type
 const variantColors = {
-        primary: {
+        availability: {
                 bg: "bg-blue-100",
                 border: "border-blue-200",
                 text: "text-blue-800",
         },
-        danger: {
-                bg: "bg-red-100",
-                border: "border-red-200",
-                text: "text-red-800",
-        },
-        success: {
+        booking: {
                 bg: "bg-green-100",
                 border: "border-green-200",
                 text: "text-green-800",
-        },
-        warning: {
-                bg: "bg-yellow-100",
-                border: "border-yellow-200",
-                text: "text-yellow-800",
         },
 };
 
@@ -100,11 +90,12 @@ export default function EventStyled({
         }
 
         // Get background color class based on variant
-        const getBackgroundColor = (variant: string | undefined) => {
-                const variantKey = variant as keyof typeof variantColors || "primary";
-                const colors = variantColors[variantKey] || variantColors.primary;
+        const getBackgroundColor = (variant: string) => {
+                const variantKey = variant as keyof typeof variantColors;
+                const colors = variantColors[variantKey];
                 return `${colors.bg} ${colors.text} ${colors.border}`;
         };
+        const variant = getBackgroundColor(event.isBooking ? "booking" : "availability");
 
         return (
                 <div
@@ -145,6 +136,7 @@ export default function EventStyled({
                                                         startDate: event?.startDate,
                                                         endDate: event?.endDate,
                                                         employeeId: event?.employeeId,
+                                                        isBooking: event?.isBooking,
                                                         typeId: event?.typeId,
                                                         availability_slot_ids: event?.availability_slot_ids,
                                                 });
@@ -161,6 +153,7 @@ export default function EventStyled({
                                                         startDate: event?.startDate,
                                                         endDate: event?.endDate,
                                                         employeeId: event?.employeeId,
+                                                        isBooking: event?.isBooking,
                                                         typeId: event?.typeId,
                                                         availability_slot_ids: event?.availability_slot_ids,
                                                 });
@@ -170,7 +163,12 @@ export default function EventStyled({
                                                 event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
                                         )}
                                 >
-                                        <div className="flex flex-col flex-grow outline-2 rounded-2xl p-2 my-2 hover:bg-primary hover:text-black">
+                                        <div
+                                                className={cn(
+                                                        "flex flex-col flex-grow outline-2 rounded-2xl p-2 my-2 hover:bg-primary hover:text-black",
+                                                        variant
+                                                )}
+                                        >
                                                 <div className="font-semibold text-xs truncate mb-1">
                                                         {typeLabel && employeeLabel
                                                                 ? `${capatalise(typeLabel)} with ${employeeLabel}`

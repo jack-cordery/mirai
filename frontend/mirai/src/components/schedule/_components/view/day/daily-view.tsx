@@ -293,6 +293,8 @@ export default function DailyView({
                         id: uuidv4.toString(),
                         employeeId: selectedEmployee?.id ?? 0,
                         isBooking: false,
+                        bookingId: null,
+                        bookingEmail: null,
                         typeId: selectedType?.id ?? 0,
                         availability_slot_ids: [],
                 });

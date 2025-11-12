@@ -635,6 +635,14 @@ INSERT INTO
 VALUES
   ($1, $2);
 
+-- name: GetBookingSlotsFromAvailability :many
+SELECT DISTINCT
+  booking_id
+FROM
+  booking_slots
+WHERE
+  availability_slot_id = ANY ($1::int[]);
+
 -- name: UpdateBookingSlot :exec
 UPDATE booking_slots
 SET

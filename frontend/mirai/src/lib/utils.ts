@@ -9,6 +9,7 @@ import {
 
 import { type Event } from "@/types/index";
 import type { GetAllBookingsResponse } from "@/api/bookings";
+import { v4 as uuidv4 } from "uuid";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -136,7 +137,8 @@ export function generateOptions(
 export function bookingsToEvents(bookings: GetAllBookingsResponse[]): Event[] {
   return bookings.map((b: GetAllBookingsResponse) => {
     return {
-      id: b.id.toString(),
+      id: uuidv4().toString(),
+      bookingId: b.id,
       startDate: new Date(b.start_time),
       endDate: new Date(b.end_time),
       employeeId: b.employee_id,
@@ -156,12 +158,13 @@ export function availabilitySlotsToEvents(
     const endDate = new Date(startDate.getTime() + unit * 60 * 1000);
 
     return {
-      id: slot.availability_slot_id.toString(),
+      id: uuidv4().toString(),
       startDate: startDate,
       endDate: endDate,
       employeeId: slot.employee_id,
       typeId: slot.type_id,
       isBooking: false,
+      bookingId: null,
       availability_slot_ids: [slot.availability_slot_id],
     };
   });
@@ -181,7 +184,7 @@ export function availabilitySlotsToEvents(
       last.typeId === curr.typeId
     ) {
       last.endDate = curr.endDate;
-      last.availability_slot_ids.push(...curr.availability_slot_ids);
+      last.availability_slot_ids?.push(...curr.availability_slot_ids);
     } else {
       merged.push({ ...curr });
     }

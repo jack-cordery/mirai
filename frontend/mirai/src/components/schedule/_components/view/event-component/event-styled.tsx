@@ -114,7 +114,7 @@ export default function EventStyled({
                                                 handlers.handleDeleteEvent(event?.id);
                                                 onDelete?.(event?.id);
                                         } catch (err) {
-                                                toast('delete failed')
+                                                toast('delete failed. Make sure you have cancelled all bookings spanning the slot')
                                         }
                                 }}
                                 variant="destructive"

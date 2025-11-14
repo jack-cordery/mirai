@@ -402,13 +402,6 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
 
-		// ok so i currently delete all and re-create them
-		// what i actually want to do is
-		// take the current set of slots
-		// and compare them to the requested slots
-		// then work out which ones i would need to create
-		// and which ones i would need to delete
-
 		params, err := availabilitySlotRequest.ToCreationParams()
 		if err != nil {
 			log.Printf("error creating params in putAvailabilitySlot: %v", err)
@@ -449,6 +442,7 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			return
 		}
 		if len(bookingsToDelete) > 0 {
+			log.Printf("user tried to edit with the following %v %v %v %v", currentDatetimes, newDatetimes, slotsToDel, slotsToCreate)
 			http.Error(w, "This change would cause bookings to be cancelled", http.StatusBadRequest)
 			return
 		}

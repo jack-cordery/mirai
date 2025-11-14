@@ -70,6 +70,7 @@ export default function AddEventModal({
                                 typeId: formData.type.id,
                                 isBooking: false,
                                 bookingId: null,
+                                bookingEmail: null,
                                 availability_slot_ids: res.availability_slot_ids,
                         }
                         handlers.handleAddEvent(newEvent);

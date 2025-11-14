@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"errors"
+	"log"
 	"math/big"
 	"slices"
 	"time"
@@ -113,12 +114,22 @@ func spanToSlots(startTime time.Time, endTime time.Time, unit int) ([]time.Time,
 
 // slots_to_keep takes two sets and calculates the items to keep and delete
 func slotsToKeepDelete(current, next []pgtype.Timestamp) ([]pgtype.Timestamp, []pgtype.Timestamp) {
+
 	toKeep := []pgtype.Timestamp{}
 	toDelete := []pgtype.Timestamp{}
+
+	nextNorm := []time.Time{}
+	for _, n := range next {
+		nextNorm = append(nextNorm, n.Time.UTC())
+	}
+
 	for _, c := range current {
-		if slices.Contains(next, c) {
+		log.Printf("current %v\n", c)
+		if slices.Contains(nextNorm, c.Time.UTC()) {
+			log.Printf("is in %v\n", next)
 			toKeep = append(toKeep, c)
 		} else {
+			log.Printf("is not in %v\n", next)
 			toDelete = append(toDelete, c)
 		}
 	}
@@ -128,8 +139,12 @@ func slotsToKeepDelete(current, next []pgtype.Timestamp) ([]pgtype.Timestamp, []
 // slots_to_keep takes two sets and calculates whats in next that isnt in next
 func slotsToCreate(current, new []pgtype.Timestamp) []pgtype.Timestamp {
 	result := []pgtype.Timestamp{}
+	currentNorm := []time.Time{}
+	for _, c := range current {
+		currentNorm = append(currentNorm, c.Time.UTC())
+	}
 	for _, n := range new {
-		if !slices.Contains(current, n) {
+		if !slices.Contains(currentNorm, n.Time.UTC()) {
 			result = append(result, n)
 		}
 	}

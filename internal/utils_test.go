@@ -257,7 +257,7 @@ func TestSlotsToKeepDelete(t *testing.T) {
 }
 
 func TestSlotsToCreate(t *testing.T) {
-	t.Run("base case", func(t *testing.T) {
+	t.Run("no creation", func(t *testing.T) {
 		t.Parallel()
 		currentStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
 		currentEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T16:00:00Z")
@@ -283,7 +283,7 @@ func TestSlotsToCreate(t *testing.T) {
 
 		assert.Equal(t, 0, len(toCreate))
 	})
-	t.Run("base case 2", func(t *testing.T) {
+	t.Run("creation", func(t *testing.T) {
 		t.Parallel()
 		currentStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
 		currentEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T16:00:00Z")

@@ -221,6 +221,7 @@ export function EditEventModal({
                                 typeId: formData.type.id,
                                 isBooking: false,
                                 bookingId: null,
+                                bookingEmail: null,
                                 employeeId: formData.employee.id,
                         }
 

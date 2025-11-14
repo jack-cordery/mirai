@@ -211,3 +211,106 @@ func TestSpanToSlots(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestSlotsToKeepDelete(t *testing.T) {
+	t.Run("base case", func(t *testing.T) {
+		t.Parallel()
+		currentStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		currentEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T16:00:00Z")
+		newStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:30:00Z")
+		newEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T15:30:00Z")
+		unit := 30
+
+		currentSlots, _ := spanToSlots(currentStartTime, currentEndTime, unit)
+		currentTimestamps := []pgtype.Timestamp{}
+		for _, s := range currentSlots {
+			t, _ := timeToTimeStamp(s)
+			currentTimestamps = append(currentTimestamps, t)
+		}
+
+		newSlots, _ := spanToSlots(newStartTime, newEndTime, unit)
+		newTimestamps := []pgtype.Timestamp{}
+		for _, s := range newSlots {
+			t, _ := timeToTimeStamp(s)
+			newTimestamps = append(newTimestamps, t)
+		}
+
+		keep, del := slotsToKeepDelete(currentTimestamps, newTimestamps)
+
+		expectedDelFirst, _ := timeToTimeStamp(currentStartTime)
+		expectedDelSecond, _ := timeToTimeStamp(newEndTime)
+		expectedDel := []pgtype.Timestamp{expectedDelFirst, expectedDelSecond}
+
+		expectedKeepStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:30:00Z")
+		expectedKeepEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T15:30:00Z")
+
+		expectedKeepSlots, _ := spanToSlots(expectedKeepStartTime, expectedKeepEndTime, unit)
+		expectedKeepTimestamps := []pgtype.Timestamp{}
+		for _, s := range expectedKeepSlots {
+			t, _ := timeToTimeStamp(s)
+			expectedKeepTimestamps = append(expectedKeepTimestamps, t)
+		}
+
+		assert.Equal(t, expectedKeepTimestamps, keep)
+		assert.Equal(t, expectedDel, del)
+	})
+}
+
+func TestSlotsToCreate(t *testing.T) {
+	t.Run("base case", func(t *testing.T) {
+		t.Parallel()
+		currentStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		currentEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T16:00:00Z")
+		newStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:30:00Z")
+		newEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T15:30:00Z")
+		unit := 30
+
+		currentSlots, _ := spanToSlots(currentStartTime, currentEndTime, unit)
+		currentTimestamps := []pgtype.Timestamp{}
+		for _, s := range currentSlots {
+			t, _ := timeToTimeStamp(s)
+			currentTimestamps = append(currentTimestamps, t)
+		}
+
+		newSlots, _ := spanToSlots(newStartTime, newEndTime, unit)
+		newTimestamps := []pgtype.Timestamp{}
+		for _, s := range newSlots {
+			t, _ := timeToTimeStamp(s)
+			newTimestamps = append(newTimestamps, t)
+		}
+
+		toCreate := slotsToCreate(currentTimestamps, newTimestamps)
+
+		assert.Equal(t, 0, len(toCreate))
+	})
+	t.Run("base case 2", func(t *testing.T) {
+		t.Parallel()
+		currentStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:00:00Z")
+		currentEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T16:00:00Z")
+		newStartTime, _ := time.Parse(time.RFC3339, "2025-09-08T14:30:00Z")
+		newEndTime, _ := time.Parse(time.RFC3339, "2025-09-08T16:30:00Z")
+		unit := 30
+
+		currentSlots, _ := spanToSlots(currentStartTime, currentEndTime, unit)
+		currentTimestamps := []pgtype.Timestamp{}
+		for _, s := range currentSlots {
+			t, _ := timeToTimeStamp(s)
+			currentTimestamps = append(currentTimestamps, t)
+		}
+
+		newSlots, _ := spanToSlots(newStartTime, newEndTime, unit)
+		newTimestamps := []pgtype.Timestamp{}
+		for _, s := range newSlots {
+			t, _ := timeToTimeStamp(s)
+			newTimestamps = append(newTimestamps, t)
+		}
+
+		toCreate := slotsToCreate(currentTimestamps, newTimestamps)
+
+		expectedCreateTime, _ := time.Parse(time.RFC3339, "2025-09-08T16:00:00Z")
+		expectedTimestamp, _ := timeToTimeStamp(expectedCreateTime)
+		expected := []pgtype.Timestamp{expectedTimestamp}
+
+		assert.Equal(t, expected, toCreate)
+	})
+}

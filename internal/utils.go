@@ -110,3 +110,28 @@ func spanToSlots(startTime time.Time, endTime time.Time, unit int) ([]time.Time,
 	return slots, nil
 
 }
+
+// slots_to_keep takes two sets and calculates the items to keep and delete
+func slotsToKeepDelete(current, next []pgtype.Timestamp) ([]pgtype.Timestamp, []pgtype.Timestamp) {
+	toKeep := []pgtype.Timestamp{}
+	toDelete := []pgtype.Timestamp{}
+	for _, c := range current {
+		if slices.Contains(next, c) {
+			toKeep = append(toKeep, c)
+		} else {
+			toDelete = append(toDelete, c)
+		}
+	}
+	return toKeep, toDelete
+}
+
+// slots_to_keep takes two sets and calculates whats in next that isnt in next
+func slotsToCreate(current, new []pgtype.Timestamp) []pgtype.Timestamp {
+	result := []pgtype.Timestamp{}
+	for _, n := range new {
+		if !slices.Contains(current, n) {
+			result = append(result, n)
+		}
+	}
+	return result
+}

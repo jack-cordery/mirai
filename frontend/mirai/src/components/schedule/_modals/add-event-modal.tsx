@@ -229,7 +229,7 @@ export function EditEventModal({
                         handlers.handleUpdateEvent(updatedEvent, updatedEvent.id);
                         setClose(); // Close the modal after submission
                 } catch (error) {
-                        toast(`creation failed: ${error}`)
+                        toast(`edit failed: ${error}. Ensure there are no bookings spanning the slot`)
 
                 }
         };
@@ -242,8 +242,8 @@ export function EditEventModal({
                                 <>
                                         <SelectDate
                                                 data={{
-                                                        startDate: getNearest30MinuteBlock(data?.default?.startDate) || getNearest30MinuteBlock(new Date()),
-                                                        endDate: getNearest30MinuteBlock(data?.default?.endDate) || getNearest30MinuteBlock(new Date()),
+                                                        startDate: typedData.default.startDate || getNearest30MinuteBlock(new Date()),
+                                                        endDate: typedData.default.endDate || getNearest30MinuteBlock(new Date()),
                                                 }}
                                                 setValue={setValue}
                                         />

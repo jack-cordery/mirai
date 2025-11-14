@@ -523,7 +523,7 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 
 }
 
-func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
+func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context, a *AuthParams, force bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var availabilitySlotIDs []int32
 		availabilitySlotId := r.PathValue("availability_slot_id")
@@ -623,13 +623,15 @@ func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context, a *AuthPara
 			return
 		}
 
-		// update booking status to cancelled and
-		// need to get booking_id from the join table
-
 		bookingIDs, err := qtx.GetBookingSlotsFromAvailability(ctx, availabilitySlotIDs)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			log.Printf("error getting booking id deleteAvailabilitySlot: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if len(bookingIDs) > 0 && !force {
+			http.Error(w, "deleting availability with bookings present", http.StatusBadRequest)
 			return
 		}
 

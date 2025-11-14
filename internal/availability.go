@@ -367,10 +367,6 @@ func getFreeAvailabilitySlots(pool *pgxpool.Pool, ctx context.Context, a *AuthPa
 	}
 }
 
-// TODO: Ok so this needs to be rethinked slightly to work correctly
-// at the moment it just deletes all of the availability slots
-// and then just books new ones. This will destroy any bookings
-// links in the join table.
 func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var availabilitySlotRequest PutAvailabilitySlotRequest

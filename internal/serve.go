@@ -171,8 +171,8 @@ func SetupServer() {
 	mux.HandleFunc("GET /availability/free", getFreeAvailabilitySlots(pool, ctx, a))
 	mux.HandleFunc("GET /availability/", getAvailabilitySlot(pool, ctx))
 	mux.HandleFunc("PUT /availability/", putAvailabilitySlot(pool, ctx))
-	mux.HandleFunc("DELETE /availability/{availability_slot_id}", deleteAvailabilitySlot(pool, ctx, a))
-	mux.HandleFunc("DELETE /availability/", deleteAvailabilitySlot(pool, ctx, a))
+	mux.HandleFunc("DELETE /availability/{availability_slot_id}", deleteAvailabilitySlot(pool, ctx, a, false))
+	mux.HandleFunc("DELETE /availability/", deleteAvailabilitySlot(pool, ctx, a, false))
 
 	err = http.ListenAndServe(":8000", corsMiddleware(jsonContentTypeMiddleware(mux), appUrl))
 	if err != nil {

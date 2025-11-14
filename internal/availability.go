@@ -367,9 +367,12 @@ func getFreeAvailabilitySlots(pool *pgxpool.Pool, ctx context.Context, a *AuthPa
 	}
 }
 
+// TODO: Ok so this needs to be rethinked slightly to work correctly
+// at the moment it just deletes all of the availability slots
+// and then just books new ones. This will destroy any bookings
+// links in the join table.
 func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		var availabilitySlotRequest PutAvailabilitySlotRequest
 		err := json.NewDecoder(r.Body).Decode(&availabilitySlotRequest)
 		if err != nil {
@@ -403,14 +406,12 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
 
-		for _, id := range availabilitySlotRequest.AvailabilitySlotIDs {
-			_, err = qtx.DeleteAvailabilitySlot(ctx, id)
-			if err != nil {
-				log.Printf("error deleting id %d in putAvailabilitySlot: %v", id, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		}
+		// ok so i currently delete all and re-create them
+		// what i actually want to do is
+		// take the current set of slots
+		// and compare them to the requested slots
+		// then work out which ones i would need to create
+		// and which ones i would need to delete
 
 		params, err := availabilitySlotRequest.ToCreationParams()
 		if err != nil {
@@ -419,7 +420,62 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			return
 		}
 
-		slotIDs, err := handleCreation(params, qtx, ctx)
+		currentDatetimes := []pgtype.Timestamp{}
+		timeToID := make(map[pgtype.Timestamp]int32)
+		for _, id := range availabilitySlotRequest.AvailabilitySlotIDs {
+			slot, err := qtx.GetAvailabilitySlotById(ctx, id)
+			if err != nil {
+				log.Printf("error getting current slots in putAvailabilitySlot: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			currentDatetimes = append(currentDatetimes, slot.Datetime)
+			timeToID[slot.Datetime] = id
+		}
+
+		newDatetimes := []pgtype.Timestamp{}
+		for _, p := range params {
+			newDatetimes = append(newDatetimes, p.Datetime)
+		}
+
+		_, slotsToDel := slotsToKeepDelete(currentDatetimes, newDatetimes)
+		slotsToCreate := slotsToCreate(currentDatetimes, newDatetimes)
+
+		idsToDel := []int32{}
+		for _, s := range slotsToDel {
+			idsToDel = append(idsToDel, timeToID[s])
+		}
+
+		bookingsToDelete, err := qtx.GetBookingSlotsFromAvailability(ctx, idsToDel)
+		if err != nil {
+			log.Printf("error getting booking slots to delete in putAvailabilitySlot: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if len(bookingsToDelete) > 0 {
+			http.Error(w, "This change would cause bookings to be cancelled", http.StatusBadRequest)
+			return
+		}
+
+		for _, id := range idsToDel {
+			_, err = qtx.DeleteAvailabilitySlot(ctx, id)
+			if err != nil {
+				log.Printf("error deleting id %d in putAvailabilitySlot: %v", id, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+
+		createParams := []db.CreateAvailabilitySlotParams{}
+		for _, s := range slotsToCreate {
+			createParams = append(createParams, db.CreateAvailabilitySlotParams{
+				EmployeeID: availabilitySlotRequest.EmployeeID,
+				TypeID:     availabilitySlotRequest.TypeID,
+				Datetime:   s,
+			})
+		}
+
+		slotIDs, err := handleCreation(createParams, qtx, ctx)
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {

@@ -34,7 +34,7 @@ function employeesToOptions(employees: Employee[]): Option[] {
 
 
 export default function Scheduler() {
-        const { dispatch, setEmployeeOptions, setTypeOptions, selectedEmployeeAvailability } = useScheduler()
+        const { dispatch, setEmployeeOptions, setTypeOptions, setSelectedEmployeeAvailability } = useScheduler()
         useEffect(() => {
                 async function fetchEvents() {
                         try {
@@ -46,6 +46,7 @@ export default function Scheduler() {
                                 dispatch({ type: "SET_EVENTS", payload: [...availabilityEvents, ...bookingEvents] });
                                 setTypeOptions(typeOptions);
                                 setEmployeeOptions(employeeOptions);
+                                setSelectedEmployeeAvailability(employeeOptions[0])
                         } catch (error) {
                                 toast("failed to fetch availability");
                         }

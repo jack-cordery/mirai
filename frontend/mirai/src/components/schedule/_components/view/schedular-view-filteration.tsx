@@ -13,6 +13,8 @@ import { useModal } from "@/providers/modal-context";
 import type { ClassNames, CustomComponents, Views } from "@/types/index";
 import { cn } from "@/lib/utils";
 import CustomModal from "@/components/ui/custom-modal";
+import { Select, SelectContent, SelectGroup, SelectLabel, SelectTrigger, SelectValue, SelectItem } from "@/components/ui/select";
+import { useScheduler } from "@/providers/schedular-provider";
 
 // Animation settings for Framer Motion
 const animationConfig: MotionProps = {
@@ -37,8 +39,10 @@ export default function SchedulerViewFilteration({
         classNames?: ClassNames;
 }) {
         const { setOpen } = useModal();
+        const { employeeOptions, selectedEmployeeAvailability, setSelectedEmployeeAvailability } = useScheduler();
         const [activeView, setActiveView] = useState<string>("day");
         const [clientSide, setClientSide] = useState(false);
+
 
 
         useEffect(() => {
@@ -172,6 +176,33 @@ export default function SchedulerViewFilteration({
                                                                 )}
                                                         </TabsList>
 
+                                                        <Select
+                                                                onValueChange={(v) => {
+                                                                        const selected = employeeOptions.find((e) => e.id === Number(v));
+
+                                                                        setSelectedEmployeeAvailability({
+                                                                                id: Number(v),
+                                                                                label: selected?.label ?? "",
+                                                                        });
+                                                                }}
+                                                        >
+                                                                <SelectTrigger>
+                                                                        <SelectValue placeholder="Select Employee" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                        <SelectGroup>
+                                                                                <SelectLabel>Employees</SelectLabel>
+                                                                                {employeeOptions.map((e) => (
+                                                                                        <SelectItem value={e.id.toString()} id={e.id.toString()}>
+                                                                                                {e.label}
+                                                                                        </SelectItem>
+                                                                                )
+
+                                                                                )}
+                                                                        </SelectGroup>
+                                                                </SelectContent>
+                                                        </Select>
+
                                                         {/* Add Event Button */}
                                                         {CustomComponents?.customButtons?.CustomAddEventButton ? (
                                                                 <div onClick={() => handleAddEvent()}>
@@ -257,7 +288,7 @@ export default function SchedulerViewFilteration({
                                                 )}
                                         </Tabs>
                                 </div>
-                        </div>
-                </div>
+                        </div >
+                </div >
         );
 }

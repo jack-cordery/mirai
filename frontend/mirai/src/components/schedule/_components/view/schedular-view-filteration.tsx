@@ -177,6 +177,7 @@ export default function SchedulerViewFilteration({
                                                         </TabsList>
 
                                                         <Select
+                                                                value={selectedEmployeeAvailability?.id.toString() ?? ""}
                                                                 onValueChange={(v) => {
                                                                         const selected = employeeOptions.find((e) => e.id === Number(v));
 
@@ -193,7 +194,12 @@ export default function SchedulerViewFilteration({
                                                                         <SelectGroup>
                                                                                 <SelectLabel>Employees</SelectLabel>
                                                                                 {employeeOptions.map((e) => (
-                                                                                        <SelectItem value={e.id.toString()} id={e.id.toString()}>
+                                                                                        <SelectItem
+                                                                                                value={e.id.toString()}
+                                                                                                id={e.id.toString()}
+                                                                                                key={e.id}
+                                                                                        >
+
                                                                                                 {e.label}
                                                                                         </SelectItem>
                                                                                 )

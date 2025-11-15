@@ -224,7 +224,7 @@ export default function DailyView({
                         currentDate?.getDate() || 0,
                         currentDate
                 ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
-        }, [selectedEmployeeAvailability])
+        }, [selectedEmployeeAvailability, currentDate])
 
         // Calculate time groups once for all events
         const timeGroups = groupEventsByTimePeriod(dayEvents);

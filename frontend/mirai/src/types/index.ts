@@ -81,6 +81,10 @@ export interface SchedulerContextType {
   setSelectedType: React.Dispatch<React.SetStateAction<Option | null>>;
   selectedEmployee: Option | null;
   setSelectedEmployee: React.Dispatch<React.SetStateAction<Option | null>>;
+  selectedEmployeeAvailability: Option | null;
+  setSelectedEmployeeAvailability: React.Dispatch<
+    React.SetStateAction<Option | null>
+  >;
   typeOptions: Option[];
   setTypeOptions: React.Dispatch<React.SetStateAction<Option[]>>;
   employeeOptions: Option[];

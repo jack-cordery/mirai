@@ -98,6 +98,7 @@ export const SchedulerProvider = ({
         const [employeeOptions, setEmployeeOptions] = useState<Option[]>([]);
         const [selectedEmployee, setSelectedEmployee] = useState<Option | null>(employeeOptions[0])
         const [selectedType, setSelectedType] = useState<Option | null>(typeOptions[0])
+        const [selectedEmployeeAvailability, setSelectedEmployeeAvailability] = useState<Option | null>(employeeOptions[0])
 
 
 
@@ -345,7 +346,7 @@ export const SchedulerProvider = ({
 
         return (
                 <SchedulerContext.Provider
-                        value={{ events: state, dispatch, getters, handlers, weekStartsOn, typeOptions, setTypeOptions, employeeOptions, setEmployeeOptions, selectedEmployee, setSelectedEmployee, selectedType, setSelectedType }}
+                        value={{ events: state, dispatch, getters, handlers, weekStartsOn, typeOptions, setTypeOptions, employeeOptions, setEmployeeOptions, selectedEmployee, setSelectedEmployee, selectedType, setSelectedType, selectedEmployeeAvailability, setSelectedEmployeeAvailability }}
                 >
                         <ModalProvider>{children}</ModalProvider>
                 </SchedulerContext.Provider>

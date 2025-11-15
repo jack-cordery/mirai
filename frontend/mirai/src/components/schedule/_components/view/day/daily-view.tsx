@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import React, { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { AnimatePresence, motion, type TargetAndTransition } from "framer-motion";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -167,7 +167,7 @@ export default function DailyView({
         const [currentDate, setCurrentDate] = useState<Date>(new Date());
         const [direction, setDirection] = useState<number>(0);
         const { setOpen } = useModal();
-        const { getters, handlers, typeOptions, employeeOptions, selectedEmployee, selectedType } = useScheduler();
+        const { getters, handlers, typeOptions, employeeOptions, selectedEmployee, selectedType, selectedEmployeeAvailability } = useScheduler();
         const [hHeight, setHHeight] = useState(0);
         useEffect(() => {
                 const updateHeight = () => {
@@ -219,10 +219,12 @@ export default function DailyView({
                 [currentDate]
         );
 
-        const dayEvents = getters.getEventsForDay(
-                currentDate?.getDate() || 0,
-                currentDate
-        );
+        const dayEvents = useMemo(() => {
+                return getters.getEventsForDay(
+                        currentDate?.getDate() || 0,
+                        currentDate
+                ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
+        }, [selectedEmployeeAvailability])
 
         // Calculate time groups once for all events
         const timeGroups = groupEventsByTimePeriod(dayEvents);

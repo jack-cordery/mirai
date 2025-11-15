@@ -34,7 +34,7 @@ function employeesToOptions(employees: Employee[]): Option[] {
 
 
 export default function Scheduler() {
-        const { dispatch, setEmployeeOptions, setTypeOptions } = useScheduler()
+        const { dispatch, setEmployeeOptions, setTypeOptions, selectedEmployeeAvailability } = useScheduler()
         useEffect(() => {
                 async function fetchEvents() {
                         try {

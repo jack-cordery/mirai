@@ -9,11 +9,9 @@ type ProtectedRouteProps = {
 export default function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
         const { validate, setAdmin } = useAuth();
 
-        if (allowedRole == "ADMIN") {
-                setAdmin(true);
-        } else {
-                setAdmin(false);
-        }
+        useEffect(() => {
+                setAdmin(allowedRole === "ADMIN");
+        }, [allowedRole, setAdmin]);
 
         useEffect(() => {
                 const checkAuth = async () => {

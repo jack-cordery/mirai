@@ -94,7 +94,6 @@ export function generateOptionsFromSlots(
     )
     .map((s) => {
       const sDate = new Date(s.datetime);
-      console.log(`sDate: ${sDate}`);
       let currDate = new Date(sDate.getTime() + 60000 * 30);
       let duration = 1;
 
@@ -102,9 +101,6 @@ export function generateOptionsFromSlots(
         (f) => new Date(f.datetime).getTime() >= currDate.getTime(),
       )) {
         const tDate = new Date(t.datetime);
-        console.log(
-          `curr: ${currDate}, t: ${tDate}, are equal: ${tDate.getTime() === currDate.getTime()}`,
-        );
         if (tDate.getTime() === currDate.getTime()) {
           duration++;
           currDate = tDate;

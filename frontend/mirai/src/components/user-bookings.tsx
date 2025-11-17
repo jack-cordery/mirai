@@ -42,8 +42,8 @@ export default function UserBookings() {
                                         <TableHeader>
                                                 <TableRow>
                                                         <TableHead>Date</TableHead>
-                                                        <TableHead>Time</TableHead>
-                                                        <TableHead>Duration</TableHead>
+                                                        <TableHead>Start Time</TableHead>
+                                                        <TableHead>End Time</TableHead>
                                                         <TableHead>Provider</TableHead>
                                                         <TableHead>Service</TableHead>
                                                         <TableHead>Paid</TableHead>
@@ -64,7 +64,7 @@ export default function UserBookings() {
                                                                 <TableRow key={b.id}>
                                                                         <TableCell>{format(new Date(b.start_time), "dd-MMM-yy")}</TableCell>
                                                                         <TableCell>{format(new Date(b.start_time), "HH:mm")}</TableCell>
-                                                                        <TableCell>{b.type_duration * 30} mins</TableCell>
+                                                                        <TableCell>{format(new Date(new Date(b.start_time).getTime() + 30 * 60000), "HH:mm")}</TableCell>
                                                                         <TableCell>{b.employee_name} {b.employee_surname}</TableCell>
                                                                         <TableCell>{b.type_title}</TableCell>
                                                                         <TableCell>

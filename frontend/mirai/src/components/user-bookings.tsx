@@ -21,7 +21,6 @@ export default function UserBookings() {
                         if (res) {
                                 setBookingData(res);
                         }
-                        console.log(res);
                 } catch (err) {
                         toast("data fetch failed. Please try again later")
                 }

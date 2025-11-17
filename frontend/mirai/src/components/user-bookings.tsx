@@ -1,19 +1,17 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getAllBookingsUser, postCancellation, type GetAllBookingsResponse } from "@/api/bookings"
+import { getAllBookingsUser } from "@/api/bookings"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
-import { IconCircleCheck, IconCircleCheckFilled, IconCircleXFilled, IconDotsVertical, IconLoader, IconRefresh, IconX } from "@tabler/icons-react"
+import { IconCircleCheck, IconCircleCheckFilled, IconCircleXFilled, IconLoader, IconRefresh, IconX } from "@tabler/icons-react"
 import { Button } from "./ui/button"
-import { DropdownMenu, DropdownMenuContent } from "@radix-ui/react-dropdown-menu"
-import { DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { CancelModal } from "./booking-table-modals"
 import { useTableContext } from "@/contexts/table-context"
 
 export default function UserBookings() {
-        const { isCancelModalOpen, setIsCancelModalOpen, setCancelModalRow, bookingData, setBookingData } = useTableContext();
+        const { setIsCancelModalOpen, setCancelModalRow, bookingData, setBookingData } = useTableContext();
 
         async function fetchData() {
                 try {

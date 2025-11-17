@@ -190,6 +190,7 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			EmployeeID:      bookingRow.EmployeeID,
 			EmployeeName:    bookingRow.EmployeeName,
 			EmployeeSurname: bookingRow.EmployeeSurname,
+			EmployeeEmail:   bookingRow.EmployeeEmail,
 			EndTime:         bookingRow.EndTime,
 			Status:          db.BookingStatusCreated,
 			ChangedByEmail:  user.Email,
@@ -771,6 +772,7 @@ func postManualStatus(pool *pgxpool.Pool, ctx context.Context, a *AuthParams, ne
 
 			err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
 				BookingID:       bookingRow.ID,
+				EmployeeID:      bookingRow.EmployeeID,
 				EmployeeName:    bookingRow.EmployeeName,
 				EmployeeSurname: bookingRow.EmployeeSurname,
 				EmployeeEmail:   bookingRow.EmployeeEmail,

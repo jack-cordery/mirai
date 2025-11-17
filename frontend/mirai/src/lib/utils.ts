@@ -96,7 +96,7 @@ export function generateOptionsFromSlots(
       const sDate = new Date(s.datetime);
       console.log(`sDate: ${sDate}`);
       let currDate = new Date(sDate.getTime() + 60000 * 30);
-      let duration = 0;
+      let duration = 1;
 
       for (const t of slots.filter(
         (f) => new Date(f.datetime).getTime() >= currDate.getTime(),

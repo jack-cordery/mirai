@@ -53,6 +53,7 @@ export default function BookingCalendar() {
                         selectedTimes.startTime ? selectedTimes.startTime : startTime,
                         selectedTimes.endTime ? selectedTimes.endTime : endTime,
                         availabilitySlots.filter((a) => a.type_id === selectedBookingType?.type_id), date);
+                console.log(slots)
                 return slots
         }, [selectedTimes, availabilitySlots, date, selectedBookingType])
 
@@ -171,7 +172,7 @@ export default function BookingCalendar() {
                                                         Select Employee
                                                 </h1>
                                                 <Select
-                                                        value={selectedEmployee?.employee_id.toString()}
+                                                        value={selectedEmployee?.employee_id?.toString() ?? ""}
                                                         onValueChange={(id) => {
                                                                 const employee = employees.find(e => e.employee_id === Number(id)) || null;
                                                                 setSelectedEmployee(employee);

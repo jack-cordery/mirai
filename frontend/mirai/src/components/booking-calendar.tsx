@@ -114,18 +114,19 @@ export default function BookingCalendar() {
 
 
         const handleConfirmBooking = async () => {
-                const user_id = user?.id;
-                const slot_ids = selectedTime?.id ? [selectedTime.id, ...selectedTime.slotIDs.slice(0, (selectedBookingType?.duration ?? 1) - 1)] : [];
-                console.log(slot_ids)
-                const type_id = selectedBookingType?.type_id;
+                const userId = user?.id;
+                const slotId = selectedTime?.id;
+                const otherIds = selectedTime?.slotIDs ?? [];
+                const typeId = selectedBookingType?.type_id;
                 try {
-                        if (user_id === undefined || type_id === undefined) {
+                        if (userId === undefined || typeId === undefined || slotId === undefined) {
                                 throw new Error("invalid inputs")
                         }
+                        const slotIds = [slotId, ...otherIds]
                         await postBooking({
-                                user_id,
-                                availability_slots: slot_ids,
-                                type_id,
+                                user_id: userId,
+                                availability_slots: slotIds,
+                                type_id: typeId,
                                 notes: "",
                         })
                         setSelectedTime(null);

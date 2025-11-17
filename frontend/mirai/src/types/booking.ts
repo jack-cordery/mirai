@@ -7,6 +7,7 @@ export type SlotTimeOfDay = {
   id: number;
   hour: number;
   minute: number;
+  duration: number;
 };
 
 export type SelectedTimes = {

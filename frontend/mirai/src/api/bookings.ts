@@ -72,6 +72,7 @@ export type GetAllBookingsResponse = {
   employee_title: string;
   type_id: number;
   type_title: string;
+  type_duration: number;
   paid: boolean;
   cost: number;
   status: string;

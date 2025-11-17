@@ -115,7 +115,8 @@ export default function BookingCalendar() {
 
         const handleConfirmBooking = async () => {
                 const user_id = user?.id;
-                const slot_ids = selectedTime?.id ? [selectedTime.id] : [];
+                const slot_ids = selectedTime?.id ? [selectedTime.id, ...selectedTime.slotIDs.slice(0, (selectedBookingType?.duration ?? 1) - 1)] : [];
+                console.log(slot_ids)
                 const type_id = selectedBookingType?.type_id;
                 try {
                         if (user_id === undefined || type_id === undefined) {
@@ -297,6 +298,12 @@ export default function BookingCalendar() {
                                                         <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Date</span>
                                                                 <span className="font-medium">{format(date ?? 0, "dd MMM yyyy")}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Type</span>
+                                                                <span className="font-medium">
+                                                                        {(selectedBookingType?.title ?? "")}
+                                                                </span >
                                                         </div>
                                                         <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Start Time</span>

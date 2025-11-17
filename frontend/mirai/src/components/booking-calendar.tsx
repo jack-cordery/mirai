@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import TimeSelection from "@/components/time-selection"
 import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/components/ui/select"
-import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, type TimeOfDay, valueToTime, datetimeToTime, type SlotTimeOfDay } from "@/types/booking"
+import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, type TimeOfDay, valueToTime, datetimeToTime, type SlotTimeOfDay, type Employee } from "@/types/booking"
 import { generateOptionsFromSlots, loadWorkingDayTimes } from "@/lib/utils"
 import { getAllBookingTypes } from "@/api/booking-type"
 import { getAllAvailability, getAllFreeAvailability } from "@/api/availability"
@@ -16,8 +16,11 @@ import { format } from "date-fns"
 import { postBooking } from "@/api/bookings"
 import { useAuth } from "@/contexts/auth-context"
 import { useNavigate } from "react-router-dom"
+import { getAllEmployees } from "@/api/employee"
 
 export default function BookingCalendar() {
+
+        const unit = 30
 
         const { startTime, endTime } = loadWorkingDayTimes()
         const { user } = useAuth();
@@ -32,8 +35,10 @@ export default function BookingCalendar() {
                 endTime: null
         });
         const [bookingTypes, setBookingTypes] = React.useState<BookingType[]>([])
+        const [employees, setEmployees] = React.useState<Employee[]>([])
         const [availabilitySlots, setAvailabilitySlots] = React.useState<AvailabilitySlot[]>([])
         const [selectedBookingType, setSelectedBookingType] = React.useState<BookingType | null>(null)
+        const [selectedEmployee, setSelectedEmployee] = React.useState<Employee | null>(null)
 
         const [isBookingModalOpen, setIsBookingModalOpen] = React.useState<boolean>(false);
 
@@ -47,13 +52,13 @@ export default function BookingCalendar() {
                 const slots = generateOptionsFromSlots(
                         selectedTimes.startTime ? selectedTimes.startTime : startTime,
                         selectedTimes.endTime ? selectedTimes.endTime : endTime,
-                        availabilitySlots, date);
+                        availabilitySlots.filter((a) => a.type_id === selectedBookingType?.type_id), date);
                 return slots
-        }, [selectedTimes, availabilitySlots, date])
+        }, [selectedTimes, availabilitySlots, date, selectedBookingType])
 
         const bookedDates = React.useMemo(() => {
                 const dates: Date[] = [];
-                const aSlots = availabilitySlots.filter((a) => {
+                const aSlots = availabilitySlots.filter((a) => a.type_id === selectedBookingType?.type_id).filter((a) => {
                         const opt = datetimeToTime(a.datetime)
                         const start = selectedTimes.startTime
                         const end = selectedTimes.endTime
@@ -89,15 +94,17 @@ export default function BookingCalendar() {
                         return !uniqueDates.includes(d.toISOString().split("T")[0])
                 })
                 return booked
-        }, [availabilitySlots, selectedTimes])
+        }, [availabilitySlots, selectedTimes, selectedBookingType])
 
         React.useEffect(() => {
                 const fetchData = async () => {
                         try {
-                                const [resBookingTypes, resAvailabilitySlots] = await Promise.all([getAllBookingTypes(), getAllFreeAvailability()])
+                                const [resBookingTypes, resAvailabilitySlots, resEmployees] = await Promise.all([getAllBookingTypes(), getAllFreeAvailability(), getAllEmployees()])
                                 setBookingTypes(resBookingTypes)
+                                setEmployees(resEmployees)
                                 setAvailabilitySlots(resAvailabilitySlots)
                                 setSelectedBookingType(resBookingTypes[0])
+                                setSelectedEmployee(resEmployees[0])
                         } catch (err) {
                                 toast(`error fetching data ${err}`)
                         }
@@ -159,6 +166,39 @@ export default function BookingCalendar() {
                                                 </Select >
 
                                         </div>
+                                        <div className="flex items-center border-b p-4 flex-row  gap-2">
+                                                <h1>
+                                                        Select Employee
+                                                </h1>
+                                                <Select
+                                                        value={selectedEmployee?.employee_id.toString()}
+                                                        onValueChange={(id) => {
+                                                                const employee = employees.find(e => e.employee_id === Number(id)) || null;
+                                                                setSelectedEmployee(employee);
+                                                        }}
+                                                >
+                                                        <SelectTrigger className="w-[180px]">
+                                                                <SelectValue placeholder={selectedEmployee?.name ?? "Select Employee"} />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                                <SelectGroup>
+                                                                        {employees.map((e) => (
+                                                                                <SelectItem key={e.employee_id} value={e.employee_id.toString()}  >
+                                                                                        {
+                                                                                                e.name[0].toUpperCase()
+                                                                                                + e.name.substring(1).toLowerCase()
+                                                                                                + ' '
+                                                                                                + e.surname[0].toUpperCase()
+                                                                                                + e.surname.substring(1).toLowerCase()
+                                                                                        }
+                                                                                </SelectItem>
+                                                                        ))}
+                                                                </SelectGroup>
+                                                        </SelectContent>
+                                                </Select >
+
+                                        </div>
+
                                         <div className="flex border-b p-4 flex-row items-center justify-center gap-2">
                                                 <h1>
                                                         Show availabilily of a given time slot
@@ -211,8 +251,8 @@ export default function BookingCalendar() {
                                 </div>
                         </CardContent>
                         <CardFooter className="flex flex-col gap-4 border-t px-6 !py-5 md:flex-row">
-                                <div className="text-sm">
-                                        {date && selectedTime ? (
+                                <div className="text-sm max-w-full md:max-w-[500px] break-words">
+                                        {date && selectedTime && selectedEmployee ? (
                                                 <>
                                                         Your current selection is for{" "}
                                                         <span className="font-medium">
@@ -225,13 +265,20 @@ export default function BookingCalendar() {
                                                         </span>
                                                         at <span className="font-medium">{timeToValue(selectedTime)}</span> {" "}
                                                         for a {selectedBookingType?.title}
+                                                        with {
+                                                                (selectedEmployee?.name[0].toUpperCase() || "")
+                                                                + selectedEmployee?.name.substring(1).toLowerCase()
+                                                                + ' '
+                                                                + selectedEmployee?.surname[0].toUpperCase()
+                                                                + selectedEmployee?.surname.substring(1).toLowerCase()
+                                                        }
                                                 </>
                                         ) : (
                                                 <>Select a date and time for your meeting.</>
                                         )}
                                 </div>
                                 <Button
-                                        disabled={!date || !selectedTime || !selectedBookingType}
+                                        disabled={!date || !selectedTime || !selectedBookingType || !selectedEmployee}
                                         className="w-full md:ml-auto md:w-auto"
                                         variant="outline"
                                         onClick={() => setIsBookingModalOpen(true)}
@@ -258,6 +305,23 @@ export default function BookingCalendar() {
                                                                 </span>
                                                         </div>
                                                         <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Employee</span>
+                                                                <span className="font-medium">{
+                                                                        (selectedEmployee?.name[0].toUpperCase() || "")
+                                                                        + selectedEmployee?.name.substring(1).toLowerCase()
+                                                                        + ' '
+                                                                        + selectedEmployee?.surname[0].toUpperCase()
+                                                                        + selectedEmployee?.surname.substring(1).toLowerCase()
+                                                                }</span >
+                                                        </div>
+                                                        <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Duration</span>
+                                                                <span className="font-medium">
+                                                                        {(selectedBookingType?.duration ?? 0) * unit} minutes
+                                                                </span >
+                                                        </div>
+
+                                                        <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Amount</span>
                                                                 <span className="font-medium">£{((selectedBookingType?.cost ?? 0) / 100).toFixed(2)}</span >
                                                         </div>
@@ -272,6 +336,6 @@ export default function BookingCalendar() {
                                 </DialogContent>
 
                         </Dialog>
-                </Card>
+                </Card >
         )
 }

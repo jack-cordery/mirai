@@ -88,8 +88,34 @@ export function generateOptionsFromSlots(
   slots: AvailabilitySlot[],
   date?: Date,
 ): SlotTimeOfDay[] {
+  const slotsWithConcecutive = slots
+    .sort(
+      (a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime(),
+    )
+    .map((s) => {
+      const sDate = new Date(s.datetime);
+      console.log(`sDate: ${sDate}`);
+      let currDate = new Date(sDate.getTime() + 60000 * 30);
+      let duration = 0;
+
+      for (const t of slots.filter(
+        (f) => new Date(f.datetime).getTime() >= currDate.getTime(),
+      )) {
+        const tDate = new Date(t.datetime);
+        console.log(
+          `curr: ${currDate}, t: ${tDate}, are equal: ${tDate.getTime() === currDate.getTime()}`,
+        );
+        if (tDate.getTime() === currDate.getTime()) {
+          duration++;
+          currDate = tDate;
+        } else {
+          break;
+        }
+      }
+      return { ...s, duration: duration };
+    });
   const filteredSlots = date
-    ? slots.filter((s) => {
+    ? slotsWithConcecutive.filter((s) => {
         const slotDate = new Date(s.datetime);
         return (
           slotDate.getFullYear() === date.getFullYear() &&
@@ -97,11 +123,13 @@ export function generateOptionsFromSlots(
           slotDate.getDate() === date.getDate()
         );
       })
-    : slots;
+    : slotsWithConcecutive;
   const options = filteredSlots
     .map((s) => {
       const time = datetimeToTime(s.datetime);
-      return time ? { id: s.availability_slot_id, ...time } : null;
+      return time
+        ? { id: s.availability_slot_id, duration: s.duration, ...time }
+        : null;
     })
     .filter((opt): opt is SlotTimeOfDay => !!opt);
 

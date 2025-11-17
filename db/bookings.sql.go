@@ -538,6 +538,7 @@ SELECT
   u.last_login AS user_last_login,
   b.type_id,
   bt.title AS type_title,
+  bt.duration AS type_duration,
   b.paid,
   b.cost,
   b.status,
@@ -594,6 +595,7 @@ GROUP BY
   u.last_login,
   b.type_id,
   bt.title,
+  bt.duration,
   b.paid,
   b.cost,
   b.status,
@@ -625,6 +627,7 @@ type GetAllBookingsWithJoinRow struct {
 	UserLastLogin   pgtype.Timestamp `json:"user_last_login"`
 	TypeID          int32            `json:"type_id"`
 	TypeTitle       string           `json:"type_title"`
+	TypeDuration    int32            `json:"type_duration"`
 	Paid            bool             `json:"paid"`
 	Cost            int32            `json:"cost"`
 	Status          BookingStatus    `json:"status"`
@@ -659,6 +662,7 @@ func (q *Queries) GetAllBookingsWithJoin(ctx context.Context, dollar_1 int32) ([
 			&i.UserLastLogin,
 			&i.TypeID,
 			&i.TypeTitle,
+			&i.TypeDuration,
 			&i.Paid,
 			&i.Cost,
 			&i.Status,
@@ -749,6 +753,7 @@ SELECT
   u.last_login AS user_last_login,
   b.type_id,
   bt.title AS type_title,
+  bt.duration AS type_duration,
   b.paid,
   b.cost,
   b.status,
@@ -807,6 +812,7 @@ GROUP BY
   u.last_login,
   b.type_id,
   bt.title,
+  bt.duration,
   b.paid,
   b.cost,
   b.status,
@@ -843,6 +849,7 @@ type GetAllBookingsWithJoinByIDRow struct {
 	UserLastLogin   pgtype.Timestamp `json:"user_last_login"`
 	TypeID          int32            `json:"type_id"`
 	TypeTitle       string           `json:"type_title"`
+	TypeDuration    int32            `json:"type_duration"`
 	Paid            bool             `json:"paid"`
 	Cost            int32            `json:"cost"`
 	Status          BookingStatus    `json:"status"`
@@ -877,6 +884,7 @@ func (q *Queries) GetAllBookingsWithJoinByID(ctx context.Context, arg GetAllBook
 			&i.UserLastLogin,
 			&i.TypeID,
 			&i.TypeTitle,
+			&i.TypeDuration,
 			&i.Paid,
 			&i.Cost,
 			&i.Status,
@@ -1040,7 +1048,7 @@ SELECT DISTINCT
 FROM
   booking_slots
 WHERE
-  availability_slot_id = ANY($1::int[])
+  availability_slot_id = ANY ($1::int[])
 `
 
 func (q *Queries) GetBookingSlotsFromAvailability(ctx context.Context, dollar_1 []int32) ([]int32, error) {
@@ -1155,6 +1163,7 @@ SELECT
   u.last_login AS user_last_login,
   b.type_id,
   bt.title AS type_title,
+  bt.duration AS type_duration,
   b.paid,
   b.cost,
   b.status,
@@ -1213,6 +1222,7 @@ GROUP BY
   u.last_login,
   b.type_id,
   bt.title,
+  bt.duration,
   b.paid,
   b.cost,
   b.status,
@@ -1249,6 +1259,7 @@ type GetBookingWithJoinRow struct {
 	UserLastLogin   pgtype.Timestamp `json:"user_last_login"`
 	TypeID          int32            `json:"type_id"`
 	TypeTitle       string           `json:"type_title"`
+	TypeDuration    int32            `json:"type_duration"`
 	Paid            bool             `json:"paid"`
 	Cost            int32            `json:"cost"`
 	Status          BookingStatus    `json:"status"`
@@ -1277,6 +1288,7 @@ func (q *Queries) GetBookingWithJoin(ctx context.Context, arg GetBookingWithJoin
 		&i.UserLastLogin,
 		&i.TypeID,
 		&i.TypeTitle,
+		&i.TypeDuration,
 		&i.Paid,
 		&i.Cost,
 		&i.Status,

@@ -96,6 +96,7 @@ export function generateOptionsFromSlots(
       const sDate = new Date(s.datetime);
       let currDate = new Date(sDate.getTime() + 60000 * 30);
       let duration = 1;
+      let ids = [];
 
       for (const t of slots.filter(
         (f) => new Date(f.datetime).getTime() >= currDate.getTime(),
@@ -104,11 +105,12 @@ export function generateOptionsFromSlots(
         if (tDate.getTime() === currDate.getTime()) {
           duration++;
           currDate = tDate;
+          ids.push(t.availability_slot_id);
         } else {
           break;
         }
       }
-      return { ...s, duration: duration };
+      return { ...s, duration: duration, slotIDs: ids };
     });
   const filteredSlots = date
     ? slotsWithConcecutive.filter((s) => {
@@ -124,7 +126,12 @@ export function generateOptionsFromSlots(
     .map((s) => {
       const time = datetimeToTime(s.datetime);
       return time
-        ? { id: s.availability_slot_id, duration: s.duration, ...time }
+        ? {
+            id: s.availability_slot_id,
+            duration: s.duration,
+            slotIDs: s.slotIDs,
+            ...time,
+          }
         : null;
     })
     .filter((opt): opt is SlotTimeOfDay => !!opt);

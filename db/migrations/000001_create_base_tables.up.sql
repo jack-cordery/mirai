@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS availability (
   type_id INT NOT NULL REFERENCES booking_types (id) ON DELETE CASCADE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (employee_id, datetime)
+  UNIQUE (employee_id, datetime, type_id)
 );
 
 CREATE TYPE booking_status AS ENUM(

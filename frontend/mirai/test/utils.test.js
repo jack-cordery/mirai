@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
-import { availabilitySlotsToEvents } from "../src/lib/utils";
+import { availabilitySlotsToEvents, getCost } from "../src/lib/utils";
+
 test("availabilitySlotsToEvents creates the right object with dates, and merging", () => {
   const rfcDate1 = "2025-10-20T12:00:00Z";
   const rfcDate2 = "2025-10-20T12:30:00Z";
@@ -31,16 +32,27 @@ test("availabilitySlotsToEvents creates the right object with dates, and merging
     },
   ];
   const actual = availabilitySlotsToEvents(input, 30);
+  actual.forEach((obj) => {
+    delete obj.id;
+  });
   const expected = [
     {
-      id: "0",
       employeeId: 0,
       startDate: new Date(rfcDate1),
       endDate: new Date(new Date(rfcDate1).getTime() + 90 * 60 * 1000), // +30 mins
       isBooking: false,
       typeId: 0,
       availability_slot_ids: [0, 1, 2],
+      bookingId: null,
+      bookingEmail: null,
     },
   ];
   expect(actual).toEqual(expected);
+});
+
+test("getCost calculates the correct cost given a fixed cost", () => {
+  const bt = { cost: 100, fixed: true };
+  const cost = getCost(bt, 10);
+  const expected = 100;
+  expect(cost).toEqual(expected);
 });

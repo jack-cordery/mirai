@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import TimeSelection from "@/components/time-selection"
 import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/components/ui/select"
 import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, type TimeOfDay, valueToTime, datetimeToTime, type SlotTimeOfDay, type Employee } from "@/types/booking"
-import { generateOptionsFromSlots, loadWorkingDayTimes } from "@/lib/utils"
+import { generateOptionsFromSlots, getCost, loadWorkingDayTimes } from "@/lib/utils"
 import { getAllBookingTypes } from "@/api/booking-type"
 import { getAllAvailability, getAllFreeAvailability } from "@/api/availability"
 import { toast } from "sonner"
@@ -331,7 +331,7 @@ export default function BookingCalendar() {
 
                                                         <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Amount</span>
-                                                                <span className="font-medium">£{((selectedBookingType?.cost ?? 0) / 100).toFixed(2)}</span >
+                                                                <span className="font-medium">£{((getCost(selectedBookingType, selectedBookingType?.duration ?? 0) ?? 0) / 100).toFixed(2)}</span >
                                                         </div>
                                                 </div>
                                         </div>

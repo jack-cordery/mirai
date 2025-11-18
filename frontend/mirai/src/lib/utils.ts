@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import {
   datetimeToTime,
   type AvailabilitySlot,
+  type BookingType,
   type SlotTimeOfDay,
   type TimeOfDay,
 } from "@/types/booking";
@@ -224,4 +225,18 @@ export function availabilitySlotsToEvents(
     }
   }
   return merged;
+}
+
+export function getCost(
+  bt: BookingType | null,
+  durationInUnits: number,
+): number {
+  if (bt === null) {
+    return 0;
+  }
+  if (bt.fixed) {
+    return bt.cost;
+  } else {
+    return bt.cost * durationInUnits;
+  }
 }

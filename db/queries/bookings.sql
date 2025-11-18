@@ -485,6 +485,14 @@ WHERE
 LIMIT
   1;
 
+-- name: GetAvailabilitySlotByIds :many
+SELECT
+  *
+FROM
+  availability
+WHERE
+  id = ANY ($1::int[]);
+
 -- name: GetAllAvailabilitySlots :many
 SELECT
   *

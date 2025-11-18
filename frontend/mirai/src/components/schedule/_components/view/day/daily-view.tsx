@@ -404,12 +404,12 @@ export default function DailyView({
                                                         onMouseMove={handleMouseMove}
                                                         onMouseLeave={() => setDetailedHour(null)}
                                                 >
-                                                        <div className="flex  flex-col">
+                                                        <div className="flex flex-col">
                                                                 {hours.map((hour, index) => (
                                                                         <motion.div
                                                                                 key={`hour-${index}`}
                                                                                 variants={itemVariants}
-                                                                                className="cursor-pointer   transition duration-300  p-4 flex-1 text-left text-sm text-muted-foreground border-default-200"
+                                                                                className="cursor-pointer   transition duration-300  p-1 flex-1 text-left text-sm text-muted-foreground border-default-200 border-t-2"
                                                                         >
                                                                                 {hour}
                                                                         </motion.div>

@@ -152,7 +152,7 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		}
 
 		if !isSequential(sequentialCheckTimes, Unit) {
-			log.Printf("slot request is not sequential")
+			log.Printf("slot request is not sequential in postBooking")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -440,6 +440,24 @@ func putBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
+
+		sequentialCheckSlots, err := qtx.GetAvailabilitySlotByIds(ctx, bookingRequest.Slots)
+		if err != nil {
+			log.Printf("getting slots for sequential check failed in putBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		sequentialCheckTimes := []time.Time{}
+		for _, s := range sequentialCheckSlots {
+			sequentialCheckTimes = append(sequentialCheckTimes, s.Datetime.Time)
+		}
+
+		if !isSequential(sequentialCheckTimes, Unit) {
+			log.Printf("slot request is not sequential in putBooking")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		bookingID, err := qtx.UpdateBooking(ctx, bookingRequest.ToDBParams(int32(id)))
 		if err != nil {

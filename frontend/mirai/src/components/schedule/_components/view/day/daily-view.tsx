@@ -7,7 +7,7 @@ import { useScheduler } from "@/providers/schedular-provider";
 import { useModal } from "@/providers/modal-context";
 import AddEventModal from "@/components/schedule/_modals/add-event-modal";
 import EventStyled from "../event-component/event-styled";
-import type { CustomEventModal, Event, Option } from "@/types/index";
+import type { CustomEventModal, Event } from "@/types/index";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CustomModal from "@/components/ui/custom-modal";
@@ -164,10 +164,9 @@ export default function DailyView({
         const hoursColumnRef = useRef<HTMLDivElement>(null);
         const [detailedHour, setDetailedHour] = useState<string | null>(null);
         const [timelinePosition, setTimelinePosition] = useState<number>(0);
-        const [currentDate, setCurrentDate] = useState<Date>(new Date());
         const [direction, setDirection] = useState<number>(0);
         const { isOpen, setOpen } = useModal();
-        const { getters, handlers, typeOptions, employeeOptions, selectedEmployee, selectedType, selectedEmployeeAvailability } = useScheduler();
+        const { getters, handlers, selectedEmployee, selectedType, selectedEmployeeAvailability, currentDate, setCurrentDate } = useScheduler();
         const [hHeight, setHHeight] = useState(0);
         useEffect(() => {
                 const updateHeight = () => {
@@ -220,7 +219,6 @@ export default function DailyView({
         );
 
         const dayEvents = useMemo(() => {
-                console.log("calculating dayevents")
                 return getters.getEventsForDay(
                         currentDate?.getDate() || 0,
                         currentDate

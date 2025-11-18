@@ -29,9 +29,7 @@ export default function AddEventModal({
         CustomAddEventModal?: React.FC<{ register: any; errors: any }>;
 }) {
         const { setClose, data } = useModal();
-        const { handlers, typeOptions, employeeOptions } = useScheduler();
-
-        const typedData = data as { default: Event };
+        const { handlers, typeOptions, employeeOptions, currentDate } = useScheduler();
 
         const {
                 register,
@@ -42,8 +40,8 @@ export default function AddEventModal({
         } = useForm<EventFormData>({
                 resolver: zodResolver(eventSchema),
                 defaultValues: {
-                        startDate: getNearest30MinuteBlock(new Date()),
-                        endDate: getNearest30MinuteBlock(new Date()),
+                        startDate: getNearest30MinuteBlock(currentDate),
+                        endDate: getNearest30MinuteBlock(currentDate),
                         type: typeOptions[0],
                         employee: employeeOptions[0],
                 },
@@ -89,8 +87,8 @@ export default function AddEventModal({
                                 <>
                                         <SelectDate
                                                 data={{
-                                                        startDate: data?.default?.startDate || getNearest30MinuteBlock(new Date()),
-                                                        endDate: data?.default?.endDate || getNearest30MinuteBlock(new Date()),
+                                                        startDate: getNearest30MinuteBlock(currentDate),
+                                                        endDate: getNearest30MinuteBlock(currentDate),
                                                 }}
                                                 setValue={setValue}
                                         />

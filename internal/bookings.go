@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"time"
 
 	"github.com/jack-cordery/mirai/db"
 	"github.com/jackc/pgx/v5"
@@ -133,6 +134,25 @@ func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		duration := len(bookingRequest.AvailabilitySlots)
 		if duration < 1 {
 			log.Printf("requested a booking with no slots")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		sequentialCheckSlots, err := qtx.GetAvailabilitySlotByIds(ctx, bookingRequest.AvailabilitySlots)
+		if err != nil {
+			log.Printf("getting slots for sequential check failed in postBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+
+		}
+
+		sequentialCheckTimes := []time.Time{}
+		for _, s := range sequentialCheckSlots {
+			sequentialCheckTimes = append(sequentialCheckTimes, s.Datetime.Time)
+		}
+
+		if !isSequential(sequentialCheckTimes, Unit) {
+			log.Printf("slot request is not sequential")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

@@ -362,7 +362,6 @@ func getFreeAvailabilitySlots(pool *pgxpool.Pool, ctx context.Context, a *AuthPa
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		return
 
 	}
 }
@@ -402,6 +401,23 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
 
+		sequentialCheckSlots, err := qtx.GetAvailabilitySlotByIds(ctx, availabilitySlotRequest.AvailabilitySlotIDs)
+		if err != nil {
+			log.Printf("getting slots for sequential check failed in putAvailability: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		sequentialCheckTimes := []time.Time{}
+		for _, s := range sequentialCheckSlots {
+			sequentialCheckTimes = append(sequentialCheckTimes, s.Datetime.Time)
+		}
+
+		if !isSequential(sequentialCheckTimes, Unit) {
+			log.Printf("slot request is not sequential in putAvailability")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		params, err := availabilitySlotRequest.ToCreationParams()
 		if err != nil {
 			log.Printf("error creating params in putAvailabilitySlot: %v", err)

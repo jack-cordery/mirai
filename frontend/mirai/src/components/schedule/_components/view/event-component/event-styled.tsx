@@ -1,12 +1,10 @@
 import React from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/providers/modal-context";
-import AddEventModal, { EditEventModal } from "@/components/schedule/_modals/add-event-modal";
+import { EditEventModal } from "@/components/schedule/_modals/add-event-modal";
 import type { Event, CustomEventModal } from "@/types";
 import { TrashIcon, CalendarIcon, ClockIcon } from "lucide-react";
 import { useScheduler } from "@/providers/schedular-provider";
-import { motion } from "framer-motion";
 import { capatalise, cn } from "@/lib/utils";
 import CustomModal from "@/components/ui/custom-modal";
 import { toast } from "sonner";

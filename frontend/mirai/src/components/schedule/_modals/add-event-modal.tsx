@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
         DropdownMenu,
         DropdownMenuContent,
@@ -9,13 +7,13 @@ import {
         DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { cn, getNearest30MinuteBlock, toLocalISOString } from "@/lib/utils";
+import { getNearest30MinuteBlock, toLocalISOString } from "@/lib/utils";
 
 import { useModal } from "@/providers/modal-context";
 import SelectDate from "@/components/schedule/_components/add-event-components/select-date";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type EventFormData, eventSchema, type Event, type Option } from "@/types/index";
+import { type EventFormData, eventSchema, type Event } from "@/types/index";
 import { useScheduler } from "@/providers/schedular-provider";
 import { v4 as uuidv4 } from 'uuid';
 import { postAvailabilitySlot, putAvailabilitySlot } from "@/api/availability";
@@ -28,7 +26,7 @@ export default function AddEventModal({
 }: {
         CustomAddEventModal?: React.FC<{ register: any; errors: any }>;
 }) {
-        const { setClose, data } = useModal();
+        const { setClose } = useModal();
         const { handlers, typeOptions, employeeOptions, currentDate, selectedEmployeeAvailability } = useScheduler();
 
         const {

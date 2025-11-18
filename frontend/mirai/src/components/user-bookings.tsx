@@ -61,7 +61,7 @@ export default function UserBookings() {
                                                                 <TableRow key={b.id}>
                                                                         <TableCell>{format(new Date(b.start_time), "dd-MMM-yy")}</TableCell>
                                                                         <TableCell>{format(new Date(b.start_time), "HH:mm")}</TableCell>
-                                                                        <TableCell>{format(new Date(new Date(b.start_time).getTime() + 30 * 60000), "HH:mm")}</TableCell>
+                                                                        <TableCell>{format(new Date(b.end_time), "HH:mm")}</TableCell>
                                                                         <TableCell>{b.employee_name} {b.employee_surname}</TableCell>
                                                                         <TableCell>{b.type_title}</TableCell>
                                                                         <TableCell>

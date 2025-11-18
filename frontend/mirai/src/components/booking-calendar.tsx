@@ -122,7 +122,7 @@ export default function BookingCalendar() {
                         if (userId === undefined || typeId === undefined || slotId === undefined) {
                                 throw new Error("invalid inputs")
                         }
-                        const slotIds = [slotId, ...otherIds]
+                        const slotIds = [slotId, ...otherIds.slice(0, (selectedBookingType?.duration ?? 1) - 1)]
                         await postBooking({
                                 user_id: userId,
                                 availability_slots: slotIds,

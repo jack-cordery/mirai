@@ -21,7 +21,6 @@ export function PaidModal() {
 
         const handleManualPayment = async () => {
                 const booking_id = paidModalRow?.id;
-                console.log("manual")
                 if (booking_id === undefined) {
                         toast("no row was select for manual payment");
                         return
@@ -35,7 +34,6 @@ export function PaidModal() {
                         setIsPaidModalOpen(false);
 
                 } catch (err) {
-                        console.log(err);
                         toast("manual payment failed, please try again");
                 }
         }
@@ -227,7 +225,6 @@ export function CompleteModal() {
                         setIsCompleteModalOpen(false);
 
                 } catch (err) {
-                        console.log(err);
                         toast("manual completion failed, please try again");
                 }
         }

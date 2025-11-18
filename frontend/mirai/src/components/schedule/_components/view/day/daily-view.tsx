@@ -230,8 +230,8 @@ export default function DailyView({
 
         function handleAddEvent(event?: Event) {
                 // Create the modal content with the provided event data or defaults
-                const startDate = event?.startDate || new Date();
-                const endDate = event?.endDate || new Date();
+                const startDate = event?.startDate;
+                const endDate = event?.endDate;
 
                 // Open the modal with the content
 
@@ -241,6 +241,7 @@ export default function DailyView({
                                         CustomAddEventModal={
                                                 CustomEventModal?.CustomAddEventModal?.CustomForm
                                         }
+                                        selectedDate={startDate}
                                 />
                         </CustomModal>,
                         async () => {

@@ -150,3 +150,15 @@ func slotsToCreate(current, new []pgtype.Timestamp) []pgtype.Timestamp {
 	}
 	return result
 }
+
+// isSequential evaluates whether an array of times is sequential given a unit space of time between them
+func isSequential(times []time.Time, unit int32) bool {
+	prev := times[0]
+	for _, t := range times[1:] {
+		prev = prev.Add(time.Minute * time.Duration(unit))
+		if prev.UTC() != t.UTC() {
+			return false
+		}
+	}
+	return true
+}

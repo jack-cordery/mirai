@@ -166,7 +166,7 @@ export default function DailyView({
         const [timelinePosition, setTimelinePosition] = useState<number>(0);
         const [currentDate, setCurrentDate] = useState<Date>(new Date());
         const [direction, setDirection] = useState<number>(0);
-        const { setOpen } = useModal();
+        const { isOpen, setOpen } = useModal();
         const { getters, handlers, typeOptions, employeeOptions, selectedEmployee, selectedType, selectedEmployeeAvailability } = useScheduler();
         const [hHeight, setHHeight] = useState(0);
         useEffect(() => {
@@ -220,11 +220,12 @@ export default function DailyView({
         );
 
         const dayEvents = useMemo(() => {
+                console.log("calculating dayevents")
                 return getters.getEventsForDay(
                         currentDate?.getDate() || 0,
                         currentDate
                 ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
-        }, [selectedEmployeeAvailability, currentDate])
+        }, [selectedEmployeeAvailability, currentDate, isOpen])
 
         // Calculate time groups once for all events
         const timeGroups = groupEventsByTimePeriod(dayEvents);

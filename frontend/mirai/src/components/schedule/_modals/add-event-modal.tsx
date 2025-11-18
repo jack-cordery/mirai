@@ -23,10 +23,12 @@ import type { PostAvailabilitySlotResponse, PutAvailabilitySlotResponse } from "
 
 export default function AddEventModal({
         CustomAddEventModal,
+        selectedDate,
 }: {
         CustomAddEventModal?: React.FC<{ register: any; errors: any }>;
+        selectedDate?: Date;
 }) {
-        const { setClose } = useModal();
+        const { setClose, data } = useModal();
         const { handlers, typeOptions, employeeOptions, currentDate, selectedEmployeeAvailability } = useScheduler();
 
         const {
@@ -38,12 +40,13 @@ export default function AddEventModal({
         } = useForm<EventFormData>({
                 resolver: zodResolver(eventSchema),
                 defaultValues: {
-                        startDate: getNearest30MinuteBlock(currentDate),
-                        endDate: getNearest30MinuteBlock(currentDate),
+                        startDate: getNearest30MinuteBlock(selectedDate) ?? getNearest30MinuteBlock(currentDate),
+                        endDate: getNearest30MinuteBlock(selectedDate) ?? getNearest30MinuteBlock(currentDate),
                         type: typeOptions[0],
                         employee: selectedEmployeeAvailability || employeeOptions[0],
                 },
         });
+        const typedData = data as { default: Event };
         const selectedType = watch("type");
         const selectedEmployee = watch("employee");
 
@@ -85,8 +88,8 @@ export default function AddEventModal({
                                 <>
                                         <SelectDate
                                                 data={{
-                                                        startDate: getNearest30MinuteBlock(currentDate),
-                                                        endDate: getNearest30MinuteBlock(currentDate),
+                                                        startDate: typedData.default.startDate,
+                                                        endDate: typedData.default.endDate,
                                                 }}
                                                 setValue={setValue}
                                         />

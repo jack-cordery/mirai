@@ -144,39 +144,41 @@ export default function BookingCalendar() {
         }
 
         return (
-                <Card className="gap-0 p-0">
+                <Card className="gap-0 p-4">
                         <CardContent className="relative p-0 md:pr-48">
-                                <div className="flex flex-col border-b">
-                                        <div className="flex items-center border-b p-4 flex-row  gap-2">
-                                                <h1>
-                                                        Select Booking Type
-                                                </h1>
+                                <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
+                                        {/* Booking Type */}
+                                        <div className="flex flex-col md:flex-1">
+                                                <label className="text-sm text-neutral-400 mb-1">Booking Type</label>
                                                 <Select
-                                                        value={selectedBookingType?.title ? selectedBookingType.title : ""}
+                                                        value={selectedBookingType?.title || ""}
                                                         onValueChange={(title) => {
                                                                 const type = bookingTypes.find(t => t.title === title) || null;
                                                                 setSelectedBookingType(type);
                                                         }}
                                                 >
-                                                        <SelectTrigger className="w-[180px]">
-                                                                <SelectValue placeholder={selectedBookingType?.title ?? "Select Booking Type"} />
+                                                        <SelectTrigger className="">
+                                                                <SelectValue placeholder="Select Booking Type" />
                                                         </SelectTrigger>
-                                                        <SelectContent>
+                                                        <SelectContent className="">
                                                                 <SelectGroup>
-                                                                        {bookingTypes.map((b) => (
-                                                                                <SelectItem key={b.title} value={b.title}  >
+                                                                        {bookingTypes.map(b => (
+                                                                                <SelectItem
+                                                                                        key={b.title}
+                                                                                        value={b.title}
+                                                                                        className=""
+                                                                                >
                                                                                         {b.title}
                                                                                 </SelectItem>
                                                                         ))}
                                                                 </SelectGroup>
                                                         </SelectContent>
-                                                </Select >
-
+                                                </Select>
                                         </div>
-                                        <div className="flex items-center border-b p-4 flex-row  gap-2">
-                                                <h1>
-                                                        Select Employee
-                                                </h1>
+
+                                        {/* Employee */}
+                                        <div className="flex flex-col md:flex-1">
+                                                <label className="text-sm text-neutral-400 mb-1">Employee</label>
                                                 <Select
                                                         value={selectedEmployee?.employee_id?.toString() ?? ""}
                                                         onValueChange={(id) => {
@@ -184,32 +186,30 @@ export default function BookingCalendar() {
                                                                 setSelectedEmployee(employee);
                                                         }}
                                                 >
-                                                        <SelectTrigger className="w-[180px]">
-                                                                <SelectValue placeholder={selectedEmployee?.name ?? "Select Employee"} />
+                                                        <SelectTrigger className="">
+                                                                <SelectValue placeholder="Select Employee" />
                                                         </SelectTrigger>
-                                                        <SelectContent>
+                                                        <SelectContent className="">
                                                                 <SelectGroup>
-                                                                        {employees.map((e) => (
-                                                                                <SelectItem key={e.employee_id} value={e.employee_id.toString()}  >
-                                                                                        {
-                                                                                                e.name[0].toUpperCase()
-                                                                                                + e.name.substring(1).toLowerCase()
-                                                                                                + ' '
-                                                                                                + e.surname[0].toUpperCase()
-                                                                                                + e.surname.substring(1).toLowerCase()
-                                                                                        }
+                                                                        {employees.map(e => (
+                                                                                <SelectItem
+                                                                                        key={e.employee_id}
+                                                                                        value={e.employee_id.toString()}
+                                                                                        className="hover:bg-neutral-700 transition"
+                                                                                >
+                                                                                        {e.name[0].toUpperCase() + e.name.slice(1).toLowerCase()}{" "}
+                                                                                        {e.surname[0].toUpperCase() + e.surname.slice(1).toLowerCase()}
                                                                                 </SelectItem>
                                                                         ))}
                                                                 </SelectGroup>
                                                         </SelectContent>
-                                                </Select >
-
+                                                </Select>
                                         </div>
 
-                                        <div className="flex border-b p-4 flex-row items-center justify-center gap-2">
-                                                <h1>
-                                                        Show availabilily of a given time slot
-                                                </h1>
+                                        {/* Time Selection */}
+                                        <div className="flex flex-col mr-4 md:flex-1">
+                                                <label className="text-sm text-neutral-400 mb-1">Time Slot</label>
+
                                                 <TimeSelection
                                                         defaultStart={startTime}
                                                         defaultEnd={endTime}

@@ -58,7 +58,12 @@ export default function BookingCalendar() {
 
         const bookedDates = React.useMemo(() => {
                 const dates: Date[] = [];
-                const aSlots = availabilitySlots.filter((a) => a.type_id === selectedBookingType?.type_id).filter((a) => {
+                const slots = generateOptionsFromSlots(
+                        selectedTimes.startTime ? selectedTimes.startTime : startTime,
+                        selectedTimes.endTime ? selectedTimes.endTime : endTime,
+                        availabilitySlots.filter((a) => a.type_id === selectedBookingType?.type_id), date);
+                const filteredSlots = slots.filter((s) => s.duration >= (selectedBookingType?.duration ?? 0)).map((a) => a.id);
+                const aSlots = availabilitySlots.filter((a) => filteredSlots.includes(a.availability_slot_id)).filter((a) => a.type_id === selectedBookingType?.type_id).filter((a) => {
                         const opt = datetimeToTime(a.datetime)
                         const start = selectedTimes.startTime
                         const end = selectedTimes.endTime

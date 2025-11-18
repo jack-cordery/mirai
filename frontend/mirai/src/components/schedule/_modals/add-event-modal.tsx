@@ -29,7 +29,7 @@ export default function AddEventModal({
         CustomAddEventModal?: React.FC<{ register: any; errors: any }>;
 }) {
         const { setClose, data } = useModal();
-        const { handlers, typeOptions, employeeOptions, currentDate } = useScheduler();
+        const { handlers, typeOptions, employeeOptions, currentDate, selectedEmployeeAvailability } = useScheduler();
 
         const {
                 register,
@@ -43,7 +43,7 @@ export default function AddEventModal({
                         startDate: getNearest30MinuteBlock(currentDate),
                         endDate: getNearest30MinuteBlock(currentDate),
                         type: typeOptions[0],
-                        employee: employeeOptions[0],
+                        employee: selectedEmployeeAvailability || employeeOptions[0],
                 },
         });
         const selectedType = watch("type");
@@ -192,8 +192,8 @@ export function EditEventModal({
                 defaultValues: {
                         startDate: getNearest30MinuteBlock(typedData.default.startDate),
                         endDate: getNearest30MinuteBlock(typedData.default.endDate),
-                        type: typeOptions[0],
-                        employee: employeeOptions[0],
+                        type: typeOptions.find((t) => t.id == typedData.default.typeId),
+                        employee: employeeOptions.find((e) => e.id == typedData.default.employeeId),
                 },
         });
         const selectedType = watch("type");

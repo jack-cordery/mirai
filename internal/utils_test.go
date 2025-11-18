@@ -314,3 +314,38 @@ func TestSlotsToCreate(t *testing.T) {
 		assert.Equal(t, expected, toCreate)
 	})
 }
+
+func TestIsSequential(t *testing.T) {
+	t.Run("base case", func(t *testing.T) {
+		t.Parallel()
+		input := []string{
+			"2025-09-08T14:00:00Z",
+			"2025-09-08T14:30:00Z",
+			"2025-09-08T15:00:00Z",
+		}
+		inputTime := []time.Time{}
+		for _, t := range input {
+			ti, _ := time.Parse(time.RFC3339, t)
+			inputTime = append(inputTime, ti)
+		}
+		actual := isSequential(inputTime, 30)
+		expected := true
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("fail case", func(t *testing.T) {
+		t.Parallel()
+		input := []string{
+			"2025-09-08T14:00:00Z",
+			"2025-09-08T14:30:00Z",
+			"2025-09-08T15:30:00Z",
+		}
+		inputTime := []time.Time{}
+		for _, t := range input {
+			ti, _ := time.Parse(time.RFC3339, t)
+			inputTime = append(inputTime, ti)
+		}
+		actual := isSequential(inputTime, 30)
+		expected := false
+		assert.Equal(t, expected, actual)
+	})
+}

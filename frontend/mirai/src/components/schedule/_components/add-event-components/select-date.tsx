@@ -37,16 +37,6 @@ export default function SelectDate({
                 data?.endDate instanceof Date ? data.endDate : new Date()
         );
 
-        // Update state when data changes
-        useEffect(() => {
-                if (data?.startDate instanceof Date) {
-                        setStartDate(data.startDate);
-                }
-                if (data?.endDate instanceof Date) {
-                        setEndDate(data.endDate);
-                }
-        }, [data]);
-
         // Update form values when dates change
         useEffect(() => {
                 setValue("startDate", startDate);

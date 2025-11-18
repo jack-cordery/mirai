@@ -89,6 +89,8 @@ export interface SchedulerContextType {
   setTypeOptions: React.Dispatch<React.SetStateAction<Option[]>>;
   employeeOptions: Option[];
   setEmployeeOptions: React.Dispatch<React.SetStateAction<Option[]>>;
+  currentDate: Date;
+  setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
 }
 
 export type Option = {

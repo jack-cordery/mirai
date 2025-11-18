@@ -1,13 +1,11 @@
-import React, {
+import {
         createContext,
         useContext,
         useReducer,
         type ReactNode,
-        type Dispatch,
         useEffect,
         useState,
 } from "react";
-import { z } from "zod";
 
 import type {
         Action,
@@ -33,11 +31,6 @@ export const variants = [
         "warning",
         "danger",
 ] as const;
-
-// Initial state
-const initialState: SchedulerState = {
-        events: [],
-};
 
 // Reducer function
 const schedulerReducer = (
@@ -99,7 +92,7 @@ export const SchedulerProvider = ({
         const [selectedEmployee, setSelectedEmployee] = useState<Option | null>(employeeOptions[0])
         const [selectedType, setSelectedType] = useState<Option | null>(typeOptions[0])
         const [selectedEmployeeAvailability, setSelectedEmployeeAvailability] = useState<Option | null>(employeeOptions[0])
-
+        const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
 
         useEffect(() => {
@@ -346,7 +339,7 @@ export const SchedulerProvider = ({
 
         return (
                 <SchedulerContext.Provider
-                        value={{ events: state, dispatch, getters, handlers, weekStartsOn, typeOptions, setTypeOptions, employeeOptions, setEmployeeOptions, selectedEmployee, setSelectedEmployee, selectedType, setSelectedType, selectedEmployeeAvailability, setSelectedEmployeeAvailability }}
+                        value={{ events: state, dispatch, getters, handlers, weekStartsOn, typeOptions, setTypeOptions, employeeOptions, setEmployeeOptions, selectedEmployee, setSelectedEmployee, selectedType, setSelectedType, selectedEmployeeAvailability, setSelectedEmployeeAvailability, currentDate, setCurrentDate }}
                 >
                         <ModalProvider>{children}</ModalProvider>
                 </SchedulerContext.Provider>

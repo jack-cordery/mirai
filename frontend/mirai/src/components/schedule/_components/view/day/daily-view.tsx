@@ -419,7 +419,6 @@ export default function DailyView({
                                                                 {Array.from({ length: endTime.hour - startTime.hour + 1 }).map((_, index) => (
                                                                         <div
                                                                                 onClick={() => {
-                                                                                        console.log(`clicked on ${detailedHour}`)
                                                                                         handleAddEventDay(detailedHour as string);
                                                                                 }}
                                                                                 key={`hour-${index + startTime.hour}`}

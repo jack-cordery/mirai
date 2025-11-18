@@ -204,7 +204,8 @@ export function availabilitySlotsToEvents(
     };
   });
   const sorted = mappedSlots.sort(
-    (a, b) => a.startDate.getTime() - b.startDate.getTime(),
+    (a, b) =>
+      a.typeId - b.typeId || a.startDate.getTime() - b.startDate.getTime(),
   );
 
   const merged: Event[] = [];

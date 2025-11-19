@@ -170,7 +170,7 @@ export default function DailyView({
                 ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
         }, [selectedEmployeeAvailability, currentDate, isOpen])
 
-        const sortedEvents = dayEvents.sort((a, b) => b.startDate?.getTime() - a.startDate?.getTime());
+        const sortedEvents = dayEvents.sort((a, b) => a.startDate?.getTime() - b.startDate?.getTime());
         const firstEvent = (dayEvents.length > 0) ? { hour: sortedEvents[0].startDate?.getHours(), minute: sortedEvents[0].startDate?.getMinutes() } : { hour: 0, minute: 0 }
         const lastEvent = (dayEvents.length > 0) ? { hour: sortedEvents[sortedEvents.length - 1].endDate?.getHours(), minute: sortedEvents[sortedEvents.length - 1].endDate?.getMinutes() } : { hour: 0, minute: 0 }
 
@@ -178,8 +178,8 @@ export default function DailyView({
         const correctedEndTime = (dayEvents.length > 0) ? maximiseTimes(endTime, lastEvent) : endTime
 
         const hours = Array.from({ length: correctedEndTime.hour - correctedStartTime.hour + 1 }, (_, i) => {
-                const hour = (i + startTime.hour) % 12 || 12;
-                const ampm = (i + startTime.hour) < 12 ? "AM" : "PM";
+                const hour = (i + correctedStartTime.hour) % 12 || 12;
+                const ampm = (i + correctedStartTime.hour) < 12 ? "AM" : "PM";
                 return `${hour}:00 ${ampm}`;
         });
 
@@ -192,6 +192,7 @@ export default function DailyView({
                                 setHHeight(rect.height / numHours);
                         }
                 };
+
 
                 // Use requestAnimationFrame to ensure DOM is painted
                 requestAnimationFrame(updateHeight);

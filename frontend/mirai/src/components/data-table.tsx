@@ -157,7 +157,6 @@ export function DataTable() {
                                 <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
                                         <TabsTrigger value="admin-requests">
                                                 Admin Requests <Badge variant="secondary">{numPending}</Badge>
-
                                         </TabsTrigger>
                                         <TabsTrigger value="bookings">
                                                 Bookings

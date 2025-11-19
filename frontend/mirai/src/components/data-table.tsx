@@ -41,7 +41,6 @@ import { useTableContext } from "@/contexts/table-context"
 import { BookingsTable } from "./bookings-table"
 import { RequestDataSchema, RequestDataTable } from "./requests-table"
 
-
 // Create a separate component for the drag handle
 export function DragHandle({ id }: { id: number }) {
         const { attributes, listeners } = useSortable({

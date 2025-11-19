@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS booking_types (
   fixed BOOL NOT NULL,
   cost INT NOT NULL,
   duration INT NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (title, description)

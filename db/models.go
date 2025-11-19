@@ -148,6 +148,7 @@ type BookingType struct {
 	Fixed       bool             `json:"fixed"`
 	Cost        int32            `json:"cost"`
 	Duration    int32            `json:"duration"`
+	Active      bool             `json:"active"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	LastEdited  pgtype.Timestamp `json:"last_edited"`
 }

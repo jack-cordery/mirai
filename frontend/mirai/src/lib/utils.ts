@@ -240,3 +240,29 @@ export function getCost(
     return bt.cost * durationInUnits;
   }
 }
+
+export function minimiseTimes(
+  f: { hour: number; minute: number },
+  s: { hour: number; minute: number },
+): { hour: number; minute: number } {
+  if (f.hour === s.hour) {
+    return { hour: f.hour, minute: f.minute < s.minute ? f.minute : s.minute };
+  } else if (f.hour < s.hour) {
+    return f;
+  } else {
+    return s;
+  }
+}
+
+export function maximiseTimes(
+  f: { hour: number; minute: number },
+  s: { hour: number; minute: number },
+): { hour: number; minute: number } {
+  if (f.hour === s.hour) {
+    return { hour: f.hour, minute: f.minute > s.minute ? f.minute : s.minute };
+  } else if (f.hour > s.hour) {
+    return f;
+  } else {
+    return s;
+  }
+}

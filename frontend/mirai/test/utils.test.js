@@ -1,5 +1,10 @@
 import { expect, test } from "vitest";
-import { availabilitySlotsToEvents, getCost } from "../src/lib/utils";
+import {
+  availabilitySlotsToEvents,
+  getCost,
+  maximiseTimes,
+  minimiseTimes,
+} from "../src/lib/utils";
 
 test("availabilitySlotsToEvents creates the right object with dates, and merging", () => {
   const rfcDate1 = "2025-10-20T12:00:00Z";
@@ -55,4 +60,35 @@ test("getCost calculates the correct cost given a fixed cost", () => {
   const cost = getCost(bt, 10);
   const expected = 100;
   expect(cost).toEqual(expected);
+});
+
+test("minimiseTimes works ", () => {
+  const f = { hour: 1, minute: 30 };
+  const s = { hour: 2, minute: 0 };
+  const expected = { hour: 1, minute: 30 };
+  const acutal = minimiseTimes(f, s);
+  expect(acutal).toEqual(expected);
+});
+test("minimiseTimes works with equals ", () => {
+  const f = { hour: 2, minute: 0 };
+  const s = { hour: 2, minute: 0 };
+  const expected = { hour: 2, minute: 0 };
+  const acutal = minimiseTimes(f, s);
+  expect(acutal).toEqual(expected);
+});
+
+test("maximiseTimes works", () => {
+  const f = { hour: 1, minute: 30 };
+  const s = { hour: 2, minute: 0 };
+  const expected = { hour: 2, minute: 0 };
+  const acutal = maximiseTimes(f, s);
+  expect(acutal).toEqual(expected);
+});
+
+test("maximiseTimes works with equals", () => {
+  const f = { hour: 2, minute: 0 };
+  const s = { hour: 2, minute: 0 };
+  const expected = { hour: 2, minute: 0 };
+  const acutal = maximiseTimes(f, s);
+  expect(acutal).toEqual(expected);
 });

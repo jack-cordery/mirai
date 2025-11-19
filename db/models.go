@@ -159,6 +159,7 @@ type Employee struct {
 	Email       string           `json:"email"`
 	Title       string           `json:"title"`
 	Description string           `json:"description"`
+	Active      bool             `json:"active"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	LastLogin   pgtype.Timestamp `json:"last_login"`
 }

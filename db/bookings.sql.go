@@ -326,7 +326,9 @@ func (q *Queries) DeleteBookingSlot(ctx context.Context, arg DeleteBookingSlotPa
 }
 
 const deleteBookingType = `-- name: DeleteBookingType :one
-DELETE FROM booking_types
+UPDATE booking_types
+SET 
+active = false
 WHERE
   id = $1
 RETURNING
@@ -402,9 +404,11 @@ func (q *Queries) GetAllAvailabilitySlots(ctx context.Context) ([]Availability, 
 
 const getAllBookingTypes = `-- name: GetAllBookingTypes :many
 SELECT
-  id, title, description, fixed, cost, duration, created_at, last_edited
+  id, title, description, fixed, cost, duration, active, created_at, last_edited
 FROM
   booking_types
+WHERE 
+active = true
 `
 
 func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error) {
@@ -423,6 +427,7 @@ func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error)
 			&i.Fixed,
 			&i.Cost,
 			&i.Duration,
+			&i.Active,
 			&i.CreatedAt,
 			&i.LastEdited,
 		); err != nil {
@@ -1109,9 +1114,26 @@ func (q *Queries) GetBookingSlotsFromAvailability(ctx context.Context, dollar_1 
 	return items, nil
 }
 
+const getBookingTypeBookingsCount = `-- name: GetBookingTypeBookingsCount :one
+SELECT
+  COUNT(*)
+FROM
+  booking_slots bs
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+WHERE
+  a.type_id = $1
+`
+
+func (q *Queries) GetBookingTypeBookingsCount(ctx context.Context, typeID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, getBookingTypeBookingsCount, typeID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getBookingTypeById = `-- name: GetBookingTypeById :one
 SELECT
-  id, title, description, fixed, cost, duration, created_at, last_edited
+  id, title, description, fixed, cost, duration, active, created_at, last_edited
 FROM
   booking_types
 WHERE
@@ -1130,6 +1152,7 @@ func (q *Queries) GetBookingTypeById(ctx context.Context, id int32) (BookingType
 		&i.Fixed,
 		&i.Cost,
 		&i.Duration,
+		&i.Active,
 		&i.CreatedAt,
 		&i.LastEdited,
 	)

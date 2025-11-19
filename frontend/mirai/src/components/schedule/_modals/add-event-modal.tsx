@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { getNearest30MinuteBlock, toLocalISOString } from "@/lib/utils";
-
 import { useModal } from "@/providers/modal-context";
 import SelectDate from "@/components/schedule/_components/add-event-components/select-date";
 import { type SubmitHandler, useForm } from "react-hook-form";
@@ -16,9 +15,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type EventFormData, eventSchema, type Event } from "@/types/index";
 import { useScheduler } from "@/providers/schedular-provider";
 import { v4 as uuidv4 } from 'uuid';
-import { postAvailabilitySlot, putAvailabilitySlot } from "@/api/availability";
+import { deleteAvailabilitySlot, postAvailabilitySlot, putAvailabilitySlot } from "@/api/availability";
 import { toast } from "sonner";
 import type { PostAvailabilitySlotResponse, PutAvailabilitySlotResponse } from "@/types/booking";
+import { postCancellation } from "@/api/bookings";
+import { format } from "date-fns";
 
 
 export default function AddEventModal({
@@ -323,4 +324,91 @@ export function EditEventModal({
                         )}
                 </form>
         );
+}
+
+export function DeleteEventModal() {
+        const { setClose, data } = useModal();
+        const { handlers, typeOptions, employeeOptions } = useScheduler();
+
+        const typedData = data as { default: Event };
+        const date = format(typedData.default.startDate ?? 0, "dd MMM yyyy") ?? ""
+        const startTime = format(typedData.default.startDate ?? 0, "HH:mm") ?? ""
+        const endTime = format(typedData.default.endDate ?? 0, "HH:mm") ?? ""
+        const typeOption = typeOptions.find((t) => t.id === typedData.default.typeId)
+        const type = typeOption?.label ?? ""
+        const employeeOption = employeeOptions.find((e) => e.id === typedData.default.employeeId)
+        const employee = employeeOption?.label ?? ""
+        const bookingEmail = typedData.default.bookingEmail ?? ""
+
+        const onSubmit = async () => {
+                try {
+                        if (!typedData.default.isBooking) {
+                                await deleteAvailabilitySlot({ availability_slot_ids: typedData.default.availability_slot_ids ?? [] });
+                        } else {
+                                await postCancellation(typedData.default.bookingId ?? -1);
+                        }
+                        handlers.handleDeleteEvent(typedData.default.id);
+                        setClose(); // Close the modal after submission
+                } catch (error) {
+                        toast(`delete/cancel failed: ${error}. Ensure there are no bookings spanning the slot`)
+                }
+        };
+
+        return (
+                <div className="flex flex-col gap-4 p-4" >
+                        <div className="grid gap-6 py-2">
+                                <div className="bg-muted/50 rounded-lg p-4 flex flex-col gap-3">
+                                        <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Date</span>
+                                                <span className="font-medium">{date}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Type</span>
+                                                <span className="font-medium">
+                                                        {type}
+                                                </span >
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Start Time</span>
+                                                <span className="font-medium">
+                                                        {startTime}
+                                                </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">End Time</span>
+                                                <span className="font-medium">
+                                                        {endTime}
+                                                </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Employee</span>
+                                                <span className="font-medium">{
+                                                        employee
+                                                }</span >
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Type</span>
+                                                <span className="font-medium">
+                                                        {type}
+                                                </span >
+                                        </div>
+                                        {typedData.default.isBooking && (
+                                                <div className="flex justify-between text-sm">
+                                                        <span className="text-muted-foreground">Booking Email</span>
+                                                        <span className="font-medium">
+                                                                {bookingEmail}
+                                                        </span >
+                                                </div>
+                                        )}
+                                </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-2 mt-4 pt-2 border-t">
+                                <Button variant="outline" type="button" onClick={() => setClose()}>
+                                        Cancel
+                                </Button>
+                                <Button onClick={() => onSubmit()}> {typedData.default.isBooking ? ("Cancel Booking") : ("Delete Availability")}</Button>
+                        </div>
+                </div>
+        )
 }

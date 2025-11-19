@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/providers/modal-context";
-import { EditEventModal } from "@/components/schedule/_modals/add-event-modal";
+import { DeleteEventModal, EditEventModal } from "@/components/schedule/_modals/add-event-modal";
 import type { Event, CustomEventModal } from "@/types";
 import { TrashIcon, CalendarIcon, ClockIcon } from "lucide-react";
 import { useScheduler } from "@/providers/schedular-provider";
@@ -71,6 +71,16 @@ export default function EventStyled({
                 );
         }
 
+        // Modal handler
+        function handleDeleteEvent(event: Event) {
+                setOpen(
+                        <CustomModal title={event.isBooking ? "Cancel Booking" : "Delete Availability"}>
+                                <DeleteEventModal />
+                        </CustomModal>,
+                        async () => ({ ...event })
+                );
+        }
+
         const variant = event.isBooking ? variantColors.booking : variantColors.availability;
 
         return (
@@ -86,13 +96,7 @@ export default function EventStyled({
                         <Button
                                 onClick={async (e) => {
                                         e.stopPropagation();
-                                        try {
-                                                await deleteAvailabilitySlot({ availability_slot_ids: event.availability_slot_ids ?? [] });
-                                                handlers.handleDeleteEvent(event?.id);
-                                                onDelete?.(event?.id);
-                                        } catch (err) {
-                                                toast("Delete failed. Make sure all bookings spanning the slot are cancelled.");
-                                        }
+                                        handleDeleteEvent(event);
                                 }}
                                 variant="ghost"
                                 size="icon"

@@ -89,8 +89,8 @@ export default function AddEventModal({
                                 <>
                                         <SelectDate
                                                 data={{
-                                                        startDate: typedData.default.startDate,
-                                                        endDate: typedData.default.endDate,
+                                                        startDate: (typedData.default?.startDate ?? getNearest30MinuteBlock(new Date())),
+                                                        endDate: (typedData.default?.endDate ?? getNearest30MinuteBlock(new Date())),
                                                 }}
                                                 setValue={setValue}
                                         />

@@ -11,16 +11,11 @@ import type { CustomEventModal, Event } from "@/types/index";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CustomModal from "@/components/ui/custom-modal";
-import { getNearest30MinuteBlock, loadWorkingDayTimes } from "@/lib/utils";
+import { getNearest30MinuteBlock, loadWorkingDayTimes, maximiseTimes, minimiseTimes } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 
 const { startTime, endTime } = loadWorkingDayTimes();
 // Generate hours in 12-hour format
-const hours = Array.from({ length: endTime.hour - startTime.hour + 1 }, (_, i) => {
-        const hour = (i + startTime.hour) % 12 || 12;
-        const ampm = (i + startTime.hour) < 12 ? "AM" : "PM";
-        return `${hour}:00 ${ampm}`;
-});
 
 // Animation variants
 const containerVariants = {
@@ -168,11 +163,32 @@ export default function DailyView({
         const { isOpen, setOpen } = useModal();
         const { getters, handlers, selectedEmployee, selectedType, selectedEmployeeAvailability, currentDate, setCurrentDate } = useScheduler();
         const [hHeight, setHHeight] = useState(0);
+        const dayEvents = useMemo(() => {
+                return getters.getEventsForDay(
+                        currentDate?.getDate() || 0,
+                        currentDate
+                ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
+        }, [selectedEmployeeAvailability, currentDate, isOpen])
+
+        const sortedEvents = dayEvents.sort((a, b) => b.startDate?.getTime() - a.startDate?.getTime());
+        const firstEvent = (dayEvents.length > 0) ? { hour: sortedEvents[0].startDate?.getHours(), minute: sortedEvents[0].startDate?.getMinutes() } : { hour: 0, minute: 0 }
+        const lastEvent = (dayEvents.length > 0) ? { hour: sortedEvents[sortedEvents.length - 1].endDate?.getHours(), minute: sortedEvents[sortedEvents.length - 1].endDate?.getMinutes() } : { hour: 0, minute: 0 }
+
+        const correctedStartTime = (dayEvents.length > 0) ? minimiseTimes(startTime, firstEvent) : startTime
+        const correctedEndTime = (dayEvents.length > 0) ? maximiseTimes(endTime, lastEvent) : endTime
+
+        const hours = Array.from({ length: correctedEndTime.hour - correctedStartTime.hour + 1 }, (_, i) => {
+                const hour = (i + startTime.hour) % 12 || 12;
+                const ampm = (i + startTime.hour) < 12 ? "AM" : "PM";
+                return `${hour}:00 ${ampm}`;
+        });
+
+
         useEffect(() => {
                 const updateHeight = () => {
                         if (hoursColumnRef.current) {
                                 const rect = hoursColumnRef.current.getBoundingClientRect();
-                                const numHours = endTime.hour - startTime.hour + 1;
+                                const numHours = correctedEndTime.hour - correctedStartTime.hour + 1;
                                 setHHeight(rect.height / numHours);
                         }
                 };
@@ -183,7 +199,8 @@ export default function DailyView({
                 // Also update on window resize
                 window.addEventListener('resize', updateHeight);
                 return () => window.removeEventListener('resize', updateHeight);
-        }, [startTime.hour, endTime.hour]);
+        }, [startTime.hour, endTime.hour, currentDate, selectedEmployee, selectedType]);
+
         useEffect(() => {
         }, [hHeight]);
 
@@ -193,8 +210,8 @@ export default function DailyView({
                         const rect = hoursColumnRef.current.getBoundingClientRect();
                         const y = e.clientY - rect.top;
 
-                        const hourHeight = rect.height / (endTime.hour - startTime.hour + 1);
-                        const hour = Math.max(startTime.hour, startTime.hour + Math.min(endTime.hour, Math.floor(y / hourHeight)));
+                        const hourHeight = rect.height / (correctedEndTime.hour - correctedStartTime.hour + 1);
+                        const hour = Math.max(correctedStartTime.hour, correctedStartTime.hour + Math.min(correctedEndTime.hour, Math.floor(y / hourHeight)));
                         const minuteFraction = (y % hourHeight) / hourHeight;
                         const minutes = Math.floor(minuteFraction * 60);
 
@@ -217,13 +234,6 @@ export default function DailyView({
                 () => currentDate.toDateString(),
                 [currentDate]
         );
-
-        const dayEvents = useMemo(() => {
-                return getters.getEventsForDay(
-                        currentDate?.getDate() || 0,
-                        currentDate
-                ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
-        }, [selectedEmployeeAvailability, currentDate, isOpen])
 
         // Calculate time groups once for all events
         const timeGroups = groupEventsByTimePeriod(dayEvents);
@@ -416,12 +426,12 @@ export default function DailyView({
                                                                 ))}
                                                         </div>
                                                         <div className="flex relative flex-grow flex-col ">
-                                                                {Array.from({ length: endTime.hour - startTime.hour + 1 }).map((_, index) => (
+                                                                {Array.from({ length: correctedEndTime.hour - correctedStartTime.hour + 1 }).map((_, index) => (
                                                                         <div
                                                                                 onClick={() => {
                                                                                         handleAddEventDay(detailedHour as string);
                                                                                 }}
-                                                                                key={`hour-${index + startTime.hour}`}
+                                                                                key={`hour-${index + correctedStartTime.hour}`}
                                                                                 className="cursor-pointer w-full relative border-b  hover:bg-default-200/50  transition duration-300  p-4 flex-1 text-left text-sm text-muted-foreground border-default-200"
                                                                         >
                                                                                 <div className="absolute bg-accent flex items-center justify-center text-xs opacity-0 transition left-0 top-0 duration-250 hover:opacity-100 w-full h-full">
@@ -455,8 +465,8 @@ export default function DailyView({
                                                                                         } = handlers.handleEventStyling(
                                                                                                 event,
                                                                                                 dayEvents,
-                                                                                                startTime.hour,
-                                                                                                endTime.hour,
+                                                                                                correctedStartTime.hour,
+                                                                                                correctedEndTime.hour,
                                                                                                 hHeight,
                                                                                                 {
                                                                                                         eventsInSamePeriod,

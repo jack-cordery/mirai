@@ -40,6 +40,7 @@ import type { GetAllRequestsResponse } from "@/types/user"
 import { useTableContext } from "@/contexts/table-context"
 import { BookingsTable } from "./bookings-table"
 import { RequestDataSchema, RequestDataTable } from "./requests-table"
+import { EmployeesTable } from "./employees-table"
 
 // Create a separate component for the drag handle
 export function DragHandle({ id }: { id: number }) {
@@ -174,23 +175,21 @@ export function DataTable() {
 
                         </div>
 
-                        <RequestDataTable />
-                        <BookingsTable />
 
                         <TabsContent
-                                value="past-performance"
+                                value="admin-requests"
                                 className="flex flex-col px-4 lg:px-6"
                         >
-                                <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+                                <RequestDataTable />
                         </TabsContent>
-                        <TabsContent value="key-personnel" className="flex flex-col px-4 lg:px-6">
-                                <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+                        <TabsContent value="bookings" className="flex flex-col px-4 lg:px-6">
+                                <BookingsTable />
                         </TabsContent>
                         <TabsContent
-                                value="focus-documents"
+                                value="employees"
                                 className="flex flex-col px-4 lg:px-6"
                         >
-                                <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+                                <EmployeesTable />
                         </TabsContent>
                 </Tabs>
         )

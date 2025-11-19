@@ -340,7 +340,9 @@ func (q *Queries) DeleteBookingType(ctx context.Context, id int32) (int32, error
 }
 
 const deleteEmployee = `-- name: DeleteEmployee :one
-DELETE FROM employees
+UPDATE employees
+SET
+  active = false
 WHERE
   id = $1
 RETURNING
@@ -1343,6 +1345,23 @@ func (q *Queries) GetBookingWithJoin(ctx context.Context, arg GetBookingWithJoin
 	return i, err
 }
 
+const getEmployeeBookingsCount = `-- name: GetEmployeeBookingsCount :one
+SELECT
+  COUNT(*)
+FROM
+  booking_slots bs
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+WHERE
+  a.employee_id = $1
+`
+
+func (q *Queries) GetEmployeeBookingsCount(ctx context.Context, employeeID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, getEmployeeBookingsCount, employeeID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const postManualPayment = `-- name: PostManualPayment :exec
 UPDATE bookings
 SET
@@ -1533,7 +1552,7 @@ SET
 WHERE
   id = $1
 RETURNING
-  id
+  id, name, surname, email, title, description, active, created_at, last_login
 `
 
 type UpdateEmployeeParams struct {
@@ -1545,7 +1564,7 @@ type UpdateEmployeeParams struct {
 	Description string `json:"description"`
 }
 
-func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (int32, error) {
+func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error) {
 	row := q.db.QueryRow(ctx, updateEmployee,
 		arg.ID,
 		arg.Name,
@@ -1554,7 +1573,17 @@ func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) 
 		arg.Title,
 		arg.Description,
 	)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
+	var i Employee
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Surname,
+		&i.Email,
+		&i.Title,
+		&i.Description,
+		&i.Active,
+		&i.CreatedAt,
+		&i.LastLogin,
+	)
+	return i, err
 }

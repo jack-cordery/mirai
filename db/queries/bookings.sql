@@ -715,10 +715,21 @@ SET
 WHERE
   id = $1
 RETURNING
-  id;
+  *;
+
+-- name: GetEmployeeBookingsCount :one
+SELECT
+  COUNT(*)
+FROM
+  booking_slots bs
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+WHERE
+  a.employee_id = $1;
 
 -- name: DeleteEmployee :one
-DELETE FROM employees
+UPDATE employees
+SET
+  active = false
 WHERE
   id = $1
 RETURNING

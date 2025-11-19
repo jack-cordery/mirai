@@ -75,7 +75,10 @@ LIMIT
 SELECT
   *
 FROM
-  employees;
+  employees
+WHERE 
+active = true;
+
 
 -- name: GetSessionByToken :one
 SELECT

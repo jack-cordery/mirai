@@ -5,9 +5,10 @@ CREATE TABLE IF NOT EXISTS employees (
   email VARCHAR(255) NOT NULL,
   title VARCHAR(40) NOT NULL,
   description TEXT NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (name, surname, title)
+  UNIQUE (name, surname, title, email, active)
 );
 
 CREATE TABLE IF NOT EXISTS users (

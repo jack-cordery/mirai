@@ -149,9 +149,11 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) (int32, error) {
 
 const getAllEmployees = `-- name: GetAllEmployees :many
 SELECT
-  id, name, surname, email, title, description, created_at, last_login
+  id, name, surname, email, title, description, active, created_at, last_login
 FROM
   employees
+WHERE 
+active = true
 `
 
 func (q *Queries) GetAllEmployees(ctx context.Context) ([]Employee, error) {
@@ -170,6 +172,7 @@ func (q *Queries) GetAllEmployees(ctx context.Context) ([]Employee, error) {
 			&i.Email,
 			&i.Title,
 			&i.Description,
+			&i.Active,
 			&i.CreatedAt,
 			&i.LastLogin,
 		); err != nil {
@@ -317,7 +320,7 @@ func (q *Queries) GetAllRoleRequestsWithJoin(ctx context.Context) ([]GetAllRoleR
 
 const getEmployeeById = `-- name: GetEmployeeById :one
 SELECT
-  id, name, surname, email, title, description, created_at, last_login
+  id, name, surname, email, title, description, active, created_at, last_login
 FROM
   employees
 WHERE
@@ -336,6 +339,7 @@ func (q *Queries) GetEmployeeById(ctx context.Context, id int32) (Employee, erro
 		&i.Email,
 		&i.Title,
 		&i.Description,
+		&i.Active,
 		&i.CreatedAt,
 		&i.LastLogin,
 	)

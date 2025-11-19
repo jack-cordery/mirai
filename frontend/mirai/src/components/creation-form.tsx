@@ -168,8 +168,6 @@ export function EmployeeFormCard() {
         };
 
         return (
-                //TODO: make this so that i can add employees
-                //name , surname, email, title, description
                 <form onSubmit={handleSubmit}>
                         <Card>
                                 <CardHeader>

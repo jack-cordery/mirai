@@ -68,9 +68,6 @@ type PutEmployeeRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }
-type PutEmployeeResponse struct {
-	EmployeeID int32 `json:"employee_id"`
-}
 
 func (r PutEmployeeRequest) ToDBParams(employeeID int32) db.UpdateEmployeeParams {
 	return db.UpdateEmployeeParams{
@@ -273,7 +270,7 @@ func putEmployee(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
 
-		employeeID, err := qtx.UpdateEmployee(ctx, employeeRequest.ToDBParams(int32(id)))
+		employee, err := qtx.UpdateEmployee(ctx, employeeRequest.ToDBParams(int32(id)))
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				log.Printf("employee id: %d, which does not exist, was attemped to be updated by putEmployee", id)
@@ -304,8 +301,14 @@ func putEmployee(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		response := PutEmployeeResponse{
-			EmployeeID: employeeID,
+		response := GetEmployeeResponse{
+			EmployeeID: employee.ID,
+			Name:       employee.Name,
+			Surname:    employee.Surname,
+			Email:      employee.Email,
+			Title:      employee.Description,
+			CreatedAt:  employee.CreatedAt,
+			LastLogin:  employee.LastLogin,
 		}
 
 		w.WriteHeader(http.StatusCreated)
@@ -353,6 +356,19 @@ func deleteEmployee(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
+
+		// if they have any active bookings then return bad request
+		bookingCount, err := qtx.GetEmployeeBookingsCount(ctx, int32(id))
+		if err != nil {
+			log.Printf("error getting employee booking count in deleteEmployee: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if bookingCount > 0 {
+			log.Printf("tried to delete employee which has a booking count of %v", bookingCount)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		_, err = qtx.DeleteEmployee(ctx, int32(id))
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {

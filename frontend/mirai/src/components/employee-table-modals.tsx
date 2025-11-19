@@ -167,7 +167,6 @@ export function EmployeeDeleteModal() {
                         toast("employee deletion failed, please try again");
                 }
         }
-
         return (
                 <Dialog open={isEmployeeDeleteModalOpen} onOpenChange={setIsEmployeeDeleteModalOpen}>
                         <DialogOverlay className="fixed inset-0 bg-black/30 backdrop-blur-sm" />

@@ -1,4 +1,5 @@
 import { getAllRequests } from "@/api/auth";
+import { getAllBookingTypes, type GetBookingTypeResponse } from "@/api/booking-type";
 import { getAllBookings, type GetAllBookingsResponse } from "@/api/bookings";
 import { getAllEmployees, type GetEmployeeResponse } from "@/api/employee";
 import type { GetAllRequestsResponse } from "@/types/user";
@@ -14,6 +15,8 @@ type TableContextType = {
         setBookingData: React.Dispatch<React.SetStateAction<GetAllBookingsResponse[]>>;
         employeeData: GetEmployeeResponse[];
         setEmployeeData: React.Dispatch<React.SetStateAction<GetEmployeeResponse[]>>;
+        bookingTypeData: GetBookingTypeResponse[];
+        setBookingTypeData: React.Dispatch<React.SetStateAction<GetBookingTypeResponse[]>>;
         isPaidModalOpen: boolean;
         setIsPaidModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         isCancelModalOpen: boolean;
@@ -26,6 +29,10 @@ type TableContextType = {
         setIsEmployeeEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         isEmployeeDeleteModalOpen: boolean;
         setIsEmployeeDeleteModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+        isBookingTypeEditModalOpen: boolean;
+        setIsBookingTypeEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+        isBookingTypeDeleteModalOpen: boolean;
+        setIsBookingTypeDeleteModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         paidModalRow: GetAllBookingsResponse | null
         setPaidModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
         cancelModalRow: GetAllBookingsResponse | null
@@ -38,6 +45,10 @@ type TableContextType = {
         setEmployeeEditModalRow: React.Dispatch<React.SetStateAction<GetEmployeeResponse | null>>;
         employeeDeleteModalRow: GetEmployeeResponse | null
         setEmployeeDeleteModalRow: React.Dispatch<React.SetStateAction<GetEmployeeResponse | null>>;
+        bookingTypeEditModalRow: GetBookingTypeResponse | null
+        setBookingTypeEditModalRow: React.Dispatch<React.SetStateAction<GetBookingTypeResponse | null>>;
+        bookingTypeDeleteModalRow: GetBookingTypeResponse | null
+        setBookingTypeDeleteModalRow: React.Dispatch<React.SetStateAction<GetBookingTypeResponse | null>>;
         fetchTableData: () => Promise<void>;
 }
 
@@ -52,29 +63,35 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
         const [requestData, setRequestData] = React.useState<GetAllRequestsResponse[]>([]);
         const [bookingData, setBookingData] = React.useState<GetAllBookingsResponse[]>([]);
         const [employeeData, setEmployeeData] = React.useState<GetEmployeeResponse[]>([]);
+        const [bookingTypeData, setBookingTypeData] = React.useState<GetBookingTypeResponse[]>([]);
         const [isPaidModalOpen, setIsPaidModalOpen] = React.useState<boolean>(false);
         const [isCancelModalOpen, setIsCancelModalOpen] = React.useState<boolean>(false);
         const [isConfirmModalOpen, setIsConfirmModalOpen] = React.useState<boolean>(false);
         const [isCompleteModalOpen, setIsCompleteModalOpen] = React.useState<boolean>(false);
         const [isEmployeeEditModalOpen, setIsEmployeeEditModalOpen] = React.useState<boolean>(false);
         const [isEmployeeDeleteModalOpen, setIsEmployeeDeleteModalOpen] = React.useState<boolean>(false);
+        const [isBookingTypeEditModalOpen, setIsBookingTypeEditModalOpen] = React.useState<boolean>(false);
+        const [isBookingTypeDeleteModalOpen, setIsBookingTypeDeleteModalOpen] = React.useState<boolean>(false);
         const [paidModalRow, setPaidModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [cancelModalRow, setCancelModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [confirmModalRow, setConfirmModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [completeModalRow, setCompleteModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [employeeEditModalRow, setEmployeeEditModalRow] = React.useState<GetEmployeeResponse | null>(null);
         const [employeeDeleteModalRow, setEmployeeDeleteModalRow] = React.useState<GetEmployeeResponse | null>(null);
+        const [bookingTypeEditModalRow, setBookingTypeEditModalRow] = React.useState<GetBookingTypeResponse | null>(null);
+        const [bookingTypeDeleteModalRow, setBookingTypeDeleteModalRow] = React.useState<GetBookingTypeResponse | null>(null);
 
         const fetchTableData = async () => {
                 try {
-                        const [requestRes, bookingRes, employeeRes]: [GetAllRequestsResponse[], GetAllBookingsResponse[], GetEmployeeResponse[]]
+                        const [requestRes, bookingRes, employeeRes, bookingTypeRes]: [GetAllRequestsResponse[], GetAllBookingsResponse[], GetEmployeeResponse[], GetBookingTypeResponse[]]
                                 = await Promise.all(
-                                        [getAllRequests(), getAllBookings(), getAllEmployees()]
+                                        [getAllRequests(), getAllBookings(), getAllEmployees(), getAllBookingTypes()]
                                 );
                         setRequestData(requestRes ?? []);
                         setNumPending(requestData.filter(r => r.status === "PENDING").length);
                         setBookingData(bookingRes ?? []);
                         setEmployeeData(employeeRes ?? []);
+                        setBookingTypeData(bookingTypeRes ?? []);
                 } catch (err) {
                         toast("data fetch failed, please try again later")
                 }
@@ -91,6 +108,8 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                         setBookingData,
                         employeeData,
                         setEmployeeData,
+                        bookingTypeData,
+                        setBookingTypeData,
                         isPaidModalOpen,
                         setIsPaidModalOpen,
                         isCancelModalOpen,
@@ -103,6 +122,10 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                         setIsEmployeeEditModalOpen,
                         isEmployeeDeleteModalOpen,
                         setIsEmployeeDeleteModalOpen,
+                        isBookingTypeEditModalOpen,
+                        setIsBookingTypeEditModalOpen,
+                        isBookingTypeDeleteModalOpen,
+                        setIsBookingTypeDeleteModalOpen,
                         paidModalRow,
                         setPaidModalRow,
                         cancelModalRow,
@@ -115,6 +138,10 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                         setEmployeeEditModalRow,
                         employeeDeleteModalRow,
                         setEmployeeDeleteModalRow,
+                        bookingTypeEditModalRow,
+                        setBookingTypeEditModalRow,
+                        bookingTypeDeleteModalRow,
+                        setBookingTypeDeleteModalRow,
                         fetchTableData,
                 }}>
                         {children}

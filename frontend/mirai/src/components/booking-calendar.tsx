@@ -5,10 +5,10 @@ import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import TimeSelection from "@/components/time-selection"
 import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/components/ui/select"
-import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, type TimeOfDay, valueToTime, datetimeToTime, type SlotTimeOfDay, type Employee } from "@/types/booking"
+import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, datetimeToTime, type SlotTimeOfDay, type Employee } from "@/types/booking"
 import { generateOptionsFromSlots, getCost, loadWorkingDayTimes } from "@/lib/utils"
 import { getAllBookingTypes } from "@/api/booking-type"
-import { getAllAvailability, getAllFreeAvailability } from "@/api/availability"
+import { getAllFreeAvailability } from "@/api/availability"
 import { toast } from "sonner"
 import { Dialog, DialogClose } from "@radix-ui/react-dialog"
 import { DialogContent, DialogFooter, DialogHeader, DialogOverlay, DialogTitle } from "./ui/dialog"
@@ -20,9 +20,9 @@ import { getAllEmployees } from "@/api/employee"
 
 export default function BookingCalendar() {
 
-        const unit = 30
+        const { slotDuration, startTime, endTime } = loadWorkingDayTimes()
+        const unit = slotDuration
 
-        const { startTime, endTime } = loadWorkingDayTimes()
         const { user } = useAuth();
         const today = new Date()
 
@@ -44,6 +44,7 @@ export default function BookingCalendar() {
 
         const handleChange = (times: SelectedTimes) => { setSelectedTimes(times) }
         const navigate = useNavigate();
+
 
         const timeSlots = React.useMemo(() => {
                 if (!date) {
@@ -197,8 +198,8 @@ export default function BookingCalendar() {
                                                                                         value={e.employee_id.toString()}
                                                                                         className="hover:bg-neutral-700 transition"
                                                                                 >
-                                                                                        {e.name[0].toUpperCase() + e.name.slice(1).toLowerCase()}{" "}
-                                                                                        {e.surname[0].toUpperCase() + e.surname.slice(1).toLowerCase()}
+                                                                                        {(e.name[0] ?? "").toUpperCase() + (e.name.slice(1) ?? "").toLowerCase()}{" "}
+                                                                                        {(e.surname[0] ?? "").toUpperCase() + (e.surname.slice(1) ?? "").toLowerCase()}
                                                                                 </SelectItem>
                                                                         ))}
                                                                 </SelectGroup>

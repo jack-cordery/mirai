@@ -505,7 +505,8 @@ SELECT
 FROM
   availability a
 WHERE
-  NOT EXISTS (
+  a.datetime > now()
+  AND NOT EXISTS (
     SELECT
       1
     FROM

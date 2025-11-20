@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { useScheduler } from "@/providers/schedular-provider";
 import { Badge } from "@/components/ui/badge";
 import { AnimatePresence, motion, type TargetAndTransition } from "framer-motion"; // Import Framer Motion
@@ -10,6 +10,10 @@ import { ArrowLeft, ArrowRight, Maximize2, ChevronLeft, Maximize } from "lucide-
 import clsx from "clsx";
 import type { Event, CustomEventModal } from "@/types";
 import CustomModal from "@/components/ui/custom-modal";
+import { getNearest30MinuteBlock, loadWorkingDayTimes, maximiseTimes, minimiseTimes } from "@/lib/utils";
+import { uuidv4 } from "zod";
+
+const { startTime, endTime } = loadWorkingDayTimes();
 
 const hours = Array.from({ length: 24 }, (_, i) => {
         const hour = i % 12 || 12;
@@ -17,57 +21,6 @@ const hours = Array.from({ length: 24 }, (_, i) => {
         return `${hour}:00 ${ampm}`;
 });
 
-interface ChipData {
-        id: number;
-        color: "primary" | "warning" | "danger";
-        title: string;
-        description: string;
-}
-
-const chipData: ChipData[] = [
-        {
-                id: 1,
-                color: "primary",
-                title: "Ads Campaign Nr1",
-                description: "Day 1 of 5: Google Ads, Target Audience: SMB-Alpha",
-        },
-        {
-                id: 2,
-                color: "warning",
-                title: "Ads Campaign Nr2",
-                description:
-                        "All Day: Day 2 of 5: AdSense + FB, Target Audience: SMB2-Delta3",
-        },
-        {
-                id: 3,
-                color: "danger",
-                title: "Critical Campaign Nr3",
-                description: "Day 3 of 5: High-Impact Ads, Target: E-Commerce Gamma",
-        },
-        {
-                id: 4,
-                color: "primary",
-                title: "Ads Campaign Nr4",
-                description: "Day 4 of 5: FB Ads, Audience: Retailers-Zeta",
-        },
-        {
-                id: 5,
-                color: "warning",
-                title: "Campaign Ending Soon",
-                description: "Final Day: Monitor closely, Audience: Delta2-Beta",
-        },
-];
-
-// Animation Variants
-const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-                opacity: 1,
-                transition: {
-                        staggerChildren: 0.1, // Stagger children animations
-                },
-        },
-};
 
 const itemVariants = {
         hidden: { opacity: 0, y: 5 },
@@ -102,48 +55,67 @@ export default function WeeklyView({
         CustomEventModal?: CustomEventModal;
         classNames?: { prev?: string; next?: string; addEvent?: string };
 }) {
-        const { getters, handlers } = useScheduler();
+        const { getters, handlers, selectedEmployee, selectedType, selectedEmployeeAvailability, currentDate, setCurrentDate } = useScheduler();
         const hoursColumnRef = useRef<HTMLDivElement>(null);
         const [detailedHour, setDetailedHour] = useState<string | null>(null);
         const [timelinePosition, setTimelinePosition] = useState<number>(0);
-        const [currentDate, setCurrentDate] = useState<Date>(new Date());
         const [colWidth, setColWidth] = useState<number[]>(Array(7).fill(1)); // Equal width columns by default
         const [isResizing, setIsResizing] = useState<boolean>(false);
         const [direction, setDirection] = useState<number>(0);
-        const { setOpen } = useModal();
+        const { isOpen, setOpen } = useModal();
 
         const daysOfWeek = getters?.getDaysInWeek(
                 getters?.getWeekNumber(currentDate),
                 currentDate.getFullYear()
         );
+        console.log(`week number ${daysOfWeek}`)
+        const [hHeight, setHHeight] = useState(0);
+        const dayEvents = useMemo(() => {
+                return getters.getEventsForDay(
+                        currentDate?.getDate() || 0,
+                        currentDate
+                ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
+        }, [selectedEmployeeAvailability, currentDate, isOpen])
+
+        const sortedEvents = dayEvents.sort((a, b) => a.startDate?.getTime() - b.startDate?.getTime());
+        const firstEvent = (dayEvents.length > 0) ? { hour: sortedEvents[0].startDate?.getHours(), minute: sortedEvents[0].startDate?.getMinutes() } : { hour: 0, minute: 0 }
+        const lastEvent = (dayEvents.length > 0) ? { hour: sortedEvents[sortedEvents.length - 1].endDate?.getHours(), minute: sortedEvents[sortedEvents.length - 1].endDate?.getMinutes() } : { hour: 0, minute: 0 }
+
+        const correctedStartTime = (dayEvents.length > 0) ? minimiseTimes(startTime, firstEvent) : startTime
+        const correctedEndTime = (dayEvents.length > 0) ? maximiseTimes(endTime, lastEvent) : endTime
+
+        const hours = Array.from({ length: correctedEndTime.hour - correctedStartTime.hour + 1 }, (_, i) => {
+                const hour = (i + correctedStartTime.hour) % 12 || 12;
+                const ampm = (i + correctedStartTime.hour) < 12 ? "AM" : "PM";
+                return `${hour}:00 ${ampm}`;
+        });
+
+
+        useEffect(() => {
+                const updateHeight = () => {
+                        if (hoursColumnRef.current) {
+                                const rect = hoursColumnRef.current.getBoundingClientRect();
+                                const numHours = correctedEndTime.hour - correctedStartTime.hour + 1;
+                                setHHeight(rect.height / numHours);
+                        }
+                };
+
+
+                // Use requestAnimationFrame to ensure DOM is painted
+                requestAnimationFrame(updateHeight);
+
+                // Also update on window resize
+                window.addEventListener('resize', updateHeight);
+                return () => window.removeEventListener('resize', updateHeight);
+        }, [startTime.hour, endTime.hour, currentDate, selectedEmployee, selectedType]);
+
+        useEffect(() => {
+        }, [hHeight]);
 
         // Reset column widths when the date changes
         useEffect(() => {
                 setColWidth(Array(7).fill(1));
         }, [currentDate]);
-
-        const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-                if (!hoursColumnRef.current) return;
-                const rect = hoursColumnRef.current.getBoundingClientRect();
-                const y = e.clientY - rect.top;
-                const hourHeight = rect.height / 24;
-                const hour = Math.max(0, Math.min(23, Math.floor(y / hourHeight)));
-                const minuteFraction = (y % hourHeight) / hourHeight;
-                const minutes = Math.floor(minuteFraction * 60);
-
-                // Format in 12-hour format
-                const hour12 = hour % 12 || 12;
-                const ampm = hour < 12 ? "AM" : "PM";
-                setDetailedHour(
-                        `${hour12}:${minutes.toString().padStart(2, "0")} ${ampm}`
-                );
-
-                // Ensure timelinePosition is never negative and is within bounds
-                // 83px offset accounts for the header height
-                const headerOffset = 83;
-                const position = Math.max(0, Math.min(rect.height, Math.round(y))) + headerOffset;
-                setTimelinePosition(position);
-        }, []);
 
         function handleAddEvent(event?: Event) {
                 // Create the modal content with the provided event data or defaults
@@ -217,14 +189,18 @@ export default function WeeklyView({
                         hours,
                         minutes
                 );
-
                 handleAddEvent({
-                        startDate: date,
-                        endDate: new Date(date.getTime() + 60 * 60 * 1000), // 1-hour duration
-                        title: "",
-                        id: "",
-                        variant: "primary",
+                        startDate: getNearest30MinuteBlock(date),
+                        endDate: getNearest30MinuteBlock(new Date(date.getTime() + 60 * 60 * 1000)), // 1-hour duration
+                        id: uuidv4.toString(),
+                        employeeId: selectedEmployee?.id ?? 0,
+                        isBooking: false,
+                        bookingId: null,
+                        bookingEmail: null,
+                        typeId: selectedType?.id ?? 0,
+                        availability_slot_ids: [],
                 });
+
         }
 
 
@@ -359,8 +335,168 @@ export default function WeeklyView({
                                                         }}
                                                 >
                                                         {daysOfWeek.map((day, idx) => (
-                                                                <div key={idx} className="relative relative group flex flex-col">
-                                                                        <div className="sticky bg-default-100 top-0 z-20 flex-grow flex items-center justify-center">
+                                                                <div key={idx} className="relative relative group cursor-pointer flex flex-col">
+                                                                        <div
+                                                                                className="sticky bg-default-100 group-hover:bg-black top-0 z-20 flex-grow flex items-center justify-center"
+                                                                                onClick={
+                                                                                        (e) => {
+                                                                                                e.stopPropagation();
+
+                                                                                                // Set the selected day
+                                                                                                const selectedDay = new Date(
+                                                                                                        currentDate.getFullYear(),
+                                                                                                        currentDate.getMonth(),
+                                                                                                        day.getDate()
+                                                                                                );
+
+                                                                                                // Get events for the selected day
+                                                                                                const dayEvents = getters.getEventsForDay(
+                                                                                                        day.getDate(),
+                                                                                                        currentDate
+                                                                                                );
+
+                                                                                                setOpen(
+                                                                                                        <CustomModal title={`${getters.getDayName(day.getDay())} ${day.getDate()}, ${selectedDay.getFullYear()}`}>
+                                                                                                                <div className="flex flex-col space-y-4 p-4">
+                                                                                                                        <div className="flex items-center mb-4">
+                                                                                                                                <ChevronLeft
+                                                                                                                                        className="cursor-pointer hover:text-primary mr-2"
+                                                                                                                                        onClick={() => setOpen(null)}
+                                                                                                                                />
+                                                                                                                                <h2 className="text-2xl font-bold">{selectedDay.toDateString()}</h2>
+                                                                                                                        </div>
+
+                                                                                                                        {dayEvents && dayEvents.length > 0 ? (
+                                                                                                                                <div className="space-y-4">
+                                                                                                                                        {/* Timeline view */}
+                                                                                                                                        <div className="relative bg-default-50 rounded-lg p-4 min-h-[500px]">
+                                                                                                                                                <div className="grid grid-cols-[100px_1fr] h-full">
+                                                                                                                                                        {/* Hours column */}
+                                                                                                                                                        <div className="flex flex-col">
+                                                                                                                                                                {hours.map((hour, index) => (
+                                                                                                                                                                        <div
+                                                                                                                                                                                key={`hour-${index}`}
+                                                                                                                                                                                className="h-16 p-2 text-sm text-muted-foreground border-r border-b border-default-200"
+                                                                                                                                                                        >
+                                                                                                                                                                                {hour}
+                                                                                                                                                                        </div>
+                                                                                                                                                                ))}
+                                                                                                                                                        </div>
+
+                                                                                                                                                        {/* Events column */}
+                                                                                                                                                        <div className="relative">
+                                                                                                                                                                {/* Hour grid lines */}
+                                                                                                                                                                {Array.from({ length: 24 }).map((_, index) => (
+                                                                                                                                                                        <div
+                                                                                                                                                                                key={`grid-${index}`}
+                                                                                                                                                                                className="h-16 border-b border-default-200"
+                                                                                                                                                                        />
+                                                                                                                                                                ))}
+
+                                                                                                                                                                {/* Display events */}
+                                                                                                                                                                {dayEvents.map((event) => {
+                                                                                                                                                                        // Calculate time groups
+                                                                                                                                                                        const timeGroups = groupEventsByTimePeriod(dayEvents);
+
+                                                                                                                                                                        // Find which time group this event belongs to
+                                                                                                                                                                        let eventsInSamePeriod = 1;
+                                                                                                                                                                        let periodIndex = 0;
+
+                                                                                                                                                                        for (let i = 0; i < timeGroups.length; i++) {
+                                                                                                                                                                                const groupIndex = timeGroups[i].findIndex(e => e.id === event.id);
+                                                                                                                                                                                if (groupIndex !== -1) {
+                                                                                                                                                                                        eventsInSamePeriod = timeGroups[i].length;
+                                                                                                                                                                                        periodIndex = groupIndex;
+                                                                                                                                                                                        break;
+                                                                                                                                                                                }
+                                                                                                                                                                        }
+
+                                                                                                                                                                        // Get styling for this event
+                                                                                                                                                                        const { height, top, left, maxWidth, minWidth } = handlers.handleEventStyling(
+                                                                                                                                                                                event,
+                                                                                                                                                                                dayEvents,
+                                                                                                                                                                                startTime.hour,
+                                                                                                                                                                                endTime.hour,
+                                                                                                                                                                                hHeight,
+                                                                                                                                                                                {
+                                                                                                                                                                                        eventsInSamePeriod,
+                                                                                                                                                                                        periodIndex,
+                                                                                                                                                                                        adjustForPeriod: true
+                                                                                                                                                                                }
+                                                                                                                                                                        );
+
+                                                                                                                                                                        return (
+                                                                                                                                                                                <div
+                                                                                                                                                                                        key={event.id}
+                                                                                                                                                                                        style={{
+                                                                                                                                                                                                position: 'absolute',
+                                                                                                                                                                                                height,
+                                                                                                                                                                                                top,
+                                                                                                                                                                                                left,
+                                                                                                                                                                                                maxWidth,
+                                                                                                                                                                                                minWidth,
+                                                                                                                                                                                                padding: '0 2px',
+                                                                                                                                                                                                boxSizing: 'border-box',
+                                                                                                                                                                                        }}
+                                                                                                                                                                                >
+                                                                                                                                                                                        <EventStyled
+                                                                                                                                                                                                event={{
+                                                                                                                                                                                                        ...event,
+                                                                                                                                                                                                        CustomEventComponent,
+                                                                                                                                                                                                        minmized: true,
+                                                                                                                                                                                                }}
+                                                                                                                                                                                                CustomEventModal={CustomEventModal}
+                                                                                                                                                                                        />
+                                                                                                                                                                                </div>
+                                                                                                                                                                        );
+                                                                                                                                                                })}
+                                                                                                                                                        </div>
+                                                                                                                                                </div>
+                                                                                                                                        </div>
+
+                                                                                                                                        {/* Event list */}
+                                                                                                                                        <div className="bg-card rounded-lg p-4">
+                                                                                                                                                <h3 className="text-lg font-semibold mb-4">All Events</h3>
+                                                                                                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                                                                                        {dayEvents.map(event => (
+                                                                                                                                                                <div
+                                                                                                                                                                        key={event.id}
+                                                                                                                                                                        className={`p-4 rounded-lg shadow-sm border-l-4 border-${event.variant} hover:shadow-md transition-shadow`}
+                                                                                                                                                                >
+                                                                                                                                                                        <EventStyled
+                                                                                                                                                                                event={{
+                                                                                                                                                                                        ...event,
+                                                                                                                                                                                        CustomEventComponent,
+                                                                                                                                                                                        minmized: false,
+                                                                                                                                                                                }}
+                                                                                                                                                                                CustomEventModal={CustomEventModal}
+                                                                                                                                                                        />
+                                                                                                                                                                </div>
+                                                                                                                                                        ))}
+                                                                                                                                                </div>
+                                                                                                                                        </div>
+                                                                                                                                </div>
+                                                                                                                        ) : (
+                                                                                                                                <div className="text-center py-10 text-muted-foreground">
+                                                                                                                                        <p>No events scheduled for this day</p>
+                                                                                                                                        <Button
+                                                                                                                                                variant="outline"
+                                                                                                                                                className="mt-4"
+                                                                                                                                                onClick={() => {
+                                                                                                                                                        setOpen(null);
+                                                                                                                                                        handleAddEventWeek(idx, detailedHour || "12:00 PM");
+                                                                                                                                                }}
+                                                                                                                                        >
+                                                                                                                                                Add Event
+                                                                                                                                        </Button>
+                                                                                                                                </div>
+                                                                                                                        )}
+                                                                                                                </div>
+                                                                                                        </CustomModal>
+                                                                                                );
+                                                                                        }
+                                                                                }
+                                                                        >
                                                                                 <div className="text-center p-4">
                                                                                         <div className="text-lg font-semibold">
                                                                                                 {getters.getDayName(day.getDay())}
@@ -378,167 +514,6 @@ export default function WeeklyView({
                                                                                                 {day.getDate()}
                                                                                         </div>
 
-                                                                                        {/* Fullscreen icon that appears on hover */}
-                                                                                        <div
-                                                                                                className="absolute top-5 right-10 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                                                onClick={(e) => {
-                                                                                                        e.stopPropagation();
-
-                                                                                                        // Set the selected day
-                                                                                                        const selectedDay = new Date(
-                                                                                                                currentDate.getFullYear(),
-                                                                                                                currentDate.getMonth(),
-                                                                                                                day.getDate()
-                                                                                                        );
-
-                                                                                                        // Get events for the selected day
-                                                                                                        const dayEvents = getters.getEventsForDay(
-                                                                                                                day.getDate(),
-                                                                                                                currentDate
-                                                                                                        );
-
-                                                                                                        setOpen(
-                                                                                                                <CustomModal title={`${getters.getDayName(day.getDay())} ${day.getDate()}, ${selectedDay.getFullYear()}`}>
-                                                                                                                        <div className="flex flex-col space-y-4 p-4">
-                                                                                                                                <div className="flex items-center mb-4">
-                                                                                                                                        <ChevronLeft
-                                                                                                                                                className="cursor-pointer hover:text-primary mr-2"
-                                                                                                                                                onClick={() => setOpen(null)}
-                                                                                                                                        />
-                                                                                                                                        <h2 className="text-2xl font-bold">{selectedDay.toDateString()}</h2>
-                                                                                                                                </div>
-
-                                                                                                                                {dayEvents && dayEvents.length > 0 ? (
-                                                                                                                                        <div className="space-y-4">
-                                                                                                                                                {/* Timeline view */}
-                                                                                                                                                <div className="relative bg-default-50 rounded-lg p-4 min-h-[500px]">
-                                                                                                                                                        <div className="grid grid-cols-[100px_1fr] h-full">
-                                                                                                                                                                {/* Hours column */}
-                                                                                                                                                                <div className="flex flex-col">
-                                                                                                                                                                        {hours.map((hour, index) => (
-                                                                                                                                                                                <div
-                                                                                                                                                                                        key={`hour-${index}`}
-                                                                                                                                                                                        className="h-16 p-2 text-sm text-muted-foreground border-r border-b border-default-200"
-                                                                                                                                                                                >
-                                                                                                                                                                                        {hour}
-                                                                                                                                                                                </div>
-                                                                                                                                                                        ))}
-                                                                                                                                                                </div>
-
-                                                                                                                                                                {/* Events column */}
-                                                                                                                                                                <div className="relative">
-                                                                                                                                                                        {/* Hour grid lines */}
-                                                                                                                                                                        {Array.from({ length: 24 }).map((_, index) => (
-                                                                                                                                                                                <div
-                                                                                                                                                                                        key={`grid-${index}`}
-                                                                                                                                                                                        className="h-16 border-b border-default-200"
-                                                                                                                                                                                />
-                                                                                                                                                                        ))}
-
-                                                                                                                                                                        {/* Display events */}
-                                                                                                                                                                        {dayEvents.map((event) => {
-                                                                                                                                                                                // Calculate time groups
-                                                                                                                                                                                const timeGroups = groupEventsByTimePeriod(dayEvents);
-
-                                                                                                                                                                                // Find which time group this event belongs to
-                                                                                                                                                                                let eventsInSamePeriod = 1;
-                                                                                                                                                                                let periodIndex = 0;
-
-                                                                                                                                                                                for (let i = 0; i < timeGroups.length; i++) {
-                                                                                                                                                                                        const groupIndex = timeGroups[i].findIndex(e => e.id === event.id);
-                                                                                                                                                                                        if (groupIndex !== -1) {
-                                                                                                                                                                                                eventsInSamePeriod = timeGroups[i].length;
-                                                                                                                                                                                                periodIndex = groupIndex;
-                                                                                                                                                                                                break;
-                                                                                                                                                                                        }
-                                                                                                                                                                                }
-
-                                                                                                                                                                                // Get styling for this event
-                                                                                                                                                                                const { height, top, left, maxWidth, minWidth } = handlers.handleEventStyling(
-                                                                                                                                                                                        event,
-                                                                                                                                                                                        dayEvents,
-                                                                                                                                                                                        {
-                                                                                                                                                                                                eventsInSamePeriod,
-                                                                                                                                                                                                periodIndex,
-                                                                                                                                                                                                adjustForPeriod: true
-                                                                                                                                                                                        }
-                                                                                                                                                                                );
-
-                                                                                                                                                                                return (
-                                                                                                                                                                                        <div
-                                                                                                                                                                                                key={event.id}
-                                                                                                                                                                                                style={{
-                                                                                                                                                                                                        position: 'absolute',
-                                                                                                                                                                                                        height,
-                                                                                                                                                                                                        top,
-                                                                                                                                                                                                        left,
-                                                                                                                                                                                                        maxWidth,
-                                                                                                                                                                                                        minWidth,
-                                                                                                                                                                                                        padding: '0 2px',
-                                                                                                                                                                                                        boxSizing: 'border-box',
-                                                                                                                                                                                                }}
-                                                                                                                                                                                        >
-                                                                                                                                                                                                <EventStyled
-                                                                                                                                                                                                        event={{
-                                                                                                                                                                                                                ...event,
-                                                                                                                                                                                                                CustomEventComponent,
-                                                                                                                                                                                                                minmized: true,
-                                                                                                                                                                                                        }}
-                                                                                                                                                                                                        CustomEventModal={CustomEventModal}
-                                                                                                                                                                                                />
-                                                                                                                                                                                        </div>
-                                                                                                                                                                                );
-                                                                                                                                                                        })}
-                                                                                                                                                                </div>
-                                                                                                                                                        </div>
-                                                                                                                                                </div>
-
-                                                                                                                                                {/* Event list */}
-                                                                                                                                                <div className="bg-card rounded-lg p-4">
-                                                                                                                                                        <h3 className="text-lg font-semibold mb-4">All Events</h3>
-                                                                                                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                                                                                                {dayEvents.map(event => (
-                                                                                                                                                                        <div
-                                                                                                                                                                                key={event.id}
-                                                                                                                                                                                className={`p-4 rounded-lg shadow-sm border-l-4 border-${event.variant} hover:shadow-md transition-shadow`}
-                                                                                                                                                                        >
-                                                                                                                                                                                <EventStyled
-                                                                                                                                                                                        event={{
-                                                                                                                                                                                                ...event,
-                                                                                                                                                                                                CustomEventComponent,
-                                                                                                                                                                                                minmized: false,
-                                                                                                                                                                                        }}
-                                                                                                                                                                                        CustomEventModal={CustomEventModal}
-                                                                                                                                                                                />
-                                                                                                                                                                        </div>
-                                                                                                                                                                ))}
-                                                                                                                                                        </div>
-                                                                                                                                                </div>
-                                                                                                                                        </div>
-                                                                                                                                ) : (
-                                                                                                                                        <div className="text-center py-10 text-muted-foreground">
-                                                                                                                                                <p>No events scheduled for this day</p>
-                                                                                                                                                <Button
-                                                                                                                                                        variant="outline"
-                                                                                                                                                        className="mt-4"
-                                                                                                                                                        onClick={() => {
-                                                                                                                                                                setOpen(null);
-                                                                                                                                                                handleAddEventWeek(idx, detailedHour || "12:00 PM");
-                                                                                                                                                        }}
-                                                                                                                                                >
-                                                                                                                                                        Add Event
-                                                                                                                                                </Button>
-                                                                                                                                        </div>
-                                                                                                                                )}
-                                                                                                                        </div>
-                                                                                                                </CustomModal>
-                                                                                                        );
-                                                                                                }}
-                                                                                        >
-                                                                                                <Maximize size={16} className="text-muted-foreground hover:text-primary" />
-                                                                                        </div>
-
-                                                                                        {/* Resize handle */}
                                                                                 </div>
                                                                         </div>
                                                                         <div className="absolute top-12 right-0 w-px h-[calc(100%-3rem)]"></div>
@@ -553,7 +528,7 @@ export default function WeeklyView({
                                                         >
                                                                 <Badge
                                                                         variant="outline"
-                                                                        className="absolute -translate-y-1/2 bg-white z-50 left-[5px] text-xs"
+                                                                        className="absolute -translate-y-1/2 bg-white z-50 left-[5px] text-xs dark:text-black"
                                                                 >
                                                                         {detailedHour}
                                                                 </Badge>
@@ -562,12 +537,10 @@ export default function WeeklyView({
                                         </div>
 
                                         <div
-                                                ref={hoursColumnRef}
-                                                onMouseMove={handleMouseMove}
-                                                onMouseLeave={() => setDetailedHour(null)}
                                                 className="relative grid grid-cols-8 col-span-8"
                                         >
-                                                <div className="col-span-1 bg-default-50 hover:bg-default-100 transition duration-400">
+                                                <div className="col-span-1 bg-default-50 hover:bg-default-100 transition duration-400"
+                                                >
                                                         {hours.map((hour, index) => (
                                                                 <motion.div
                                                                         key={`hour-${index}`}

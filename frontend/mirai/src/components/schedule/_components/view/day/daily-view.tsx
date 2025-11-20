@@ -508,20 +508,6 @@ export default function DailyView({
                                                                 </AnimatePresence>
                                                         </div>
                                                 </motion.div>
-
-                                                {detailedHour && (
-                                                        <div
-                                                                className="absolute left-[50px] w-[calc(100%-53px)] h-[2px] bg-primary/40 rounded-full pointer-events-none"
-                                                                style={{ top: `${timelinePosition}px` }}
-                                                        >
-                                                                <Badge
-                                                                        variant="outline"
-                                                                        className="absolute -translate-y-1/2 bg-white z-50 left-[-20px] text-xs dark:text-black"
-                                                                >
-                                                                        {detailedHour}
-                                                                </Badge>
-                                                        </div>
-                                                )}
                                         </div>
                                 </motion.div>
                         </AnimatePresence>

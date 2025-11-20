@@ -112,7 +112,11 @@ export function BookingTypeFormCard() {
                                                 />
                                         </div>
                                         <div className="flex items-start gap-3">
-                                                <Checkbox id="fixed" defaultChecked />
+                                                <Checkbox
+                                                        id="fixed"
+                                                        checked={formData.fixed}
+                                                        onCheckedChange={(e) => handleChange("fixed", e)}
+                                                        defaultChecked />
                                                 <div className="grid gap-2">
                                                         <Label htmlFor="fixed">Fixed Cost </Label>
                                                         <p className="text-muted-foreground text-sm">

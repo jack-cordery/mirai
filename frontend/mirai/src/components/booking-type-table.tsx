@@ -50,31 +50,31 @@ import {
         TabsContent,
 } from "@/components/ui/tabs"
 import { useTableContext } from "@/contexts/table-context"
-import { ArrowUpDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent } from "./ui/dropdown-menu"
 import { DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
-import { EmployeeDeleteModal, EmployeeEditModal } from "./employee-table-modals"
-import { DeleteEventModal } from "./schedule/_modals/add-event-modal"
+import { BookingTypeDeleteModal, BookingTypeEditModal } from "./booking-type-modals"
+import { loadWorkingDayTimes } from "@/lib/utils"
 
-export const EmployeesDataSchema = z.object({
-        employee_id: z.number(),
-        name: z.string(),
-        surname: z.string(),
-        email: z.string(),
+export const BookingTypeDataSchema = z.object({
+        type_id: z.number(),
         title: z.string(),
         description: z.string(),
+        fixed: z.boolean(),
+        cost: z.number(),
+        duration: z.number(),
         created_at: z.string(),
-        last_login: z.string(),
+        last_edited: z.string(),
 });
 
-export function EmployeesTable() {
+export function BookingTypeTable() {
         const {
-                employeeData,
-                setIsEmployeeEditModalOpen,
-                setEmployeeEditModalRow,
-                setIsEmployeeDeleteModalOpen,
-                setEmployeeDeleteModalRow,
+                bookingTypeData,
+                setIsBookingTypeEditModalOpen,
+                setBookingTypeEditModalRow,
+                setIsBookingTypeDeleteModalOpen,
+                setBookingTypeDeleteModalRow,
         } = useTableContext();
+        const { slotDuration } = loadWorkingDayTimes()
         const [columnVisibility, setColumnVisibility] =
                 React.useState<VisibilityState>({})
         const [pagination, setPagination] = React.useState({
@@ -83,52 +83,63 @@ export function EmployeesTable() {
         })
 
         const dataIds = React.useMemo<UniqueIdentifier[]>(
-                () => employeeData?.map(({ employee_id }) => employee_id) || [],
-                [employeeData]
+                () => bookingTypeData?.map(({ type_id }) => type_id) || [],
+                [bookingTypeData]
         )
-        const columns: ColumnDef<z.infer<typeof EmployeesDataSchema>>[] = [
-                {
-                        accessorKey: "employee_name",
-                        header: "Name",
-                        cell: ({ row }) => {
-                                const styledName = row.original.name.charAt(0).toUpperCase()
-                                        + row.original.name.slice(1).toLowerCase()
-                                        + " "
-                                        + row.original.surname.charAt(0).toUpperCase()
-                                        + row.original.surname.slice(1).toLowerCase();
-                                return <p> {styledName} </p>
-                        },
-                        enableHiding: false,
-                },
-                {
-                        accessorKey: "user_email",
-                        header: "Email",
-                        cell: ({ row }) => {
-                                return <p> {row.original.email} </p>
-                        },
-                },
+        const columns: ColumnDef<z.infer<typeof BookingTypeDataSchema>>[] = [
                 {
                         accessorKey: "title",
                         header: "Title",
                         cell: ({ row }) => {
-                                return <p> {row.original.title} </p>
+                                return <p>{row.original.title}</p>
                         },
                 },
                 {
                         accessorKey: "description",
                         header: "Description",
                         cell: ({ row }) => {
-                                return <p> {row.original.description} </p>
+                                return <p>{row.original.description}</p>
+                        },
+                },
+                {
+                        accessorKey: "fixed",
+                        header: "Fixed",
+                        cell: ({ row }) => {
+                                return <p>{row.original.fixed ? "☑︎" : "□"}</p>
+                        },
+                },
+                {
+                        accessorKey: "cost",
+                        header: "Cost",
+                        cell: ({ row }) => {
+                                return <p>£{(row.original.cost / 100).toFixed(2)}</p>
+                        },
+                },
+                {
+                        accessorKey: "duration",
+                        header: "Duration (minutes)",
+                        cell: ({ row }) => {
+                                return <p>{row.original.duration * slotDuration}</p>
                         },
                 },
                 {
                         accessorKey: "created_at",
-                        header: "Created At",
+                        header: "Create At",
                         cell: ({ row }) => {
                                 if (!row.original.created_at) {
                                         return <p> NULL </p>
                                 }
-                                return <p> {new Date(row.original.created_at).toDateString()} </p>
+                                return <p>{new Date(row.original.created_at).toDateString()}</p>
+                        },
+                },
+                {
+                        accessorKey: "last_edited",
+                        header: "Last Edited",
+                        cell: ({ row }) => {
+                                if (!row.original.last_edited) {
+                                        return <p> NULL </p>
+                                }
+                                return <p> {new Date(row.original.last_edited).toDateString()} </p>
                         },
                 },
                 {
@@ -147,29 +158,27 @@ export function EmployeesTable() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-32">
                                                 <DropdownMenuItem onClick={() => {
-                                                        setEmployeeEditModalRow(row.original);
-                                                        setIsEmployeeEditModalOpen(true);
+                                                        setBookingTypeEditModalRow(row.original);
+                                                        setIsBookingTypeEditModalOpen(true);
                                                 }}>Edit</DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => {
-                                                        setEmployeeDeleteModalRow(row.original);
-                                                        setIsEmployeeDeleteModalOpen(true);
+                                                        setBookingTypeDeleteModalRow(row.original);
+                                                        setIsBookingTypeDeleteModalOpen(true);
                                                 }}>Delete</DropdownMenuItem>
                                         </DropdownMenuContent >
                                 </DropdownMenu >
                         ),
                 },
-
-
         ]
 
         const table = useReactTable({
-                data: employeeData,
+                data: bookingTypeData,
                 columns: columns,
                 state: {
                         columnVisibility,
                         pagination,
                 },
-                getRowId: (row) => row.employee_id.toString(),
+                getRowId: (row) => row.type_id.toString(),
                 enableRowSelection: true,
                 onColumnVisibilityChange: setColumnVisibility,
                 onPaginationChange: setPagination,
@@ -183,7 +192,7 @@ export function EmployeesTable() {
 
         return (
                 <TabsContent
-                        value="employees"
+                        value="booking-types"
                         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
                 >
                         <div className="overflow-hidden rounded-lg border">
@@ -213,7 +222,7 @@ export function EmployeesTable() {
                                                                 strategy={verticalListSortingStrategy}
                                                         >
                                                                 {table.getRowModel().rows.map((row) => (
-                                                                        <TableRow key={row.original.employee_id}>
+                                                                        <TableRow key={row.original.type_id}>
                                                                                 {row.getVisibleCells().map((cell) => (
                                                                                         <TableCell key={cell.id}>
                                                                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -312,8 +321,8 @@ export function EmployeesTable() {
                                                 </Button>
                                         </div>
                                 </div>
-                                <EmployeeEditModal />
-                                <EmployeeDeleteModal />
+                                <BookingTypeEditModal />
+                                <BookingTypeDeleteModal />
                         </div>
                 </TabsContent>
         )

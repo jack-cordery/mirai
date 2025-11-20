@@ -41,6 +41,7 @@ import { useTableContext } from "@/contexts/table-context"
 import { BookingsTable } from "./bookings-table"
 import { RequestDataSchema, RequestDataTable } from "./requests-table"
 import { EmployeesTable } from "./employees-table"
+import { BookingTypeTable } from "./booking-type-table"
 
 // Create a separate component for the drag handle
 export function DragHandle({ id }: { id: number }) {
@@ -190,6 +191,12 @@ export function DataTable() {
                                 className="flex flex-col px-4 lg:px-6"
                         >
                                 <EmployeesTable />
+                        </TabsContent>
+                        <TabsContent
+                                value="booking-types"
+                                className="flex flex-col px-4 lg:px-6"
+                        >
+                                <BookingTypeTable />
                         </TabsContent>
                 </Tabs>
         )

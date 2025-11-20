@@ -53,9 +53,10 @@ export default function BookingCalendar() {
                 const slots = generateOptionsFromSlots(
                         selectedTimes.startTime ? selectedTimes.startTime : startTime,
                         selectedTimes.endTime ? selectedTimes.endTime : endTime,
-                        availabilitySlots.filter((a) => a.type_id === selectedBookingType?.type_id), date);
+                        availabilitySlots.filter((a) => a.type_id === selectedBookingType?.type_id).filter((a) => a.employee_id === selectedEmployee?.employee_id)
+                        , date);
                 return slots.filter((s) => s.duration >= (selectedBookingType?.duration ?? 0));
-        }, [selectedTimes, availabilitySlots, date, selectedBookingType])
+        }, [selectedTimes, availabilitySlots, date, selectedBookingType, selectedEmployee])
 
         const bookedDates = React.useMemo(() => {
                 const dates: Date[] = [];
@@ -321,11 +322,11 @@ export default function BookingCalendar() {
                                                         <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Employee</span>
                                                                 <span className="font-medium">{
-                                                                        (selectedEmployee?.name[0].toUpperCase() || "")
-                                                                        + selectedEmployee?.name.substring(1).toLowerCase()
+                                                                        ((selectedEmployee?.name[0] ?? "").toUpperCase() || "")
+                                                                        + (selectedEmployee?.name ?? "").substring(1).toLowerCase()
                                                                         + ' '
-                                                                        + selectedEmployee?.surname[0].toUpperCase()
-                                                                        + selectedEmployee?.surname.substring(1).toLowerCase()
+                                                                        + (selectedEmployee?.surname[0] ?? "").toUpperCase()
+                                                                        + (selectedEmployee?.surname.substring(1) ?? "").toLowerCase()
                                                                 }</span >
                                                         </div>
                                                         <div className="flex justify-between text-sm">

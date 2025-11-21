@@ -12,6 +12,7 @@ import type { Event, CustomEventModal } from "@/types";
 import CustomModal from "@/components/ui/custom-modal";
 import { getNearest30MinuteBlock, loadWorkingDayTimes, maximiseTimes, minimiseTimes } from "@/lib/utils";
 import { uuidv4 } from "zod";
+import { format } from "date-fns";
 
 const { startTime, endTime } = loadWorkingDayTimes();
 
@@ -329,9 +330,18 @@ export default function WeeklyView({
                                         className={`grid use-automation-zoom-in grid-cols-8 gap-0`}
                                 >
                                         <div className="sticky top-0 left-0 z-30 bg-default-100 rounded-tl-lg h-full border-0 flex items-center justify-center bg-primary/10">
-                                                <span className="text-xl tracking-tight font-semibold ">
-                                                        Week {getters.getWeekNumber(currentDate)}
-                                                </span>
+                                                <div className="flex flex-col">
+                                                        <div className="flex flex-col items-center gap-0.5">
+                                                                <span className="text-lg font-bold text-foreground">
+                                                                        Week {getters.getWeekNumber(currentDate)}
+                                                                </span>
+
+                                                                <span className="rounded-full bg-background/50 px-2 py-0.5 text-m font-medium text-muted-foreground shadow-sm">
+                                                                        {format(currentDate, "MMM")}
+                                                                </span>
+                                                        </div>
+                                                </div>
+
                                         </div>
 
                                         <div className="col-span-7 flex flex-col relative">

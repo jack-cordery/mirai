@@ -9,6 +9,8 @@ import { capatalise, cn } from "@/lib/utils";
 import CustomModal from "@/components/ui/custom-modal";
 import { toast } from "sonner";
 import { deleteAvailabilitySlot } from "@/api/availability";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@radix-ui/react-hover-card";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 // Formatters
 const formatDate = (date: Date) =>
@@ -49,15 +51,16 @@ interface EventStyledProps extends Event {
 
 export default function EventStyled({
         event,
-        onDelete,
+        hover,
         CustomEventModal,
 }: {
         event: EventStyledProps;
         CustomEventModal?: CustomEventModal;
         onDelete?: (id: string) => void;
+        hover: boolean;
 }) {
         const { setOpen } = useModal();
-        const { handlers, employeeOptions, typeOptions } = useScheduler();
+        const { employeeOptions, typeOptions } = useScheduler();
         const typeLabel = typeOptions.find((t) => t.id === event?.typeId)?.label;
         const employeeLabel = employeeOptions.find((e) => e.id === event?.employeeId)?.label;
 
@@ -84,100 +87,149 @@ export default function EventStyled({
         const variant = event.isBooking ? variantColors.booking : variantColors.availability;
 
         return (
-                <div
-                        key={event?.id}
-                        className={cn(
-                                "w-full relative group flex flex-col flex-grow cursor-pointer",
-                                "rounded-md border border-neutral-700 bg-neutral-900",
-                                "shadow-sm hover:shadow-md transition-all duration-150"
-                        )}
-                >
-                        {/* Delete button */}
-                        <Button
-                                onClick={async (e) => {
-                                        e.stopPropagation();
-                                        handleDeleteEvent(event);
-                                }}
-                                variant="ghost"
-                                size="icon"
-                                className={cn(
-                                        "absolute right-1 top-1 h-5 w-5 p-0",
-                                        "text-neutral-400 hover:text-red-400 hover:bg-red-800/20",
-                                        "transition-opacity duration-100",
-                                        event.minmized ? "opacity-0 group-hover:opacity-100" : "opacity-100"
-                                )}
-                        >
-                                <TrashIcon size={12} />
-                        </Button>
-
-                        {/* Custom UI */}
-                        {event.CustomEventComponent ? (
+                <HoverCard>
+                        <HoverCardTrigger asChild>
                                 <div
-                                        onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEditEvent(event);
-                                        }}
-                                >
-                                        <event.CustomEventComponent {...event} />
-                                </div>
-                        ) : (
-                                <div
-                                        onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEditEvent(event);
-                                        }}
+                                        key={event?.id}
                                         className={cn(
-                                                "flex flex-col h-full w-full rounded-md",
-                                                event.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
+                                                "w-full relative group flex flex-col flex-grow cursor-pointer",
+                                                "rounded-md border border-neutral-700 bg-neutral-900",
+                                                "shadow-sm hover:shadow-md transition-all duration-150"
                                         )}
                                 >
-                                        <div
+                                        {/* Delete button */}
+                                        <Button
+                                                onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteEvent(event);
+                                                }}
+                                                variant="ghost"
+                                                size="icon"
                                                 className={cn(
-                                                        "flex flex-col flex-grow rounded-md p-3 space-y-1 border-l-4",
-                                                        variant.bg,
-                                                        variant.text,
-                                                        variant.border
+                                                        "absolute right-1 top-1 h-5 w-5 p-0",
+                                                        "text-neutral-400 hover:text-red-400 hover:bg-red-800/20",
+                                                        "transition-opacity duration-100",
+                                                        event.minmized ? "opacity-0 group-hover:opacity-100" : "opacity-100"
                                                 )}
                                         >
-                                                {/* Title */}
-                                                <div className="font-medium text-sm truncate">
-                                                        {event.isBooking
-                                                                ? event.bookingEmail && employeeLabel && typeLabel
-                                                                        ? `${capatalise(typeLabel)} — ${event.bookingEmail} with ${employeeLabel}`
-                                                                        : "Booking"
-                                                                : typeLabel && employeeLabel
-                                                                        ? `${capatalise(typeLabel)} — ${employeeLabel}`
-                                                                        : "Availability"}
+                                                <TrashIcon size={12} />
+                                        </Button>
+
+                                        {/* Custom UI */}
+                                        {event.CustomEventComponent ? (
+                                                <div
+                                                        onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEditEvent(event);
+                                                        }}
+                                                >
+                                                        <event.CustomEventComponent {...event} />
+                                                </div>
+                                        ) : (
+                                                <div
+                                                        onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEditEvent(event);
+                                                        }}
+                                                        className={cn(
+                                                                "flex flex-col h-full w-full rounded-md",
+                                                                event.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
+                                                        )}
+                                                >
+                                                        <div
+                                                                className={cn(
+                                                                        "flex flex-col flex-grow rounded-md p-3 space-y-1 border-l-4",
+                                                                        variant.bg,
+                                                                        variant.text,
+                                                                        variant.border
+                                                                )}
+                                                        >
+                                                                {/* Title */}
+                                                                <div className="font-medium text-sm truncate">
+                                                                        {event.isBooking
+                                                                                ? event.bookingEmail && employeeLabel && typeLabel
+                                                                                        ? `${capatalise(typeLabel)} — ${event.bookingEmail} with ${employeeLabel}`
+                                                                                        : "Booking"
+                                                                                : typeLabel && employeeLabel
+                                                                                        ? `${capatalise(typeLabel)} — ${employeeLabel}`
+                                                                                        : "Availability"}
+                                                                </div>
+
+                                                                {/* Minimized time */}
+                                                                {event.minmized && (
+                                                                        <div className="text-[11px] text-neutral-400">
+                                                                                {`${formatTime(event.startDate)} – ${formatTime(event.endDate)}`}
+                                                                        </div>
+                                                                )}
+
+                                                                {/* Full view type ID */}
+                                                                {!event.minmized && event.typeId && (
+                                                                        <div className="text-xs text-neutral-400 mt-1">{event.typeId}</div>
+                                                                )}
+
+                                                                {/* Full view date/time */}
+                                                                {!event.minmized && (
+                                                                        <div className="mt-1 space-y-1 text-xs text-neutral-400">
+                                                                                <div className="flex items-center gap-1">
+                                                                                        <CalendarIcon className="h-3 w-3 text-neutral-500" />
+                                                                                        {formatDate(event.startDate)}
+                                                                                </div>
+                                                                                <div className="flex items-center gap-1">
+                                                                                        <ClockIcon className="h-3 w-3 text-neutral-500" />
+                                                                                        {formatDate(event.endDate)}
+                                                                                </div>
+                                                                        </div>
+                                                                )}
+                                                        </div>
+                                                </div>
+                                        )}
+                                </div>
+
+                        </HoverCardTrigger>
+                        {hover && <HoverCardContent
+                                className="w-80 p-0  z-10 border-neutral-800 bg-neutral-950/95 backdrop-blur-sm shadow-2xl text-neutral-200"
+                                align="start"
+                                sideOffset={8}
+                        >
+                                <div className={cn("h-1 w-full", event.isBooking ? "bg-green-500" : "bg-blue-500")} />
+
+                                <div className="p-4 space-y-4">
+                                        {/* Header Section */}
+                                        <div className="space-y-1.5">
+                                                <h4 className="text-sm font-semibold text-white leading-tight">
+                                                        {event.isBooking ? "Client Booking" : "Availability Slot"}
+                                                </h4>
+                                                <p className="text-xs text-neutral-400">
+                                                        {typeLabel && employeeLabel
+                                                                ? `${capatalise(typeLabel)} — ${employeeLabel}`
+                                                                : "Unassigned Event"}
+                                                </p>
+                                        </div>
+
+                                        <div className="border-t border-neutral-800" />
+
+                                        {/* Details Grid */}
+                                        <div className="grid gap-3 text-xs">
+
+                                                {/* Date & Time Row */}
+                                                <div className="flex items-start gap-3 text-neutral-300">
+                                                        <CalendarIcon className="h-4 w-4 text-neutral-500 mt-0.5 shrink-0" />
+                                                        <div className="space-y-0.5">
+                                                                <p className="font-medium">{formatDate(event.startDate)}</p>
+                                                                <p className="text-neutral-500">until {formatDate(event.endDate)}</p>
+                                                        </div>
                                                 </div>
 
-                                                {/* Minimized time */}
-                                                {event.minmized && (
-                                                        <div className="text-[11px] text-neutral-400">
-                                                                {`${formatTime(event.startDate)} – ${formatTime(event.endDate)}`}
-                                                        </div>
-                                                )}
-
-                                                {/* Full view type ID */}
-                                                {!event.minmized && event.typeId && (
-                                                        <div className="text-xs text-neutral-400 mt-1">{event.typeId}</div>
-                                                )}
-
-                                                {/* Full view date/time */}
-                                                {!event.minmized && (
-                                                        <div className="mt-1 space-y-1 text-xs text-neutral-400">
-                                                                <div className="flex items-center gap-1">
-                                                                        <CalendarIcon className="h-3 w-3 text-neutral-500" />
-                                                                        {formatDate(event.startDate)}
-                                                                </div>
-                                                                <div className="flex items-center gap-1">
-                                                                        <ClockIcon className="h-3 w-3 text-neutral-500" />
-                                                                        {formatDate(event.endDate)}
-                                                                </div>
+                                                {/* Email Row (Only if booking) */}
+                                                {event.isBooking && event.bookingEmail && (
+                                                        <div className="flex items-center gap-3 text-neutral-300">
+                                                                <div className="h-4 w-4 flex items-center justify-center text-neutral-500">@</div>
+                                                                <span className="truncate">{event.bookingEmail}</span>
                                                         </div>
                                                 )}
                                         </div>
                                 </div>
-                        )}
-                </div>
+                        </HoverCardContent>}
+                </HoverCard>
         );
 }

@@ -485,6 +485,7 @@ export default function WeeklyView({
                                                                                                                                 minmized: true,
                                                                                                                         }}
                                                                                                                         CustomEventModal={CustomEventModal}
+                                                                                                                        hover={true}
                                                                                                                 />
                                                                                                         </motion.div>
                                                                                                 );
@@ -522,6 +523,7 @@ export default function WeeklyView({
                                                                                                                                                                         minmized: false,
                                                                                                                                                                 }}
                                                                                                                                                                 CustomEventModal={CustomEventModal}
+                                                                                                                                                                hover={true}
                                                                                                                                                         />
                                                                                                                                                 ))}
                                                                                                                                                 PM           </div>

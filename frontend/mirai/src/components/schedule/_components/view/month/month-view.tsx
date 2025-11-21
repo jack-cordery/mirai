@@ -295,6 +295,7 @@ export default function MonthView({
                                                                                                                         CustomEventComponent,
                                                                                                                         minmized: true,
                                                                                                                 }}
+                                                                                                                hover={true}
                                                                                                                 CustomEventModal={CustomEventModal}
                                                                                                         />
                                                                                                 </motion.div>

@@ -380,6 +380,7 @@ export default function DailyView({
                                                                                                                 minmized: false,
                                                                                                         }}
                                                                                                         CustomEventModal={CustomEventModal}
+                                                                                                        hover={true}
                                                                                                 />
                                                                                         </motion.div>
                                                                                 );
@@ -486,6 +487,7 @@ export default function DailyView({
                                                                                                                         minmized: true,
                                                                                                                 }}
                                                                                                                 CustomEventModal={CustomEventModal}
+                                                                                                                hover={true}
                                                                                                         />
                                                                                                 </motion.div>
                                                                                         );

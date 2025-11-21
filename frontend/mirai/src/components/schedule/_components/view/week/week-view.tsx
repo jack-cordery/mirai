@@ -6,7 +6,7 @@ import { useModal } from "@/providers/modal-context";
 import AddEventModal from "@/components/schedule/_modals/add-event-modal";
 import EventStyled from "../event-component/event-styled";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Maximize2, ChevronLeft, Maximize } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import clsx from "clsx";
 import type { Event, CustomEventModal } from "@/types";
 import CustomModal from "@/components/ui/custom-modal";
@@ -14,13 +14,6 @@ import { getNearest30MinuteBlock, loadWorkingDayTimes, maximiseTimes, minimiseTi
 import { uuidv4 } from "zod";
 
 const { startTime, endTime } = loadWorkingDayTimes();
-
-const hours = Array.from({ length: 24 }, (_, i) => {
-        const hour = i % 12 || 12;
-        const ampm = i < 12 ? "AM" : "PM";
-        return `${hour}:00 ${ampm}`;
-});
-
 
 const itemVariants = {
         hidden: { opacity: 0, y: 5 },
@@ -57,10 +50,9 @@ export default function WeeklyView({
 }) {
         const { getters, handlers, selectedEmployee, selectedType, selectedEmployeeAvailability, currentDate, setCurrentDate } = useScheduler();
         const hoursColumnRef = useRef<HTMLDivElement>(null);
+        const hourElementRef = useRef<HTMLDivElement>(null);
         const [detailedHour, setDetailedHour] = useState<string | null>(null);
-        const [timelinePosition, setTimelinePosition] = useState<number>(0);
         const [colWidth, setColWidth] = useState<number[]>(Array(7).fill(1)); // Equal width columns by default
-        const [isResizing, setIsResizing] = useState<boolean>(false);
         const [direction, setDirection] = useState<number>(0);
         const { isOpen, setOpen } = useModal();
 
@@ -69,19 +61,25 @@ export default function WeeklyView({
                 currentDate.getFullYear()
         );
         const [hHeight, setHHeight] = useState(0);
-        const dayEvents = useMemo(() => {
-                return getters.getEventsForDay(
-                        currentDate?.getDate() || 0,
-                        currentDate
-                ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
+        const weekEvents = useMemo(() => {
+                const weekEvents = [];
+                for (let i = 0; i < 7; i++) {
+                        weekEvents.push(...getters.getEventsForDay(
+                                daysOfWeek[i].getDate(),
+                                currentDate
+                        ));
+                }
+                return weekEvents.filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
         }, [selectedEmployeeAvailability, currentDate, isOpen])
 
-        const sortedEvents = dayEvents.sort((a, b) => a.startDate?.getTime() - b.startDate?.getTime());
-        const firstEvent = (dayEvents.length > 0) ? { hour: sortedEvents[0].startDate?.getHours(), minute: sortedEvents[0].startDate?.getMinutes() } : { hour: 0, minute: 0 }
-        const lastEvent = (dayEvents.length > 0) ? { hour: sortedEvents[sortedEvents.length - 1].endDate?.getHours(), minute: sortedEvents[sortedEvents.length - 1].endDate?.getMinutes() } : { hour: 0, minute: 0 }
 
-        const correctedStartTime = (dayEvents.length > 0) ? minimiseTimes(startTime, firstEvent) : startTime
-        const correctedEndTime = (dayEvents.length > 0) ? maximiseTimes(endTime, lastEvent) : endTime
+        const startSortedEvents = weekEvents.sort((a, b) => (a.startDate?.getHours() - b.startDate?.getHours()) || (a.startDate?.getMinutes() - b.startDate?.getMinutes()));
+        const firstEvent = (weekEvents.length > 0) ? { hour: startSortedEvents[0].startDate?.getHours(), minute: startSortedEvents[0].startDate?.getMinutes() } : { hour: 0, minute: 0 }
+        const endSortedEvents = weekEvents.sort((a, b) => (a.endDate?.getHours() - b.endDate?.getHours()) || (a.endDate?.getMinutes() - b.endDate?.getMinutes()));
+        const lastEvent = (weekEvents.length > 0) ? { hour: endSortedEvents[endSortedEvents.length - 1].endDate?.getHours(), minute: endSortedEvents[endSortedEvents.length - 1].endDate?.getMinutes() } : { hour: 0, minute: 0 }
+
+        const correctedStartTime = (weekEvents.length > 0) ? minimiseTimes(startTime, firstEvent) : startTime
+        const correctedEndTime = (weekEvents.length > 0) ? maximiseTimes(endTime, lastEvent) : endTime
 
         const hours = Array.from({ length: correctedEndTime.hour - correctedStartTime.hour + 1 }, (_, i) => {
                 const hour = (i + correctedStartTime.hour) % 12 || 12;
@@ -94,49 +92,32 @@ export default function WeeklyView({
                         if (!hoursColumnRef.current) return;
                         const rect = hoursColumnRef.current.getBoundingClientRect();
                         const y = e.clientY - rect.top;
-
-                        const hourHeight = rect.height / (correctedEndTime.hour - correctedStartTime.hour + 1);
-                        const hour = Math.max(correctedStartTime.hour, correctedStartTime.hour + Math.min(correctedEndTime.hour, Math.floor(y / hourHeight)));
-                        const minuteFraction = (y % hourHeight) / hourHeight;
-                        const minutes = Math.floor(minuteFraction * 60);
+                        const hour = Math.max(correctedStartTime.hour, correctedStartTime.hour + Math.min(correctedEndTime.hour, Math.floor(y / hHeight)));
 
                         // Format in 12-hour format
                         const hour12 = hour % 12 || 12;
                         const ampm = hour < 12 ? "AM" : "PM";
-                        //TODO: make it so that this locks to the slot duration i.e. steps of 30mins 
                         setDetailedHour(
-                                `${hour12}:${Math.max(0, minutes).toString().padStart(2, "0")} ${ampm}`
+                                `${hour12}:00 ${ampm}`
                         );
-
-                        // Ensure timelinePosition is never negative and is within bounds
-                        const position = Math.max(0, Math.min(rect.height, Math.round(y)));
-                        setTimelinePosition(position);
                 },
-                []
+                [hHeight]
         );
-
-
 
         useEffect(() => {
                 const updateHeight = () => {
-                        if (hoursColumnRef.current) {
-                                const rect = hoursColumnRef.current.getBoundingClientRect();
-                                const numHours = correctedEndTime.hour - correctedStartTime.hour + 1;
-                                setHHeight(rect.height / numHours);
+                        if (hourElementRef.current) {
+                                const rect = hourElementRef.current.getBoundingClientRect();
+                                setHHeight(rect.height);
                         }
                 };
-
-
                 // Use requestAnimationFrame to ensure DOM is painted
                 requestAnimationFrame(updateHeight);
 
                 // Also update on window resize
                 window.addEventListener('resize', updateHeight);
                 return () => window.removeEventListener('resize', updateHeight);
-        }, [startTime.hour, endTime.hour, currentDate, selectedEmployee, selectedType]);
-
-        useEffect(() => {
-        }, [hHeight]);
+        }, [startTime.hour, endTime.hour, currentDate, selectedEmployeeAvailability]);
 
         // Reset column widths when the date changes
         useEffect(() => {
@@ -358,7 +339,7 @@ export default function WeeklyView({
                                                         className="grid gap-0 flex-grow bg-primary/10 rounded-r-lg"
                                                         style={{
                                                                 gridTemplateColumns: colWidth.map(w => `${w}fr`).join(' '),
-                                                                transition: isResizing ? 'none' : 'grid-template-columns 0.3s ease-in-out'
+                                                                transition: 'grid-template-columns 0.3s ease-in-out'
                                                         }}
                                                 >
                                                         {daysOfWeek.map((day, idx) => (
@@ -395,14 +376,18 @@ export default function WeeklyView({
                                         <div
                                                 className="grid grid-cols-8 col-span-8"
                                         >
-                                                <div className="col-span-1 flex flex-col h-full bg-default-50 hover:bg-default-100 transition duration-400"
+                                                <div
+                                                        className="col-span-1 flex flex-col bg-default-50 hover:bg-default-100 transition duration-400"
+                                                        ref={hoursColumnRef}
                                                 >
                                                         {hours.map((hour, index) => (
                                                                 <motion.div
                                                                         key={`hour-${index}`}
+                                                                        ref={(index === 0) ? hourElementRef : null}
                                                                         variants={itemVariants}
-                                                                        className="cursor-pointer border-b border-default-200 h-full text-center text-sm text-muted-foreground border-r"
+                                                                        className="cursor-pointer   transition duration-300  p-1 flex-1 text-left text-sm text-muted-foreground border-default-200 border-t-2"
                                                                 >
+
                                                                         {hour}
                                                                 </motion.div>
                                                         ))}
@@ -412,7 +397,7 @@ export default function WeeklyView({
                                                         className="col-span-7 bg-default-50 grid h-full"
                                                         style={{
                                                                 gridTemplateColumns: colWidth.map(w => `${w}fr`).join(' '),
-                                                                transition: isResizing ? 'none' : 'grid-template-columns 0.3s ease-in-out'
+                                                                transition: 'grid-template-columns 0.3s ease-in-out'
                                                         }}
                                                 >
                                                         {Array.from({ length: 7 }, (_, dayIndex) => {
@@ -438,7 +423,6 @@ export default function WeeklyView({
                                                                         <div
                                                                                 key={`day-${dayIndex}`}
                                                                                 className="col-span-1 border-default-200 z-20 relative transition duration-300 cursor-pointer border-r border-b text-center text-sm text-muted-foreground overflow-hidden"
-                                                                                ref={hoursColumnRef}
                                                                                 onMouseMove={handleMouseMove}
                                                                                 onMouseLeave={() => setDetailedHour(null)}
                                                                                 onClick={() => {
@@ -480,7 +464,7 @@ export default function WeeklyView({
                                                                                                         <motion.div
                                                                                                                 key={event.id}
                                                                                                                 style={{
-                                                                                                                        minHeight: height,
+                                                                                                                        height: height,
                                                                                                                         top: top,
                                                                                                                         left: left,
                                                                                                                         maxWidth: maxWidth,
@@ -488,7 +472,7 @@ export default function WeeklyView({
                                                                                                                         padding: '0 2px',
                                                                                                                         boxSizing: 'border-box',
                                                                                                                 }}
-                                                                                                                className="flex transition-all duration-1000 flex-grow flex-col z-50 absolute"
+                                                                                                                className="transition-all duration-1000 flex z-50 absolute"
                                                                                                                 initial={{ opacity: 0, scale: 0.9 }}
                                                                                                                 animate={{ opacity: 1, scale: 1 }}
                                                                                                                 exit={{ opacity: 0, scale: 0.9 }}
@@ -571,6 +555,6 @@ export default function WeeklyView({
                         </AnimatePresence>
 
 
-                </div>
+                </div >
         );
 }

@@ -252,7 +252,7 @@ export const SchedulerProvider = ({
                                 event.startDate.getHours() + event.startDate.getMinutes() / 60;
 
                         // Define the day-end hour (24.0 for midnight)
-                        const dayEndHour = workEndHour;
+                        const dayEndHour = workEndHour + 1;
 
                         // Calculate maxHeight based on the difference between the day-end hour and the event's start hour
                         maxHeight = Math.max(0, (dayEndHour - eventStartHour) * hourHeight);
@@ -277,15 +277,9 @@ export const SchedulerProvider = ({
                 const safeLeftPosition = Math.min(leftPosition, 100 - widthPercentage);
 
                 // Minimum height for visibility
-                const minimumHeight = 20;
 
                 return {
-                        height: `${eventHeight < minimumHeight
-                                ? minimumHeight
-                                : eventHeight > maxHeight
-                                        ? maxHeight
-                                        : eventHeight
-                                }px`,
+                        height: `${eventHeight}px`,
                         top: `${eventTop}px`,
                         zIndex: indexOnHour + 1,
                         left: `${safeLeftPosition}%`,

@@ -59,7 +59,6 @@ export async function getAllBookingTypes() {
   if (!res.ok) {
     throw new Error(`Get all booking types failed with ${res.status}`);
   }
-  console.log(res);
   return res.json();
 }
 

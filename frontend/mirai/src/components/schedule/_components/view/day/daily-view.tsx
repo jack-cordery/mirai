@@ -157,12 +157,13 @@ export default function DailyView({
         classNames?: { prev?: string; next?: string; addEvent?: string };
 }) {
         const hoursColumnRef = useRef<HTMLDivElement>(null);
+        const hourElementRef = useRef<HTMLDivElement>(null);
         const [detailedHour, setDetailedHour] = useState<string | null>(null);
-        const [timelinePosition, setTimelinePosition] = useState<number>(0);
         const [direction, setDirection] = useState<number>(0);
         const { isOpen, setOpen } = useModal();
         const { getters, handlers, selectedEmployee, selectedType, selectedEmployeeAvailability, currentDate, setCurrentDate } = useScheduler();
         const [hHeight, setHHeight] = useState(0);
+
         const dayEvents = useMemo(() => {
                 return getters.getEventsForDay(
                         currentDate?.getDate() || 0,
@@ -170,9 +171,10 @@ export default function DailyView({
                 ).filter((e) => e.employeeId === selectedEmployeeAvailability?.id);
         }, [selectedEmployeeAvailability, currentDate, isOpen])
 
-        const sortedEvents = dayEvents.sort((a, b) => a.startDate?.getTime() - b.startDate?.getTime());
-        const firstEvent = (dayEvents.length > 0) ? { hour: sortedEvents[0].startDate?.getHours(), minute: sortedEvents[0].startDate?.getMinutes() } : { hour: 0, minute: 0 }
-        const lastEvent = (dayEvents.length > 0) ? { hour: sortedEvents[sortedEvents.length - 1].endDate?.getHours(), minute: sortedEvents[sortedEvents.length - 1].endDate?.getMinutes() } : { hour: 0, minute: 0 }
+        const startSortedEvents = dayEvents.sort((a, b) => (a.startDate?.getHours() - b.startDate?.getHours()) || (a.startDate?.getMinutes() - b.startDate?.getMinutes()));
+        const firstEvent = (dayEvents.length > 0) ? { hour: startSortedEvents[0].startDate?.getHours(), minute: startSortedEvents[0].startDate?.getMinutes() } : { hour: 0, minute: 0 }
+        const endSortedEvents = dayEvents.sort((a, b) => (a.endDate?.getHours() - b.endDate?.getHours()) || (a.endDate?.getMinutes() - b.endDate?.getMinutes()));
+        const lastEvent = (dayEvents.length > 0) ? { hour: endSortedEvents[endSortedEvents.length - 1].endDate?.getHours(), minute: endSortedEvents[endSortedEvents.length - 1].endDate?.getMinutes() } : { hour: 0, minute: 0 }
 
         const correctedStartTime = (dayEvents.length > 0) ? minimiseTimes(startTime, firstEvent) : startTime
         const correctedEndTime = (dayEvents.length > 0) ? maximiseTimes(endTime, lastEvent) : endTime
@@ -183,27 +185,19 @@ export default function DailyView({
                 return `${hour}:00 ${ampm}`;
         });
 
-
         useEffect(() => {
                 const updateHeight = () => {
-                        if (hoursColumnRef.current) {
-                                const rect = hoursColumnRef.current.getBoundingClientRect();
-                                const numHours = correctedEndTime.hour - correctedStartTime.hour + 1;
-                                setHHeight(rect.height / numHours);
+                        if (hourElementRef.current) {
+                                const rect = hourElementRef.current.getBoundingClientRect();
+                                setHHeight(rect.height);
                         }
                 };
-
-
                 // Use requestAnimationFrame to ensure DOM is painted
                 requestAnimationFrame(updateHeight);
-
                 // Also update on window resize
                 window.addEventListener('resize', updateHeight);
                 return () => window.removeEventListener('resize', updateHeight);
-        }, [startTime.hour, endTime.hour, currentDate, selectedEmployee, selectedType]);
-
-        useEffect(() => {
-        }, [hHeight]);
+        }, [startTime.hour, endTime.hour, currentDate, selectedEmployeeAvailability]);
 
         const handleMouseMove = useCallback(
                 (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -211,31 +205,21 @@ export default function DailyView({
                         const rect = hoursColumnRef.current.getBoundingClientRect();
                         const y = e.clientY - rect.top;
 
-                        const hourHeight = rect.height / (correctedEndTime.hour - correctedStartTime.hour + 1);
-                        const hour = Math.max(correctedStartTime.hour, correctedStartTime.hour + Math.min(correctedEndTime.hour, Math.floor(y / hourHeight)));
-                        const minuteFraction = (y % hourHeight) / hourHeight;
-                        const minutes = Math.floor(minuteFraction * 60);
+                        const hour = Math.max(correctedStartTime.hour, correctedStartTime.hour + Math.min(correctedEndTime.hour, Math.floor(y / hHeight)));
 
                         // Format in 12-hour format
                         const hour12 = hour % 12 || 12;
                         const ampm = hour < 12 ? "AM" : "PM";
-                        //TODO: make it so that this locks to the slot duration i.e. steps of 30mins 
                         setDetailedHour(
-                                `${hour12}:${Math.max(0, minutes).toString().padStart(2, "0")} ${ampm}`
+                                `${hour12}:00 ${ampm}`
                         );
-
-                        // Ensure timelinePosition is never negative and is within bounds
-                        const position = Math.max(0, Math.min(rect.height, Math.round(y)));
-                        setTimelinePosition(position);
                 },
-                []
+                [hHeight]
         );
-
         const getFormattedDayTitle = useCallback(
                 () => currentDate.toDateString(),
                 [currentDate]
         );
-
         // Calculate time groups once for all events
         const timeGroups = groupEventsByTimePeriod(dayEvents);
 
@@ -408,19 +392,21 @@ export default function DailyView({
                                         <div className="relative h-full rounded-md bg-default-50 hover:bg-default-100 transition duration-400">
                                                 <motion.div
                                                         className="relative h-full rounded-xl flex ease-in-out"
-                                                        ref={hoursColumnRef}
                                                         variants={containerVariants}
                                                         initial="hidden" // Ensure initial state is hidden
                                                         animate="visible" // Trigger animation to visible state
                                                         onMouseMove={handleMouseMove}
                                                         onMouseLeave={() => setDetailedHour(null)}
                                                 >
-                                                        <div className="flex flex-col">
+                                                        <div
+                                                                className="flex flex-col"
+                                                                ref={hoursColumnRef}>
                                                                 {hours.map((hour, index) => (
                                                                         <motion.div
                                                                                 key={`hour-${index}`}
                                                                                 variants={itemVariants}
                                                                                 className="cursor-pointer   transition duration-300  p-1 flex-1 text-left text-sm text-muted-foreground border-default-200 border-t-2"
+                                                                                ref={(index === 0) ? hourElementRef : null}
                                                                         >
                                                                                 {hour}
                                                                         </motion.div>
@@ -479,7 +465,7 @@ export default function DailyView({
                                                                                                 <motion.div
                                                                                                         key={event.id}
                                                                                                         style={{
-                                                                                                                minHeight: height,
+                                                                                                                height: height,
                                                                                                                 top: top,
                                                                                                                 left: left,
                                                                                                                 maxWidth: maxWidth,
@@ -487,7 +473,7 @@ export default function DailyView({
                                                                                                                 padding: "0 2px",
                                                                                                                 boxSizing: "border-box",
                                                                                                         }}
-                                                                                                        className="flex transition-all duration-1000 flex-grow flex-col z-50 absolute"
+                                                                                                        className="transition-all duration-1000 flex z-50 absolute"
                                                                                                         initial={{ opacity: 0, scale: 0.9 }}
                                                                                                         animate={{ opacity: 1, scale: 1 }}
                                                                                                         exit={{ opacity: 0, scale: 0.9 }}

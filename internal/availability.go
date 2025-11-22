@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"slices"
 	"strconv"
 	"time"
 
@@ -305,44 +304,6 @@ func getFreeAvailabilitySlots(pool *pgxpool.Pool, ctx context.Context, a *AuthPa
 			return
 		}
 
-		valid, err := VerifySession(ctx, queries, token)
-		if err != nil {
-			log.Printf("error verfying session in getFreeAvailabilitySlots failed with %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if !valid {
-			w.WriteHeader(http.StatusUnauthorized)
-			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
-			if err != nil {
-				log.Printf("writing json in getFreeAvailabilitySlots failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			return
-		}
-
-		session, err := queries.GetSessionByToken(ctx, token)
-		if err != nil {
-			log.Printf("error getting session in getFreeAvailabilitySlots failed with %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		user, err := queries.GetUserByIdWithRoles(ctx, session.UserID)
-		if err != nil {
-			log.Printf("error getting user in getFreeAvailabilitySlots failed with %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if !(slices.Contains(user.RoleNames, RoleUser)) {
-			log.Printf("user %v has requested permission to getFreeAvailability without permissions USER", user.ID)
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
 		availabilitySlots, err := queries.GetAllFreeAvailabilitySlots(ctx)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			log.Printf("error querying availability table in getFreeAvailabilitySlots: %v", err)
@@ -591,24 +552,6 @@ func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context, a *AuthPara
 			return
 		}
 
-		valid, err := VerifySession(ctx, queries, token)
-		if err != nil {
-			log.Printf("error verfying session in deleteAvailabilitySlots failed with %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if !valid {
-			w.WriteHeader(http.StatusUnauthorized)
-			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
-			if err != nil {
-				log.Printf("writing json in deleteAvailabilitySlots failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			return
-		}
-
 		session, err := queries.GetSessionByToken(ctx, token)
 		if err != nil {
 			log.Printf("error getting session in deleteAvailabilitySlots failed with %v", err)
@@ -620,12 +563,6 @@ func deleteAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context, a *AuthPara
 		if err != nil {
 			log.Printf("error getting user in deleteAvailabilitySlots failed with %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if !(slices.Contains(user.RoleNames, RoleAdmin)) {
-			log.Printf("user %v has requested permission to deleteAvailability without permissions Admin", user.ID)
-			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 

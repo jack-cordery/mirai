@@ -50,7 +50,11 @@ export type GetBookingResponse = {
 };
 
 export async function getAllBookings() {
-  const res = await fetch(`${apiUrl}/booking`);
+  const res = await fetch(`${apiUrl}/booking`, {
+    method: "GET",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
 
   if (!res.ok) {
     throw new Error(`get all bookings failed with ${res.status}`);

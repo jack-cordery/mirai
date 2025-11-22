@@ -152,8 +152,8 @@ SELECT
   id, name, surname, email, title, description, active, created_at, last_login
 FROM
   employees
-WHERE 
-active = true
+WHERE
+  active = true
 `
 
 func (q *Queries) GetAllEmployees(ctx context.Context) ([]Employee, error) {
@@ -758,6 +758,24 @@ func (q *Queries) UpdateRoleRequest(ctx context.Context, arg UpdateRoleRequestPa
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const updateSession = `-- name: UpdateSession :exec
+UPDATE sessions
+SET
+  expires_at = $2
+WHERE
+  session_token = $1
+`
+
+type UpdateSessionParams struct {
+	SessionToken string           `json:"session_token"`
+	ExpiresAt    pgtype.Timestamp `json:"expires_at"`
+}
+
+func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) error {
+	_, err := q.db.Exec(ctx, updateSession, arg.SessionToken, arg.ExpiresAt)
+	return err
 }
 
 const updateUser = `-- name: UpdateUser :one

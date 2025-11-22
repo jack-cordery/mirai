@@ -76,9 +76,8 @@ SELECT
   *
 FROM
   employees
-WHERE 
-active = true;
-
+WHERE
+  active = true;
 
 -- name: GetSessionByToken :one
 SELECT
@@ -107,6 +106,13 @@ VALUES
   ($1, $2, $3)
 RETURNING
   id;
+
+-- name: UpdateSession :exec
+UPDATE sessions
+SET
+  expires_at = $2
+WHERE
+  session_token = $1;
 
 -- name: DeleteSessionByToken :exec
 DELETE FROM sessions

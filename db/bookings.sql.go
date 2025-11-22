@@ -327,8 +327,8 @@ func (q *Queries) DeleteBookingSlot(ctx context.Context, arg DeleteBookingSlotPa
 
 const deleteBookingType = `-- name: DeleteBookingType :one
 UPDATE booking_types
-SET 
-active = false
+SET
+  active = false
 WHERE
   id = $1
 RETURNING
@@ -407,8 +407,8 @@ SELECT
   id, title, description, fixed, cost, duration, active, created_at, last_edited
 FROM
   booking_types
-WHERE 
-active = true
+WHERE
+  active = true
 `
 
 func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error) {

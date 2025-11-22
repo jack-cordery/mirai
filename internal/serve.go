@@ -18,29 +18,6 @@ type HealthResponse struct {
 	Status string `json:"status"`
 }
 
-func jsonContentTypeMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
-}
-
-func corsMiddleware(next http.Handler, appUrl string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", appUrl)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-
-}
-
 func liveHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	err := json.NewEncoder(w).Encode(HealthResponse{Status: "alive"})
@@ -125,7 +102,7 @@ func SetupServer() {
 	mux.HandleFunc("GET /livez", liveHandler)
 
 	mux.HandleFunc("POST /booking", postBooking(pool, ctx))
-	mux.HandleFunc("GET /booking", getBooking(pool, ctx))
+	mux.HandleFunc("GET /booking", authMiddleware(getBooking(pool, ctx), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("GET /booking/user", getBookingUser(pool, ctx, a))
 	mux.HandleFunc("GET /booking/{booking_id}", getBooking(pool, ctx))
 	mux.HandleFunc("PUT /booking/{booking_id}", putBooking(pool, ctx))

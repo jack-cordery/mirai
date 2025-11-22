@@ -244,6 +244,14 @@ func HandleLogin(w http.ResponseWriter, ctx context.Context, queries *db.Queries
 			return err
 		}
 
+		if !isCurr {
+			err = queries.DeleteSessionByToken(ctx, latestSession.SessionToken)
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return err
+			}
+		}
+
 		w.WriteHeader(http.StatusOK)
 
 		err = json.NewEncoder(w).Encode(LoginResponse{
@@ -260,6 +268,16 @@ func HandleLogin(w http.ResponseWriter, ctx context.Context, queries *db.Queries
 
 	// Serve existing with a new token with extended expiry
 	err = ServeAuthCookie(w, latestSession.SessionToken, a)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return err
+	}
+
+	expiryTime := time.Now().UTC().Add(time.Duration(a.SessionDuration) * time.Hour)
+	err = queries.UpdateSession(ctx, db.UpdateSessionParams{
+		SessionToken: latestSession.SessionToken,
+		ExpiresAt:    pgtype.Timestamp{Time: expiryTime, Valid: true},
+	})
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return err

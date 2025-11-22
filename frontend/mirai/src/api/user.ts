@@ -11,6 +11,7 @@ export async function postUser(postRequest: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postRequest),
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -23,7 +24,12 @@ export async function postUser(postRequest: {
 export async function checkUser(postRequest: {
   email: string;
 }): Promise<GetUserResponse> {
-  const res = await fetch(`${apiUrl}/userByEmail?email=${postRequest.email}`);
+  const res = await fetch(`${apiUrl}/userBYEmail?email=${postRequest.email}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(postRequest),
+    credentials: "include",
+  });
 
   if (!res.ok) {
     throw new Error(`User check failed with ${res.status}`);

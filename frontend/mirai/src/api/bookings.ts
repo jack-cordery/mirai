@@ -10,6 +10,7 @@ export async function postBooking(postRequest: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postRequest),
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -26,6 +27,7 @@ export async function getBooking(getRequest: { booking_id: number }) {
   const res = await fetch(`${apiUrl}/booking/${getRequest.booking_id}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   });
 
   if (!res.ok) {

@@ -11,6 +11,7 @@ export async function postBookingType(postRequest: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postRequest),
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -33,6 +34,7 @@ export async function putBookingType(
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(putRequest),
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -45,6 +47,7 @@ export async function deleteBookingType(id: number) {
   const res = await fetch(`${apiUrl}/booking_type/${id}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -54,7 +57,11 @@ export async function deleteBookingType(id: number) {
 
 // get user by email and return details
 export async function getAllBookingTypes() {
-  const res = await fetch(`${apiUrl}/booking_type`);
+  const res = await fetch(`${apiUrl}/booking_type`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
 
   if (!res.ok) {
     throw new Error(`Get all booking types failed with ${res.status}`);

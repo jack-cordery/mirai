@@ -88,20 +88,6 @@ func getSessionStatus(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) ht
 	}
 }
 
-func postSessionRefresh(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		conn, err := pool.Acquire(ctx)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		defer conn.Release()
-
-		queries := db.New(conn)
-		_ = HandleSessionRefresh(w, r, ctx, queries, a)
-	}
-}
-
 func postRaise(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := pool.Acquire(ctx)

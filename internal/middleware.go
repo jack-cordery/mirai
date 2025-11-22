@@ -41,13 +41,18 @@ func authMiddleware(next http.Handler, ctx context.Context, pool *pgxpool.Pool, 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// validate session
 		token, err := ReadEncryptedCookie(r, a.CParams.Name, a.SecretKey)
-		log.Printf("token is %v", token)
 		if err != nil {
 			log.Printf("The token provided failed in authMiddleware: %v with %v", token, err)
 			w.WriteHeader(http.StatusUnauthorized)
 			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
 			if err != nil {
 				log.Printf("encoding response in authMiddleware failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			err = InvalidateAuthCookie(w, a)
+			if err != nil {
+				log.Printf("invalidating cookie in authMiddleware failed with %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}

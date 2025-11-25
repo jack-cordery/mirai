@@ -150,6 +150,8 @@ func SetupServer() {
 	mux.HandleFunc("DELETE /availability/{availability_slot_id}", authMiddleware(deleteAvailabilitySlot(pool, ctx, a, false), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("DELETE /availability/", authMiddleware(deleteAvailabilitySlot(pool, ctx, a, false), ctx, pool, a, "ADMIN"))
 
+	mux.HandleFunc("GET /stats", authMiddleware(getStats(pool, ctx), ctx, pool, a, "ADMIN"))
+
 	err = http.ListenAndServe(":8000", corsMiddleware(jsonContentTypeMiddleware(mux), appUrl))
 	if err != nil {
 		log.Println(err)

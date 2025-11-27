@@ -249,7 +249,7 @@ FROM
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 WHERE
-  b.status = 'comfirmed'
+  b.status = 'confirmed'
 GROUP BY
   date_trunc($1::text, a.datetime)::timestamp
 `
@@ -563,7 +563,7 @@ FROM
     WHERE
       b.status = 'cancelled'
       and bh.status = 'cancelled'
-      and bh.paid = true
+      and b.paid = true
     GROUP BY
       date_trunc($1::text, bh.start_time)::timestamp
   ) as c on o.date = c.date

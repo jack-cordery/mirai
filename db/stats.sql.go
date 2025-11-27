@@ -14,14 +14,14 @@ import (
 const totalBookings = `-- name: TotalBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 `
 
 type TotalBookingsRow struct {
-	TotalCount int64 `json:"total_count"`
-	TotalCost  int64 `json:"total_cost"`
+	TotalCount int64       `json:"total_count"`
+	TotalCost  interface{} `json:"total_cost"`
 }
 
 func (q *Queries) TotalBookings(ctx context.Context) (TotalBookingsRow, error) {
@@ -94,7 +94,7 @@ func (q *Queries) TotalBookingsBy(ctx context.Context, dollar_1 string) ([]Total
 const totalCancelledBookings = `-- name: TotalCancelledBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -102,8 +102,8 @@ WHERE
 `
 
 type TotalCancelledBookingsRow struct {
-	TotalCount int64 `json:"total_count"`
-	TotalCost  int64 `json:"total_cost"`
+	TotalCount int64       `json:"total_count"`
+	TotalCost  interface{} `json:"total_cost"`
 }
 
 func (q *Queries) TotalCancelledBookings(ctx context.Context) (TotalCancelledBookingsRow, error) {
@@ -117,7 +117,7 @@ const totalCancelledBookingsBy = `-- name: TotalCancelledBookingsBy :many
 SELECT
   date_trunc($1::text, bh.start_time)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   LEFT JOIN booking_history as bh on b.id = bh.booking_id
@@ -131,7 +131,7 @@ GROUP BY
 type TotalCancelledBookingsByRow struct {
 	Date  pgtype.Timestamp `json:"date"`
 	Count int64            `json:"count"`
-	Sum   int64            `json:"sum"`
+	Sum   interface{}      `json:"sum"`
 }
 
 func (q *Queries) TotalCancelledBookingsBy(ctx context.Context, dollar_1 string) ([]TotalCancelledBookingsByRow, error) {
@@ -157,7 +157,7 @@ func (q *Queries) TotalCancelledBookingsBy(ctx context.Context, dollar_1 string)
 const totalCompletedBookings = `-- name: TotalCompletedBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -165,8 +165,8 @@ WHERE
 `
 
 type TotalCompletedBookingsRow struct {
-	TotalCount int64 `json:"total_count"`
-	TotalCost  int64 `json:"total_cost"`
+	TotalCount int64       `json:"total_count"`
+	TotalCost  interface{} `json:"total_cost"`
 }
 
 func (q *Queries) TotalCompletedBookings(ctx context.Context) (TotalCompletedBookingsRow, error) {
@@ -180,7 +180,7 @@ const totalCompletedBookingsBy = `-- name: TotalCompletedBookingsBy :many
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -194,7 +194,7 @@ GROUP BY
 type TotalCompletedBookingsByRow struct {
 	Date  pgtype.Timestamp `json:"date"`
 	Count int64            `json:"count"`
-	Sum   int64            `json:"sum"`
+	Sum   interface{}      `json:"sum"`
 }
 
 func (q *Queries) TotalCompletedBookingsBy(ctx context.Context, dollar_1 string) ([]TotalCompletedBookingsByRow, error) {
@@ -220,7 +220,7 @@ func (q *Queries) TotalCompletedBookingsBy(ctx context.Context, dollar_1 string)
 const totalConfirmedBookings = `-- name: TotalConfirmedBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -228,8 +228,8 @@ WHERE
 `
 
 type TotalConfirmedBookingsRow struct {
-	TotalCount int64 `json:"total_count"`
-	TotalCost  int64 `json:"total_cost"`
+	TotalCount int64       `json:"total_count"`
+	TotalCost  interface{} `json:"total_cost"`
 }
 
 func (q *Queries) TotalConfirmedBookings(ctx context.Context) (TotalConfirmedBookingsRow, error) {
@@ -243,7 +243,7 @@ const totalConfirmedBookingsBy = `-- name: TotalConfirmedBookingsBy :many
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -257,7 +257,7 @@ GROUP BY
 type TotalConfirmedBookingsByRow struct {
 	Date  pgtype.Timestamp `json:"date"`
 	Count int64            `json:"count"`
-	Sum   int64            `json:"sum"`
+	Sum   interface{}      `json:"sum"`
 }
 
 func (q *Queries) TotalConfirmedBookingsBy(ctx context.Context, dollar_1 string) ([]TotalConfirmedBookingsByRow, error) {
@@ -283,7 +283,7 @@ func (q *Queries) TotalConfirmedBookingsBy(ctx context.Context, dollar_1 string)
 const totalCreatedBookings = `-- name: TotalCreatedBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -291,8 +291,8 @@ WHERE
 `
 
 type TotalCreatedBookingsRow struct {
-	TotalCount int64 `json:"total_count"`
-	TotalCost  int64 `json:"total_cost"`
+	TotalCount int64       `json:"total_count"`
+	TotalCost  interface{} `json:"total_cost"`
 }
 
 func (q *Queries) TotalCreatedBookings(ctx context.Context) (TotalCreatedBookingsRow, error) {
@@ -306,7 +306,7 @@ const totalCreatedBookingsBy = `-- name: TotalCreatedBookingsBy :many
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -320,7 +320,7 @@ GROUP BY
 type TotalCreatedBookingsByRow struct {
 	Date  pgtype.Timestamp `json:"date"`
 	Count int64            `json:"count"`
-	Sum   int64            `json:"sum"`
+	Sum   interface{}      `json:"sum"`
 }
 
 func (q *Queries) TotalCreatedBookingsBy(ctx context.Context, dollar_1 string) ([]TotalCreatedBookingsByRow, error) {
@@ -346,7 +346,7 @@ func (q *Queries) TotalCreatedBookingsBy(ctx context.Context, dollar_1 string) (
 const totalOpenBookings = `-- name: TotalOpenBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -354,8 +354,8 @@ WHERE
 `
 
 type TotalOpenBookingsRow struct {
-	TotalCount int64 `json:"total_count"`
-	TotalCost  int64 `json:"total_cost"`
+	TotalCount int64       `json:"total_count"`
+	TotalCost  interface{} `json:"total_cost"`
 }
 
 func (q *Queries) TotalOpenBookings(ctx context.Context) (TotalOpenBookingsRow, error) {
@@ -369,7 +369,7 @@ const totalOpenBookingsBy = `-- name: TotalOpenBookingsBy :many
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -381,7 +381,7 @@ GROUP BY
 type TotalOpenBookingsByRow struct {
 	Date  pgtype.Timestamp `json:"date"`
 	Count int64            `json:"count"`
-	Sum   int64            `json:"sum"`
+	Sum   interface{}      `json:"sum"`
 }
 
 func (q *Queries) TotalOpenBookingsBy(ctx context.Context, dollar_1 string) ([]TotalOpenBookingsByRow, error) {
@@ -407,7 +407,7 @@ func (q *Queries) TotalOpenBookingsBy(ctx context.Context, dollar_1 string) ([]T
 const totalOpenNotPaidBookings = `-- name: TotalOpenNotPaidBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -416,8 +416,8 @@ WHERE
 `
 
 type TotalOpenNotPaidBookingsRow struct {
-	TotalCount int64 `json:"total_count"`
-	TotalCost  int64 `json:"total_cost"`
+	TotalCount int64       `json:"total_count"`
+	TotalCost  interface{} `json:"total_cost"`
 }
 
 func (q *Queries) TotalOpenNotPaidBookings(ctx context.Context) (TotalOpenNotPaidBookingsRow, error) {
@@ -431,7 +431,7 @@ const totalOpenNotPaidBookingsBy = `-- name: TotalOpenNotPaidBookingsBy :many
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -445,7 +445,7 @@ GROUP BY
 type TotalOpenNotPaidBookingsByRow struct {
 	Date  pgtype.Timestamp `json:"date"`
 	Count int64            `json:"count"`
-	Sum   int64            `json:"sum"`
+	Sum   interface{}      `json:"sum"`
 }
 
 func (q *Queries) TotalOpenNotPaidBookingsBy(ctx context.Context, dollar_1 string) ([]TotalOpenNotPaidBookingsByRow, error) {
@@ -471,7 +471,7 @@ func (q *Queries) TotalOpenNotPaidBookingsBy(ctx context.Context, dollar_1 strin
 const totalOpenPaidBookings = `-- name: TotalOpenPaidBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -480,8 +480,8 @@ WHERE
 `
 
 type TotalOpenPaidBookingsRow struct {
-	TotalCount int64 `json:"total_count"`
-	TotalCost  int64 `json:"total_cost"`
+	TotalCount int64       `json:"total_count"`
+	TotalCost  interface{} `json:"total_cost"`
 }
 
 func (q *Queries) TotalOpenPaidBookings(ctx context.Context) (TotalOpenPaidBookingsRow, error) {
@@ -495,7 +495,7 @@ const totalOpenPaidBookingsBy = `-- name: TotalOpenPaidBookingsBy :many
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -509,7 +509,7 @@ GROUP BY
 type TotalOpenPaidBookingsByRow struct {
 	Date  pgtype.Timestamp `json:"date"`
 	Count int64            `json:"count"`
-	Sum   int64            `json:"sum"`
+	Sum   interface{}      `json:"sum"`
 }
 
 func (q *Queries) TotalOpenPaidBookingsBy(ctx context.Context, dollar_1 string) ([]TotalOpenPaidBookingsByRow, error) {

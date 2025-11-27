@@ -1,14 +1,14 @@
 -- name: TotalBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings;
 
 -- name: TotalCancelledBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -17,7 +17,7 @@ WHERE
 -- name: TotalCompletedBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -26,7 +26,7 @@ WHERE
 -- name: TotalConfirmedBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -35,7 +35,7 @@ WHERE
 -- name: TotalCreatedBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -44,7 +44,7 @@ WHERE
 -- name: TotalOpenBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -53,7 +53,7 @@ WHERE
 -- name: TotalOpenPaidBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -63,7 +63,7 @@ WHERE
 -- name: TotalOpenNotPaidBookings :one
 SELECT
   COUNT(*) as total_count,
-  SUM(cost) as total_cost
+  COALESCE(SUM(cost), 0) as total_cost
 FROM
   bookings
 WHERE
@@ -74,7 +74,7 @@ WHERE
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -86,7 +86,7 @@ GROUP BY
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -100,7 +100,7 @@ GROUP BY
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -114,7 +114,7 @@ GROUP BY
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -128,7 +128,7 @@ GROUP BY
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -142,7 +142,7 @@ GROUP BY
 SELECT
   date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
@@ -156,7 +156,7 @@ GROUP BY
 SELECT
   date_trunc($1::text, bh.start_time)::timestamp as date,
   COUNT(*) as count,
-  sum(b.cost) as sum
+  COALESCE(sum(b.cost), 0) as sum
 FROM
   bookings as b
   LEFT JOIN booking_history as bh on b.id = bh.booking_id

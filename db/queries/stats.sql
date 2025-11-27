@@ -1,63 +1,222 @@
 -- name: TotalBookings :one
-SELECT 
+SELECT
   COUNT(*) as total_count,
   SUM(cost) as total_cost
 FROM
   bookings;
 
 -- name: TotalCancelledBookings :one
-SELECT 
+SELECT
   COUNT(*) as total_count,
   SUM(cost) as total_cost
 FROM
   bookings
-WHERE status = 'cancelled';
+WHERE
+  status = 'cancelled';
 
 -- name: TotalCompletedBookings :one
-SELECT 
+SELECT
   COUNT(*) as total_count,
   SUM(cost) as total_cost
 FROM
   bookings
-WHERE status = 'completed';
+WHERE
+  status = 'completed';
 
 -- name: TotalConfirmedBookings :one
-SELECT 
+SELECT
   COUNT(*) as total_count,
   SUM(cost) as total_cost
 FROM
   bookings
-WHERE status = 'confirmed';
+WHERE
+  status = 'confirmed';
 
 -- name: TotalCreatedBookings :one
-SELECT 
+SELECT
   COUNT(*) as total_count,
   SUM(cost) as total_cost
 FROM
   bookings
-WHERE status = 'created';
+WHERE
+  status = 'created';
 
 -- name: TotalOpenBookings :one
-SELECT 
+SELECT
   COUNT(*) as total_count,
   SUM(cost) as total_cost
 FROM
   bookings
-WHERE status != 'cancelled';
+WHERE
+  status != 'cancelled';
 
 -- name: TotalOpenPaidBookings :one
-SELECT 
+SELECT
   COUNT(*) as total_count,
   SUM(cost) as total_cost
 FROM
   bookings
-WHERE status != 'cancelled' and paid=true;
+WHERE
+  status != 'cancelled'
+  and paid = true;
 
 -- name: TotalOpenNotPaidBookings :one
-SELECT 
+SELECT
   COUNT(*) as total_count,
   SUM(cost) as total_cost
 FROM
   bookings
-WHERE status != 'cancelled' and paid=false;
+WHERE
+  status != 'cancelled'
+  and paid = false;
 
+-- name: TotalOpenBookingsBy :many
+SELECT
+  date_trunc($1::text, a.datetime) as date,
+  COUNT(*) as count,
+  sum(b.cost) as sum
+FROM
+  bookings as b
+  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  LEFT JOIN availability as a on bs.availability_slot_id = a.id
+GROUP BY
+  date_trunc($1::text, a.datetime);
+
+-- name: TotalOpenNotPaidBookingsBy :many
+SELECT
+  date_trunc($1::text, a.datetime) as date,
+  COUNT(*) as count,
+  sum(b.cost) as sum
+FROM
+  bookings as b
+  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  LEFT JOIN availability as a on bs.availability_slot_id = a.id
+WHERE
+  b.paid = false
+GROUP BY
+  date_trunc($1::text, a.datetime);
+
+-- name: TotalOpenPaidBookingsBy :many
+SELECT
+  date_trunc($1::text, a.datetime) as date,
+  COUNT(*) as count,
+  sum(b.cost) as sum
+FROM
+  bookings as b
+  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  LEFT JOIN availability as a on bs.availability_slot_id = a.id
+WHERE
+  b.paid = true
+GROUP BY
+  date_trunc($1::text, a.datetime);
+
+-- name: TotalCreatedBookingsBy :many
+SELECT
+  date_trunc($1::text, a.datetime) as date,
+  COUNT(*) as count,
+  sum(b.cost) as sum
+FROM
+  bookings as b
+  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  LEFT JOIN availability as a on bs.availability_slot_id = a.id
+WHERE
+  b.status = 'created'
+GROUP BY
+  date_trunc($1::text, a.datetime);
+
+-- name: TotalCompletedBookingsBy :many
+SELECT
+  date_trunc($1::text, a.datetime) as date,
+  COUNT(*) as count,
+  sum(b.cost) as sum
+FROM
+  bookings as b
+  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  LEFT JOIN availability as a on bs.availability_slot_id = a.id
+WHERE
+  b.status = 'completed'
+GROUP BY
+  date_trunc($1::text, a.datetime);
+
+-- name: TotalCancelledBookingsBy :many
+SELECT
+  date_trunc($1::text, bh.start_time) as date,
+  COUNT(*) as count,
+  sum(b.cost) as sum
+FROM
+  bookings as b
+  LEFT JOIN booking_history as bh on b.id = bh.booking_id
+WHERE
+  b.status = 'cancelled'
+  and bh.status = 'cancelled'
+GROUP BY
+  date_trunc($1::text, bh.start_time);
+
+-- name: TotalBookingsBy :many
+SELECT
+  COALESCE(o.date, c.date),
+  COALESCE(c.count, 0) + COALESCE(o.count, 0) as count,
+  COALESCE(c.sum, 0) + COALESCE(o.sum, 0) as sum
+FROM
+  (
+    SELECT
+      date_trunc($1::text, a.datetime) as date,
+      COUNT(*) as count,
+      sum(b.cost) as sum
+    FROM
+      bookings as b
+      RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    GROUP BY
+      date_trunc($1::text, a.datetime)
+  ) as o
+  FULL OUTER JOIN (
+    SELECT
+      date_trunc($1::text, bh.start_time) as date,
+      COUNT(*) as count,
+      sum(b.cost) as sum
+    FROM
+      bookings as b
+      LEFT JOIN booking_history as bh on b.id = bh.booking_id
+    WHERE
+      b.status = 'cancelled'
+      and bh.status = 'cancelled'
+    GROUP BY
+      date_trunc($1::text, bh.start_time)
+  ) as c on o.date = c.date;
+
+-- name: TotalBookingsPaidBy :many
+SELECT
+  COALESCE(o.date, c.date),
+  COALESCE(c.count, 0) + COALESCE(o.count, 0) as count,
+  COALESCE(c.sum, 0) + COALESCE(o.sum, 0) as sum
+FROM
+  (
+    SELECT
+      date_trunc($1::text, a.datetime) as date,
+      COUNT(*) as count,
+      sum(b.cost) as sum
+    FROM
+      bookings as b
+      RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.paid = true
+    GROUP BY
+      date_trunc($1::text, a.datetime)
+  ) as o
+  FULL OUTER JOIN (
+    SELECT
+      date_trunc($1::text, bh.start_time) as date,
+      COUNT(*) as count,
+      sum(b.cost) as sum
+    FROM
+      bookings as b
+      LEFT JOIN booking_history as bh on b.id = bh.booking_id
+    WHERE
+      b.status = 'cancelled'
+      and bh.status = 'cancelled'
+      and bh.paid = true
+    GROUP BY
+      date_trunc($1::text, bh.start_time)
+  ) as c on o.date = c.date;

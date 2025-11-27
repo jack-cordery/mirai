@@ -72,7 +72,7 @@ WHERE
 
 -- name: TotalOpenBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -80,11 +80,11 @@ FROM
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 GROUP BY
-  date_trunc($1::text, a.datetime);
+  date_trunc($1::text, a.datetime)::timestamp;
 
 -- name: TotalOpenNotPaidBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -94,11 +94,11 @@ FROM
 WHERE
   b.paid = false
 GROUP BY
-  date_trunc($1::text, a.datetime);
+  date_trunc($1::text, a.datetime)::timestamp;
 
 -- name: TotalOpenPaidBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -108,11 +108,11 @@ FROM
 WHERE
   b.paid = true
 GROUP BY
-  date_trunc($1::text, a.datetime);
+  date_trunc($1::text, a.datetime)::timestamp;
 
 -- name: TotalCreatedBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -122,11 +122,11 @@ FROM
 WHERE
   b.status = 'created'
 GROUP BY
-  date_trunc($1::text, a.datetime);
+  date_trunc($1::text, a.datetime)::timestamp;
 
 -- name: TotalCompletedBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -136,11 +136,25 @@ FROM
 WHERE
   b.status = 'completed'
 GROUP BY
-  date_trunc($1::text, a.datetime);
+  date_trunc($1::text, a.datetime)::timestamp;
+
+-- name: TotalConfirmedBookingsBy :many
+SELECT
+  date_trunc($1::text, a.datetime)::timestamp as date,
+  COUNT(*) as count,
+  sum(b.cost) as sum
+FROM
+  bookings as b
+  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  LEFT JOIN availability as a on bs.availability_slot_id = a.id
+WHERE
+  b.status = 'comfirmed'
+GROUP BY
+  date_trunc($1::text, a.datetime)::timestamp;
 
 -- name: TotalCancelledBookingsBy :many
 SELECT
-  date_trunc($1::text, bh.start_time) as date,
+  date_trunc($1::text, bh.start_time)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -150,17 +164,17 @@ WHERE
   b.status = 'cancelled'
   and bh.status = 'cancelled'
 GROUP BY
-  date_trunc($1::text, bh.start_time);
+  date_trunc($1::text, bh.start_time)::timestamp;
 
 -- name: TotalBookingsBy :many
 SELECT
-  COALESCE(o.date, c.date),
+  COALESCE(o.date, c.date)::timestamp as date,
   COALESCE(c.count, 0) + COALESCE(o.count, 0) as count,
   COALESCE(c.sum, 0) + COALESCE(o.sum, 0) as sum
 FROM
   (
     SELECT
-      date_trunc($1::text, a.datetime) as date,
+      date_trunc($1::text, a.datetime)::timestamp as date,
       COUNT(*) as count,
       sum(b.cost) as sum
     FROM
@@ -168,11 +182,11 @@ FROM
       RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
       LEFT JOIN availability as a on bs.availability_slot_id = a.id
     GROUP BY
-      date_trunc($1::text, a.datetime)
+      date_trunc($1::text, a.datetime)::timestamp
   ) as o
   FULL OUTER JOIN (
     SELECT
-      date_trunc($1::text, bh.start_time) as date,
+      date_trunc($1::text, bh.start_time)::timestamp as date,
       COUNT(*) as count,
       sum(b.cost) as sum
     FROM
@@ -182,18 +196,18 @@ FROM
       b.status = 'cancelled'
       and bh.status = 'cancelled'
     GROUP BY
-      date_trunc($1::text, bh.start_time)
+      date_trunc($1::text, bh.start_time)::timestamp
   ) as c on o.date = c.date;
 
--- name: TotalBookingsPaidBy :many
+-- name: TotalPaidBookingsBy :many
 SELECT
-  COALESCE(o.date, c.date),
+  COALESCE(o.date, c.date)::timestamp as date,
   COALESCE(c.count, 0) + COALESCE(o.count, 0) as count,
   COALESCE(c.sum, 0) + COALESCE(o.sum, 0) as sum
 FROM
   (
     SELECT
-      date_trunc($1::text, a.datetime) as date,
+      date_trunc($1::text, a.datetime)::timestamp as date,
       COUNT(*) as count,
       sum(b.cost) as sum
     FROM
@@ -203,11 +217,11 @@ FROM
     WHERE
       b.paid = true
     GROUP BY
-      date_trunc($1::text, a.datetime)
+      date_trunc($1::text, a.datetime)::timestamp
   ) as o
   FULL OUTER JOIN (
     SELECT
-      date_trunc($1::text, bh.start_time) as date,
+      date_trunc($1::text, bh.start_time)::timestamp as date,
       COUNT(*) as count,
       sum(b.cost) as sum
     FROM
@@ -218,5 +232,5 @@ FROM
       and bh.status = 'cancelled'
       and bh.paid = true
     GROUP BY
-      date_trunc($1::text, bh.start_time)
+      date_trunc($1::text, bh.start_time)::timestamp
   ) as c on o.date = c.date;

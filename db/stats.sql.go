@@ -33,13 +33,13 @@ func (q *Queries) TotalBookings(ctx context.Context) (TotalBookingsRow, error) {
 
 const totalBookingsBy = `-- name: TotalBookingsBy :many
 SELECT
-  COALESCE(o.date, c.date),
+  COALESCE(o.date, c.date)::timestamp as date,
   COALESCE(c.count, 0) + COALESCE(o.count, 0) as count,
   COALESCE(c.sum, 0) + COALESCE(o.sum, 0) as sum
 FROM
   (
     SELECT
-      date_trunc($1::text, a.datetime) as date,
+      date_trunc($1::text, a.datetime)::timestamp as date,
       COUNT(*) as count,
       sum(b.cost) as sum
     FROM
@@ -47,11 +47,11 @@ FROM
       RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
       LEFT JOIN availability as a on bs.availability_slot_id = a.id
     GROUP BY
-      date_trunc($1::text, a.datetime)
+      date_trunc($1::text, a.datetime)::timestamp
   ) as o
   FULL OUTER JOIN (
     SELECT
-      date_trunc($1::text, bh.start_time) as date,
+      date_trunc($1::text, bh.start_time)::timestamp as date,
       COUNT(*) as count,
       sum(b.cost) as sum
     FROM
@@ -61,14 +61,14 @@ FROM
       b.status = 'cancelled'
       and bh.status = 'cancelled'
     GROUP BY
-      date_trunc($1::text, bh.start_time)
+      date_trunc($1::text, bh.start_time)::timestamp
   ) as c on o.date = c.date
 `
 
 type TotalBookingsByRow struct {
-	Date  pgtype.Interval `json:"date"`
-	Count int32           `json:"count"`
-	Sum   int32           `json:"sum"`
+	Date  pgtype.Timestamp `json:"date"`
+	Count int32            `json:"count"`
+	Sum   int32            `json:"sum"`
 }
 
 func (q *Queries) TotalBookingsBy(ctx context.Context, dollar_1 string) ([]TotalBookingsByRow, error) {
@@ -80,69 +80,6 @@ func (q *Queries) TotalBookingsBy(ctx context.Context, dollar_1 string) ([]Total
 	var items []TotalBookingsByRow
 	for rows.Next() {
 		var i TotalBookingsByRow
-		if err := rows.Scan(&i.Date, &i.Count, &i.Sum); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const totalBookingsPaidBy = `-- name: TotalBookingsPaidBy :many
-SELECT
-  COALESCE(o.date, c.date),
-  COALESCE(c.count, 0) + COALESCE(o.count, 0) as count,
-  COALESCE(c.sum, 0) + COALESCE(o.sum, 0) as sum
-FROM
-  (
-    SELECT
-      date_trunc($1::text, a.datetime) as date,
-      COUNT(*) as count,
-      sum(b.cost) as sum
-    FROM
-      bookings as b
-      RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
-      LEFT JOIN availability as a on bs.availability_slot_id = a.id
-    WHERE
-      b.paid = true
-    GROUP BY
-      date_trunc($1::text, a.datetime)
-  ) as o
-  FULL OUTER JOIN (
-    SELECT
-      date_trunc($1::text, bh.start_time) as date,
-      COUNT(*) as count,
-      sum(b.cost) as sum
-    FROM
-      bookings as b
-      LEFT JOIN booking_history as bh on b.id = bh.booking_id
-    WHERE
-      b.status = 'cancelled'
-      and bh.status = 'cancelled'
-      and bh.paid = true
-    GROUP BY
-      date_trunc($1::text, bh.start_time)
-  ) as c on o.date = c.date
-`
-
-type TotalBookingsPaidByRow struct {
-	Date  pgtype.Interval `json:"date"`
-	Count int32           `json:"count"`
-	Sum   int32           `json:"sum"`
-}
-
-func (q *Queries) TotalBookingsPaidBy(ctx context.Context, dollar_1 string) ([]TotalBookingsPaidByRow, error) {
-	rows, err := q.db.Query(ctx, totalBookingsPaidBy, dollar_1)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []TotalBookingsPaidByRow
-	for rows.Next() {
-		var i TotalBookingsPaidByRow
 		if err := rows.Scan(&i.Date, &i.Count, &i.Sum); err != nil {
 			return nil, err
 		}
@@ -178,7 +115,7 @@ func (q *Queries) TotalCancelledBookings(ctx context.Context) (TotalCancelledBoo
 
 const totalCancelledBookingsBy = `-- name: TotalCancelledBookingsBy :many
 SELECT
-  date_trunc($1::text, bh.start_time) as date,
+  date_trunc($1::text, bh.start_time)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -188,13 +125,13 @@ WHERE
   b.status = 'cancelled'
   and bh.status = 'cancelled'
 GROUP BY
-  date_trunc($1::text, bh.start_time)
+  date_trunc($1::text, bh.start_time)::timestamp
 `
 
 type TotalCancelledBookingsByRow struct {
-	Date  pgtype.Interval `json:"date"`
-	Count int64           `json:"count"`
-	Sum   int64           `json:"sum"`
+	Date  pgtype.Timestamp `json:"date"`
+	Count int64            `json:"count"`
+	Sum   int64            `json:"sum"`
 }
 
 func (q *Queries) TotalCancelledBookingsBy(ctx context.Context, dollar_1 string) ([]TotalCancelledBookingsByRow, error) {
@@ -241,7 +178,7 @@ func (q *Queries) TotalCompletedBookings(ctx context.Context) (TotalCompletedBoo
 
 const totalCompletedBookingsBy = `-- name: TotalCompletedBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -251,13 +188,13 @@ FROM
 WHERE
   b.status = 'completed'
 GROUP BY
-  date_trunc($1::text, a.datetime)
+  date_trunc($1::text, a.datetime)::timestamp
 `
 
 type TotalCompletedBookingsByRow struct {
-	Date  pgtype.Interval `json:"date"`
-	Count int64           `json:"count"`
-	Sum   int64           `json:"sum"`
+	Date  pgtype.Timestamp `json:"date"`
+	Count int64            `json:"count"`
+	Sum   int64            `json:"sum"`
 }
 
 func (q *Queries) TotalCompletedBookingsBy(ctx context.Context, dollar_1 string) ([]TotalCompletedBookingsByRow, error) {
@@ -302,6 +239,47 @@ func (q *Queries) TotalConfirmedBookings(ctx context.Context) (TotalConfirmedBoo
 	return i, err
 }
 
+const totalConfirmedBookingsBy = `-- name: TotalConfirmedBookingsBy :many
+SELECT
+  date_trunc($1::text, a.datetime)::timestamp as date,
+  COUNT(*) as count,
+  sum(b.cost) as sum
+FROM
+  bookings as b
+  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  LEFT JOIN availability as a on bs.availability_slot_id = a.id
+WHERE
+  b.status = 'comfirmed'
+GROUP BY
+  date_trunc($1::text, a.datetime)::timestamp
+`
+
+type TotalConfirmedBookingsByRow struct {
+	Date  pgtype.Timestamp `json:"date"`
+	Count int64            `json:"count"`
+	Sum   int64            `json:"sum"`
+}
+
+func (q *Queries) TotalConfirmedBookingsBy(ctx context.Context, dollar_1 string) ([]TotalConfirmedBookingsByRow, error) {
+	rows, err := q.db.Query(ctx, totalConfirmedBookingsBy, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TotalConfirmedBookingsByRow
+	for rows.Next() {
+		var i TotalConfirmedBookingsByRow
+		if err := rows.Scan(&i.Date, &i.Count, &i.Sum); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const totalCreatedBookings = `-- name: TotalCreatedBookings :one
 SELECT
   COUNT(*) as total_count,
@@ -326,7 +304,7 @@ func (q *Queries) TotalCreatedBookings(ctx context.Context) (TotalCreatedBooking
 
 const totalCreatedBookingsBy = `-- name: TotalCreatedBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -336,13 +314,13 @@ FROM
 WHERE
   b.status = 'created'
 GROUP BY
-  date_trunc($1::text, a.datetime)
+  date_trunc($1::text, a.datetime)::timestamp
 `
 
 type TotalCreatedBookingsByRow struct {
-	Date  pgtype.Interval `json:"date"`
-	Count int64           `json:"count"`
-	Sum   int64           `json:"sum"`
+	Date  pgtype.Timestamp `json:"date"`
+	Count int64            `json:"count"`
+	Sum   int64            `json:"sum"`
 }
 
 func (q *Queries) TotalCreatedBookingsBy(ctx context.Context, dollar_1 string) ([]TotalCreatedBookingsByRow, error) {
@@ -389,7 +367,7 @@ func (q *Queries) TotalOpenBookings(ctx context.Context) (TotalOpenBookingsRow, 
 
 const totalOpenBookingsBy = `-- name: TotalOpenBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -397,13 +375,13 @@ FROM
   RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 GROUP BY
-  date_trunc($1::text, a.datetime)
+  date_trunc($1::text, a.datetime)::timestamp
 `
 
 type TotalOpenBookingsByRow struct {
-	Date  pgtype.Interval `json:"date"`
-	Count int64           `json:"count"`
-	Sum   int64           `json:"sum"`
+	Date  pgtype.Timestamp `json:"date"`
+	Count int64            `json:"count"`
+	Sum   int64            `json:"sum"`
 }
 
 func (q *Queries) TotalOpenBookingsBy(ctx context.Context, dollar_1 string) ([]TotalOpenBookingsByRow, error) {
@@ -451,7 +429,7 @@ func (q *Queries) TotalOpenNotPaidBookings(ctx context.Context) (TotalOpenNotPai
 
 const totalOpenNotPaidBookingsBy = `-- name: TotalOpenNotPaidBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -461,13 +439,13 @@ FROM
 WHERE
   b.paid = false
 GROUP BY
-  date_trunc($1::text, a.datetime)
+  date_trunc($1::text, a.datetime)::timestamp
 `
 
 type TotalOpenNotPaidBookingsByRow struct {
-	Date  pgtype.Interval `json:"date"`
-	Count int64           `json:"count"`
-	Sum   int64           `json:"sum"`
+	Date  pgtype.Timestamp `json:"date"`
+	Count int64            `json:"count"`
+	Sum   int64            `json:"sum"`
 }
 
 func (q *Queries) TotalOpenNotPaidBookingsBy(ctx context.Context, dollar_1 string) ([]TotalOpenNotPaidBookingsByRow, error) {
@@ -515,7 +493,7 @@ func (q *Queries) TotalOpenPaidBookings(ctx context.Context) (TotalOpenPaidBooki
 
 const totalOpenPaidBookingsBy = `-- name: TotalOpenPaidBookingsBy :many
 SELECT
-  date_trunc($1::text, a.datetime) as date,
+  date_trunc($1::text, a.datetime)::timestamp as date,
   COUNT(*) as count,
   sum(b.cost) as sum
 FROM
@@ -525,13 +503,13 @@ FROM
 WHERE
   b.paid = true
 GROUP BY
-  date_trunc($1::text, a.datetime)
+  date_trunc($1::text, a.datetime)::timestamp
 `
 
 type TotalOpenPaidBookingsByRow struct {
-	Date  pgtype.Interval `json:"date"`
-	Count int64           `json:"count"`
-	Sum   int64           `json:"sum"`
+	Date  pgtype.Timestamp `json:"date"`
+	Count int64            `json:"count"`
+	Sum   int64            `json:"sum"`
 }
 
 func (q *Queries) TotalOpenPaidBookingsBy(ctx context.Context, dollar_1 string) ([]TotalOpenPaidBookingsByRow, error) {
@@ -543,6 +521,69 @@ func (q *Queries) TotalOpenPaidBookingsBy(ctx context.Context, dollar_1 string) 
 	var items []TotalOpenPaidBookingsByRow
 	for rows.Next() {
 		var i TotalOpenPaidBookingsByRow
+		if err := rows.Scan(&i.Date, &i.Count, &i.Sum); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const totalPaidBookingsBy = `-- name: TotalPaidBookingsBy :many
+SELECT
+  COALESCE(o.date, c.date)::timestamp as date,
+  COALESCE(c.count, 0) + COALESCE(o.count, 0) as count,
+  COALESCE(c.sum, 0) + COALESCE(o.sum, 0) as sum
+FROM
+  (
+    SELECT
+      date_trunc($1::text, a.datetime)::timestamp as date,
+      COUNT(*) as count,
+      sum(b.cost) as sum
+    FROM
+      bookings as b
+      RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.paid = true
+    GROUP BY
+      date_trunc($1::text, a.datetime)::timestamp
+  ) as o
+  FULL OUTER JOIN (
+    SELECT
+      date_trunc($1::text, bh.start_time)::timestamp as date,
+      COUNT(*) as count,
+      sum(b.cost) as sum
+    FROM
+      bookings as b
+      LEFT JOIN booking_history as bh on b.id = bh.booking_id
+    WHERE
+      b.status = 'cancelled'
+      and bh.status = 'cancelled'
+      and bh.paid = true
+    GROUP BY
+      date_trunc($1::text, bh.start_time)::timestamp
+  ) as c on o.date = c.date
+`
+
+type TotalPaidBookingsByRow struct {
+	Date  pgtype.Timestamp `json:"date"`
+	Count int32            `json:"count"`
+	Sum   int32            `json:"sum"`
+}
+
+func (q *Queries) TotalPaidBookingsBy(ctx context.Context, dollar_1 string) ([]TotalPaidBookingsByRow, error) {
+	rows, err := q.db.Query(ctx, totalPaidBookingsBy, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TotalPaidBookingsByRow
+	for rows.Next() {
+		var i TotalPaidBookingsByRow
 		if err := rows.Scan(&i.Date, &i.Count, &i.Sum); err != nil {
 			return nil, err
 		}

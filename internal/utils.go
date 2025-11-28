@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"errors"
-	"log"
 	"math/big"
 	"slices"
 	"time"
@@ -124,12 +123,9 @@ func slotsToKeepDelete(current, next []pgtype.Timestamp) ([]pgtype.Timestamp, []
 	}
 
 	for _, c := range current {
-		log.Printf("current %v\n", c)
 		if slices.Contains(nextNorm, c.Time.UTC()) {
-			log.Printf("is in %v\n", next)
 			toKeep = append(toKeep, c)
 		} else {
-			log.Printf("is not in %v\n", next)
 			toDelete = append(toDelete, c)
 		}
 	}

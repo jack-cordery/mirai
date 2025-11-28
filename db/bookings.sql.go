@@ -1404,8 +1404,7 @@ UPDATE availability
 SET
   id = $1,
   employee_id = $2,
-  datetime = $3,
-  type_id = $4,
+  type_id = $3,
   created_at = DEFAULT,
   last_edited = DEFAULT
 WHERE
@@ -1415,19 +1414,13 @@ RETURNING
 `
 
 type UpdateAvailabilitySlotParams struct {
-	ID         int32            `json:"id"`
-	EmployeeID int32            `json:"employee_id"`
-	Datetime   pgtype.Timestamp `json:"datetime"`
-	TypeID     int32            `json:"type_id"`
+	ID         int32 `json:"id"`
+	EmployeeID int32 `json:"employee_id"`
+	TypeID     int32 `json:"type_id"`
 }
 
 func (q *Queries) UpdateAvailabilitySlot(ctx context.Context, arg UpdateAvailabilitySlotParams) (int32, error) {
-	row := q.db.QueryRow(ctx, updateAvailabilitySlot,
-		arg.ID,
-		arg.EmployeeID,
-		arg.Datetime,
-		arg.TypeID,
-	)
+	row := q.db.QueryRow(ctx, updateAvailabilitySlot, arg.ID, arg.EmployeeID, arg.TypeID)
 	var id int32
 	err := row.Scan(&id)
 	return id, err

@@ -44,7 +44,15 @@ FROM
       sum(b.cost) as sum
     FROM
       bookings as b
-      RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+      RIGHT JOIN (
+        SELECT
+          booking_id,
+          min(availability_slot_id) as availability_slot_id
+        FROM
+          booking_slots
+        GROUP BY
+          booking_id
+      ) as bs on bs.booking_id = b.id
       LEFT JOIN availability as a on bs.availability_slot_id = a.id
     GROUP BY
       date_trunc($1::text, a.datetime)::timestamp
@@ -183,7 +191,15 @@ SELECT
   COALESCE(sum(b.cost), 0)::integer as sum
 FROM
   bookings as b
-  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  RIGHT JOIN (
+    SELECT
+      booking_id,
+      min(availability_slot_id) as availability_slot_id
+    FROM
+      booking_slots
+    GROUP BY
+      booking_id
+  ) as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 WHERE
   b.status = 'completed'
@@ -246,7 +262,15 @@ SELECT
   COALESCE(sum(b.cost), 0)::integer as sum
 FROM
   bookings as b
-  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  RIGHT JOIN (
+    SELECT
+      booking_id,
+      min(availability_slot_id) as availability_slot_id
+    FROM
+      booking_slots
+    GROUP BY
+      booking_id
+  ) as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 WHERE
   b.status = 'confirmed'
@@ -309,7 +333,15 @@ SELECT
   COALESCE(sum(b.cost), 0)::integer as sum
 FROM
   bookings as b
-  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  RIGHT JOIN (
+    SELECT
+      booking_id,
+      min(availability_slot_id) as availability_slot_id
+    FROM
+      booking_slots
+    GROUP BY
+      booking_id
+  ) as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 WHERE
   b.status = 'created'
@@ -372,7 +404,15 @@ SELECT
   COALESCE(sum(b.cost), 0)::integer as sum
 FROM
   bookings as b
-  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  RIGHT JOIN (
+    SELECT
+      booking_id,
+      min(availability_slot_id) as availability_slot_id
+    FROM
+      booking_slots
+    GROUP BY
+      booking_id
+  ) as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 GROUP BY
   date_trunc($1::text, a.datetime)::timestamp
@@ -434,7 +474,15 @@ SELECT
   COALESCE(sum(b.cost), 0)::integer as sum
 FROM
   bookings as b
-  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  RIGHT JOIN (
+    SELECT
+      booking_id,
+      min(availability_slot_id) as availability_slot_id
+    FROM
+      booking_slots
+    GROUP BY
+      booking_id
+  ) as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 WHERE
   b.paid = false
@@ -498,7 +546,15 @@ SELECT
   COALESCE(sum(b.cost), 0)::integer as sum
 FROM
   bookings as b
-  RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+  RIGHT JOIN (
+    SELECT
+      booking_id,
+      min(availability_slot_id) as availability_slot_id
+    FROM
+      booking_slots
+    GROUP BY
+      booking_id
+  ) as bs on bs.booking_id = b.id
   LEFT JOIN availability as a on bs.availability_slot_id = a.id
 WHERE
   b.paid = true
@@ -532,6 +588,28 @@ func (q *Queries) TotalOpenPaidBookingsBy(ctx context.Context, dollar_1 string) 
 	return items, nil
 }
 
+const totalPaidBookings = `-- name: TotalPaidBookings :one
+SELECT
+  COUNT(*) as total_count,
+  COALESCE(SUM(cost), 0)::integer as total_cost
+FROM
+  bookings
+WHERE
+  paid = true
+`
+
+type TotalPaidBookingsRow struct {
+	TotalCount int64 `json:"total_count"`
+	TotalCost  int32 `json:"total_cost"`
+}
+
+func (q *Queries) TotalPaidBookings(ctx context.Context) (TotalPaidBookingsRow, error) {
+	row := q.db.QueryRow(ctx, totalPaidBookings)
+	var i TotalPaidBookingsRow
+	err := row.Scan(&i.TotalCount, &i.TotalCost)
+	return i, err
+}
+
 const totalPaidBookingsBy = `-- name: TotalPaidBookingsBy :many
 SELECT
   COALESCE(o.date, c.date)::timestamp as date,
@@ -545,7 +623,15 @@ FROM
       sum(b.cost) as sum
     FROM
       bookings as b
-      RIGHT JOIN booking_slots as bs on bs.booking_id = b.id
+      RIGHT JOIN (
+        SELECT
+          booking_id,
+          min(availability_slot_id) as availability_slot_id
+        FROM
+          booking_slots
+        GROUP BY
+          booking_id
+      ) as bs on bs.booking_id = b.id
       LEFT JOIN availability as a on bs.availability_slot_id = a.id
     WHERE
       b.paid = true
@@ -561,9 +647,9 @@ FROM
       bookings as b
       LEFT JOIN booking_history as bh on b.id = bh.booking_id
     WHERE
-      b.status = 'cancelled'
+      b.paid = true
+      and b.status = 'cancelled'
       and bh.status = 'cancelled'
-      and b.paid = true
     GROUP BY
       date_trunc($1::text, bh.start_time)::timestamp
   ) as c on o.date = c.date

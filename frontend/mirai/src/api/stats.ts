@@ -1,7 +1,9 @@
 const apiUrl = import.meta.env.VITE_API_URL;
 
-export async function getStats() {
-  const res = await fetch(`${apiUrl}/stats`, {
+export type ByDate = "hour" | "day" | "week" | "month" | "year";
+
+export async function getStats(by: ByDate) {
+  const res = await fetch(`${apiUrl}/stats/${by}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -18,7 +20,7 @@ type TotalPair = {
   cost: number;
 };
 
-export type GetStatsResponse = {
+export type Data = {
   total: TotalPair;
   cancelled: TotalPair;
   completed: TotalPair;
@@ -27,4 +29,14 @@ export type GetStatsResponse = {
   open_not_paid: TotalPair;
   open_paid: TotalPair;
   total_paid: TotalPair;
+};
+
+export type DataByDate = {
+  date: string;
+  data: Data;
+};
+
+export type GetStatsResponse = {
+  totals: Data;
+  by_date: DataByDate[];
 };

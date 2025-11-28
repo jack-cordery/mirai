@@ -160,6 +160,13 @@ func statsQuery(query *db.Queries, ctx context.Context, t string) (QueryResponse
 	}
 	qr.Totals.OpenNotPaidBookings = TotalPair{notOpenPaidBookings.TotalCount, notOpenPaidBookings.TotalCost}
 
+	totalPaidBookings, err := query.TotalPaidBookings(ctx)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("error getting open not paid bookings in statsQuery")
+		return QueryResponse{}, err
+	}
+	qr.Totals.TotalPaidBookings = TotalPair{totalPaidBookings.TotalCount, totalPaidBookings.TotalCost}
+
 	dataByDay, err := GetDataByTime(ctx, query, t)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		log.Printf("error getting data by date in statsQuery")
@@ -220,7 +227,6 @@ func GetDataByTime(ctx context.Context, query *db.Queries, t string) ([]DataByDa
 	}
 
 	if len(totalByDay) == 0 && len(totalCancelledByDay) == 0 {
-		log.Printf("no dates")
 		return []DataByDate{}, nil
 	}
 

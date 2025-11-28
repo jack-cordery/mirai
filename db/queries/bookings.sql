@@ -751,8 +751,7 @@ UPDATE availability
 SET
   id = $1,
   employee_id = $2,
-  datetime = $3,
-  type_id = $4,
+  type_id = $3,
   created_at = DEFAULT,
   last_edited = DEFAULT
 WHERE

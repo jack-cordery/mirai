@@ -336,6 +336,7 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		log.Printf("put request with %v", availabilitySlotRequest)
 
 		conn, err := pool.Acquire(ctx)
 		if err != nil {
@@ -404,8 +405,23 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			newDatetimes = append(newDatetimes, p.Datetime)
 		}
 
-		_, slotsToDel := slotsToKeepDelete(currentDatetimes, newDatetimes)
+		slotsToKeep, slotsToDel := slotsToKeepDelete(currentDatetimes, newDatetimes)
 		slotsToCreate := slotsToCreate(currentDatetimes, newDatetimes)
+
+		for _, s := range slotsToKeep {
+			idToKeep := timeToID[s]
+			_, err := qtx.UpdateAvailabilitySlot(ctx, db.UpdateAvailabilitySlotParams{
+				ID:         idToKeep,
+				EmployeeID: availabilitySlotRequest.EmployeeID,
+				TypeID:     availabilitySlotRequest.TypeID,
+			})
+			if err != nil {
+				log.Printf("error updating slots to keep in putAvailabilitySlot: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+		}
 
 		idsToDel := []int32{}
 		for _, s := range slotsToDel {

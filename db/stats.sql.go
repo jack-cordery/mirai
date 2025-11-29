@@ -11,6 +11,106 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const monthlyCompletedDelta = `-- name: MonthlyCompletedDelta :one
+with
+  curr as (
+    SELECT
+      b.id
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.status = 'completed'
+      and (a.datetime > now() - interval '30 day')
+    GROUP BY
+      b.id
+  ),
+  prev as (
+    SELECT
+      b.id
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.status = 'completed'
+      and (a.datetime < now() - interval '30 day')
+      and (a.datetime > now() - interval '60 day')
+    GROUP BY
+      b.id
+  )
+SELECT
+  (
+    SELECT
+      COUNT(*)
+    FROM
+      curr
+  ) - (
+    SELECT
+      COUNT(*)
+    FROM
+      prev
+  ) as delta
+`
+
+func (q *Queries) MonthlyCompletedDelta(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, monthlyCompletedDelta)
+	var delta int32
+	err := row.Scan(&delta)
+	return delta, err
+}
+
+const monthlyConfirmedDelta = `-- name: MonthlyConfirmedDelta :one
+with
+  curr as (
+    SELECT
+      b.id
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.status = 'confirmed'
+      and (a.datetime > now() - interval '30 day')
+    GROUP BY
+      b.id
+  ),
+  prev as (
+    SELECT
+      b.id
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.status = 'confirmed'
+      and (a.datetime < now() - interval '30 day')
+      and (a.datetime > now() - interval '60 day')
+    GROUP BY
+      b.id
+  )
+SELECT
+  (
+    SELECT
+      COUNT(*)
+    FROM
+      curr
+  ) - (
+    SELECT
+      COUNT(*)
+    FROM
+      prev
+  ) as delta
+`
+
+func (q *Queries) MonthlyConfirmedDelta(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, monthlyConfirmedDelta)
+	var delta int32
+	err := row.Scan(&delta)
+	return delta, err
+}
+
 const monthlyPaidDelta = `-- name: MonthlyPaidDelta :one
 with
   curr as (
@@ -116,7 +216,12 @@ func (q *Queries) MonthlyUnpaidDelta(ctx context.Context) (int32, error) {
 }
 
 const monthlyUserDelta = `-- name: MonthlyUserDelta :one
-   SELECT COUNT(*) FROM users WHERE created_at > now() - interval '30 day'
+SELECT
+  COUNT(*)
+FROM
+  users
+WHERE
+  created_at > now() - interval '30 day'
 `
 
 func (q *Queries) MonthlyUserDelta(ctx context.Context) (int64, error) {

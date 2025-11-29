@@ -111,33 +111,18 @@ export const SchedulerProvider = ({
                         })
                 );
         };
-
         const getDaysInWeek = (week: number, year: number) => {
-                // Determine if the week should start on Sunday (0) or Monday (1)
-                const startDay = weekStartsOn === "sunday" ? 0 : 1;
+                const simple = new Date(year, 0, 4 + (week - 1) * 7);
+                const dayOfWeek = simple.getDay() || 7; // Sunday => 7
+                const weekStart = new Date(simple);
+                weekStart.setDate(simple.getDate() - (dayOfWeek - 1));
 
-                // Get January 1st of the year
-                const janFirst = new Date(year, 0, 1);
-
-                // Calculate how many days we are offsetting from January 1st
-                const janFirstDayOfWeek = janFirst.getDay();
-
-                // Calculate the start of the week by finding the correct day in the year
-                const weekStart = new Date(janFirst);
-                weekStart.setDate(
-                        janFirst.getDate() +
-                        (week - 1) * 7 +
-                        ((startDay - janFirstDayOfWeek + 7) % 7)
-                );
-
-                // Generate the week's days
                 const days = [];
                 for (let i = 0; i < 7; i++) {
-                        const day = new Date(weekStart);
-                        day.setDate(day.getDate() + i);
-                        days.push(day);
+                        const d = new Date(weekStart);
+                        d.setDate(weekStart.getDate() + i);
+                        days.push(d);
                 }
-
                 return days;
         };
 
@@ -267,7 +252,7 @@ export const SchedulerProvider = ({
                                 event.startDate.getHours() + event.startDate.getMinutes() / 60;
 
                         // Define the day-end hour (24.0 for midnight)
-                        const dayEndHour = workEndHour;
+                        const dayEndHour = workEndHour + 1;
 
                         // Calculate maxHeight based on the difference between the day-end hour and the event's start hour
                         maxHeight = Math.max(0, (dayEndHour - eventStartHour) * hourHeight);
@@ -292,15 +277,9 @@ export const SchedulerProvider = ({
                 const safeLeftPosition = Math.min(leftPosition, 100 - widthPercentage);
 
                 // Minimum height for visibility
-                const minimumHeight = 20;
 
                 return {
-                        height: `${eventHeight < minimumHeight
-                                ? minimumHeight
-                                : eventHeight > maxHeight
-                                        ? maxHeight
-                                        : eventHeight
-                                }px`,
+                        height: `${eventHeight}px`,
                         top: `${eventTop}px`,
                         zIndex: indexOnHour + 1,
                         left: `${safeLeftPosition}%`,

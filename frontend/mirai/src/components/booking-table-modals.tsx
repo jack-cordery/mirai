@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 
 export function PaidModal() {
-        const { isPaidModalOpen, setBookingData, setIsPaidModalOpen, paidModalRow } = useTableContext();
+        const { isPaidModalOpen, setIsPaidModalOpen, paidModalRow, fetchTableData } = useTableContext();
 
         const handleManualPayment = async () => {
                 const booking_id = paidModalRow?.id;
@@ -27,9 +27,7 @@ export function PaidModal() {
                 }
                 try {
                         await postManualPayment(booking_id)
-                        setBookingData(prev => prev.map(row =>
-                                row.id === booking_id ? { ...row, paid: true } : row
-                        ));
+                        fetchTableData()
                         toast("manual payment accepted");
                         setIsPaidModalOpen(false);
 
@@ -144,7 +142,7 @@ export function CancelModal() {
 }
 
 export function ConfirmModal() {
-        const { isConfirmModalOpen, setBookingData, setIsConfirmModalOpen, confirmModalRow } = useTableContext();
+        const { isConfirmModalOpen, setIsConfirmModalOpen, confirmModalRow, fetchTableData } = useTableContext();
 
         const handleConfirm = async () => {
                 const booking_id = confirmModalRow?.id;
@@ -154,9 +152,7 @@ export function ConfirmModal() {
                 }
                 try {
                         await postConfirm(booking_id)
-                        setBookingData(prev => prev.map(row =>
-                                row.id === booking_id ? { ...row, status: "confirmed" } : row
-                        ));
+                        fetchTableData();
                         toast("confirmation accepted");
                         setIsConfirmModalOpen(false);
 
@@ -208,7 +204,7 @@ export function ConfirmModal() {
 }
 
 export function CompleteModal() {
-        const { isCompleteModalOpen, setBookingData, setIsCompleteModalOpen, completeModalRow } = useTableContext();
+        const { isCompleteModalOpen, setIsCompleteModalOpen, completeModalRow, fetchTableData } = useTableContext();
 
         const handleComplete = async () => {
                 const booking_id = completeModalRow?.id;
@@ -218,9 +214,7 @@ export function CompleteModal() {
                 }
                 try {
                         await postComplete(booking_id)
-                        setBookingData(prev => prev.map(row =>
-                                row.id === booking_id ? { ...row, status: "completed" } : row
-                        ));
+                        fetchTableData()
                         toast("completion accepted");
                         setIsCompleteModalOpen(false);
 

@@ -10,6 +10,7 @@ export async function postBooking(postRequest: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postRequest),
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -26,6 +27,7 @@ export async function getBooking(getRequest: { booking_id: number }) {
   const res = await fetch(`${apiUrl}/booking/${getRequest.booking_id}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -50,7 +52,11 @@ export type GetBookingResponse = {
 };
 
 export async function getAllBookings() {
-  const res = await fetch(`${apiUrl}/booking`);
+  const res = await fetch(`${apiUrl}/booking`, {
+    method: "GET",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
 
   if (!res.ok) {
     throw new Error(`get all bookings failed with ${res.status}`);

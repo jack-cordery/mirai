@@ -26,6 +26,7 @@ export default function ShowMoreEventsModal() {
                                                 event={{
                                                         ...event,
                                                 }}
+                                                hover={false}
                                         />
                                 ))
                         ) : (

@@ -148,6 +148,7 @@ type BookingType struct {
 	Fixed       bool             `json:"fixed"`
 	Cost        int32            `json:"cost"`
 	Duration    int32            `json:"duration"`
+	Active      bool             `json:"active"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	LastEdited  pgtype.Timestamp `json:"last_edited"`
 }
@@ -159,6 +160,7 @@ type Employee struct {
 	Email       string           `json:"email"`
 	Title       string           `json:"title"`
 	Description string           `json:"description"`
+	Active      bool             `json:"active"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	LastLogin   pgtype.Timestamp `json:"last_login"`
 }

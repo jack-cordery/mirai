@@ -13,6 +13,7 @@ export async function postAvailabilitySlot(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postRequest),
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -28,6 +29,7 @@ export async function putAvailabilitySlot(
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(putRequest),
+    credentials: "include",
   });
 
   if (!res.ok) {
@@ -52,8 +54,11 @@ export async function deleteAvailabilitySlot(
 }
 
 export async function getAllAvailability() {
-  const res = await fetch(`${apiUrl}/availability/`);
-
+  const res = await fetch(`${apiUrl}/availability`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
   if (!res.ok) {
     throw new Error(`Get all availability slots failed with ${res.status}`);
   }

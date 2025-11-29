@@ -326,7 +326,9 @@ func (q *Queries) DeleteBookingSlot(ctx context.Context, arg DeleteBookingSlotPa
 }
 
 const deleteBookingType = `-- name: DeleteBookingType :one
-DELETE FROM booking_types
+UPDATE booking_types
+SET
+  active = false
 WHERE
   id = $1
 RETURNING
@@ -340,7 +342,9 @@ func (q *Queries) DeleteBookingType(ctx context.Context, id int32) (int32, error
 }
 
 const deleteEmployee = `-- name: DeleteEmployee :one
-DELETE FROM employees
+UPDATE employees
+SET
+  active = false
 WHERE
   id = $1
 RETURNING
@@ -400,9 +404,11 @@ func (q *Queries) GetAllAvailabilitySlots(ctx context.Context) ([]Availability, 
 
 const getAllBookingTypes = `-- name: GetAllBookingTypes :many
 SELECT
-  id, title, description, fixed, cost, duration, created_at, last_edited
+  id, title, description, fixed, cost, duration, active, created_at, last_edited
 FROM
   booking_types
+WHERE
+  active = true
 `
 
 func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error) {
@@ -421,6 +427,7 @@ func (q *Queries) GetAllBookingTypes(ctx context.Context) ([]BookingType, error)
 			&i.Fixed,
 			&i.Cost,
 			&i.Duration,
+			&i.Active,
 			&i.CreatedAt,
 			&i.LastEdited,
 		); err != nil {
@@ -916,7 +923,8 @@ SELECT
 FROM
   availability a
 WHERE
-  NOT EXISTS (
+  a.datetime > now()
+  AND NOT EXISTS (
     SELECT
       1
     FROM
@@ -1107,9 +1115,26 @@ func (q *Queries) GetBookingSlotsFromAvailability(ctx context.Context, dollar_1 
 	return items, nil
 }
 
+const getBookingTypeBookingsCount = `-- name: GetBookingTypeBookingsCount :one
+SELECT
+  COUNT(*)
+FROM
+  booking_slots bs
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+WHERE
+  a.type_id = $1
+`
+
+func (q *Queries) GetBookingTypeBookingsCount(ctx context.Context, typeID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, getBookingTypeBookingsCount, typeID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getBookingTypeById = `-- name: GetBookingTypeById :one
 SELECT
-  id, title, description, fixed, cost, duration, created_at, last_edited
+  id, title, description, fixed, cost, duration, active, created_at, last_edited
 FROM
   booking_types
 WHERE
@@ -1128,6 +1153,7 @@ func (q *Queries) GetBookingTypeById(ctx context.Context, id int32) (BookingType
 		&i.Fixed,
 		&i.Cost,
 		&i.Duration,
+		&i.Active,
 		&i.CreatedAt,
 		&i.LastEdited,
 	)
@@ -1343,6 +1369,23 @@ func (q *Queries) GetBookingWithJoin(ctx context.Context, arg GetBookingWithJoin
 	return i, err
 }
 
+const getEmployeeBookingsCount = `-- name: GetEmployeeBookingsCount :one
+SELECT
+  COUNT(*)
+FROM
+  booking_slots bs
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+WHERE
+  a.employee_id = $1
+`
+
+func (q *Queries) GetEmployeeBookingsCount(ctx context.Context, employeeID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, getEmployeeBookingsCount, employeeID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const postManualPayment = `-- name: PostManualPayment :exec
 UPDATE bookings
 SET
@@ -1361,8 +1404,7 @@ UPDATE availability
 SET
   id = $1,
   employee_id = $2,
-  datetime = $3,
-  type_id = $4,
+  type_id = $3,
   created_at = DEFAULT,
   last_edited = DEFAULT
 WHERE
@@ -1372,19 +1414,13 @@ RETURNING
 `
 
 type UpdateAvailabilitySlotParams struct {
-	ID         int32            `json:"id"`
-	EmployeeID int32            `json:"employee_id"`
-	Datetime   pgtype.Timestamp `json:"datetime"`
-	TypeID     int32            `json:"type_id"`
+	ID         int32 `json:"id"`
+	EmployeeID int32 `json:"employee_id"`
+	TypeID     int32 `json:"type_id"`
 }
 
 func (q *Queries) UpdateAvailabilitySlot(ctx context.Context, arg UpdateAvailabilitySlotParams) (int32, error) {
-	row := q.db.QueryRow(ctx, updateAvailabilitySlot,
-		arg.ID,
-		arg.EmployeeID,
-		arg.Datetime,
-		arg.TypeID,
-	)
+	row := q.db.QueryRow(ctx, updateAvailabilitySlot, arg.ID, arg.EmployeeID, arg.TypeID)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
@@ -1533,7 +1569,7 @@ SET
 WHERE
   id = $1
 RETURNING
-  id
+  id, name, surname, email, title, description, active, created_at, last_login
 `
 
 type UpdateEmployeeParams struct {
@@ -1545,7 +1581,7 @@ type UpdateEmployeeParams struct {
 	Description string `json:"description"`
 }
 
-func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (int32, error) {
+func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error) {
 	row := q.db.QueryRow(ctx, updateEmployee,
 		arg.ID,
 		arg.Name,
@@ -1554,7 +1590,17 @@ func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) 
 		arg.Title,
 		arg.Description,
 	)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
+	var i Employee
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Surname,
+		&i.Email,
+		&i.Title,
+		&i.Description,
+		&i.Active,
+		&i.CreatedAt,
+		&i.LastLogin,
+	)
+	return i, err
 }

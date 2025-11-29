@@ -329,68 +329,34 @@ func getBookingUser(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http
 
 		queries := db.New(conn)
 
-		valid, err := VerifySession(ctx, queries, token)
+		session, err := queries.GetSessionByToken(ctx, token)
 		if err != nil {
-			log.Printf("verifying session in getBookingUser failed with %v", err)
+			log.Printf("getting session by token in getBookingUser failed with %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		if !valid {
-			w.WriteHeader(http.StatusUnauthorized)
-			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
-			if err != nil {
-				log.Printf("writing json in getBookingUser failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+		user, err := queries.GetUserById(ctx, session.UserID)
+		if err != nil {
+			log.Printf("getting user by id for user in getBookingUser failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
-		} else {
-			session, err := queries.GetSessionByToken(ctx, token)
-			if err != nil {
-				log.Printf("getting session by token in getBookingUser failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+		}
+		bookingData, err := queries.GetAllBookingsWithJoinByID(ctx, db.GetAllBookingsWithJoinByIDParams{
+			UserID:  user.ID,
+			Column2: Unit,
+		})
+		if err != nil {
+			log.Printf("getting booking data in getBookingUser failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-			approver, err := queries.GetUserById(ctx, session.UserID)
-			if err != nil {
-				log.Printf("getting user by id for user in getBookingUser failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			userRoles, err := queries.GetRolesForUser(ctx, approver.ID)
-			if err != nil {
-				log.Printf("getting user roles by id for user in getBookingUser failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			isUser := slices.Contains(userRoles, RoleUser)
-
-			if !isUser {
-				log.Printf("user %d has requested to get booking data and doesnt have permission to", approver.ID)
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-
-			bookingData, err := queries.GetAllBookingsWithJoinByID(ctx, db.GetAllBookingsWithJoinByIDParams{
-				UserID:  approver.ID,
-				Column2: Unit,
-			})
-			if err != nil {
-				log.Printf("getting booking data in getBookingUser failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			err = json.NewEncoder(w).Encode(bookingData)
-			if err != nil {
-				log.Printf("encoding booking data in getBookingUser failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+		err = json.NewEncoder(w).Encode(bookingData)
+		if err != nil {
+			log.Printf("encoding booking data in getBookingUser failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 	}
 
@@ -623,67 +589,19 @@ func postManualPayment(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) h
 			return
 		}
 
-		valid, err := VerifySession(ctx, qtx, token)
+		err = qtx.PostManualPayment(ctx, int32(booking_id))
 		if err != nil {
-			log.Printf("verifying session in postManualPayment failed with %v", err)
+			log.Printf("posting manual payment failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		err = tx.Commit(ctx)
+		if err != nil {
+			log.Printf("error commiting tx in postManualPayment: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		if !valid {
-			w.WriteHeader(http.StatusUnauthorized)
-			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
-			if err != nil {
-				log.Printf("writing json in postManualPayment failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			return
-		} else {
-			session, err := qtx.GetSessionByToken(ctx, token)
-			if err != nil {
-				log.Printf("getting session by token in postManualPayment failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			approver, err := qtx.GetUserById(ctx, session.UserID)
-			if err != nil {
-				log.Printf("getting user by id for user in postManualPayment failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			userRoles, err := qtx.GetRolesForUser(ctx, approver.ID)
-			if err != nil {
-				log.Printf("getting user roles by id for user in postManualPayment failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			isAdmin := slices.Contains(userRoles, RoleAdmin)
-
-			if !isAdmin {
-				log.Printf("user %d has requested to post a manual payment and doesnt have permission to", approver.ID)
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-
-			err = qtx.PostManualPayment(ctx, int32(booking_id))
-			if err != nil {
-				log.Printf("posting manual payment failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			err = tx.Commit(ctx)
-			if err != nil {
-				log.Printf("error commiting tx in postManualPayment: %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			return
-		}
 	}
 }
 
@@ -739,108 +657,90 @@ func postManualStatus(pool *pgxpool.Pool, ctx context.Context, a *AuthParams, ne
 			return
 		}
 
-		valid, err := VerifySession(ctx, qtx, token)
+		session, err := qtx.GetSessionByToken(ctx, token)
 		if err != nil {
-			log.Printf("verifying session in postManualStatus failed with %v", err)
+			log.Printf("getting session by token in postManualStatus failed with %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		if !valid {
-			w.WriteHeader(http.StatusUnauthorized)
-			err = json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid session"})
-			if err != nil {
-				log.Printf("writing json in postManualStatus failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			return
-		} else {
-			session, err := qtx.GetSessionByToken(ctx, token)
-			if err != nil {
-				log.Printf("getting session by token in postManualStatus failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			approver, err := qtx.GetUserByIdWithRoles(ctx, session.UserID)
-			if err != nil {
-				log.Printf("getting user by id with roles for user in postManualStatus failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			booking, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{Column1: Unit, ID: int32(booking_id)})
-			if err != nil {
-				log.Printf("getting booking by id with join for booking_id in postManualStatus failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			isAdmin := slices.Contains(approver.RoleNames, RoleAdmin)
-			isCorrectUser := slices.Contains(approver.RoleNames, RoleUser) && (approver.ID == booking.UserID)
-
-			if !isAdmin && !isCorrectUser {
-				log.Printf("user %d has requested to post a manual status and doesnt have permission to", approver.ID)
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-
-			err = qtx.UpdateBookingStatus(ctx, db.UpdateBookingStatusParams{
-				ID:              int32(booking_id),
-				Status:          newStatus,
-				StatusUpdatedBy: approver.Email,
-			})
-			if err != nil {
-				log.Printf("updating booking status failed with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			bookingRow, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{
-				Column1: Unit,
-				ID:      int32(booking_id),
-			})
-
-			if err != nil {
-				log.Printf("getting booking data in post manual status with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
-				BookingID:       bookingRow.ID,
-				EmployeeID:      bookingRow.EmployeeID,
-				EmployeeName:    bookingRow.EmployeeName,
-				EmployeeSurname: bookingRow.EmployeeSurname,
-				EmployeeEmail:   bookingRow.EmployeeEmail,
-				StartTime:       bookingRow.StartTime,
-				EndTime:         bookingRow.EndTime,
-				Status:          newStatus,
-				ChangedByEmail:  bookingRow.StatusUpdatedBy,
-			})
-			if err != nil {
-				log.Printf("creating booking history in post manual status with %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			if newStatus == db.BookingStatusCancelled {
-				err = qtx.FreeAvailabilitySlot(ctx, int32(booking_id))
-				if err != nil {
-					log.Printf("freeing availability slots failed with %v", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-			}
-			err = tx.Commit(ctx)
-			if err != nil {
-				log.Printf("error commiting tx in postManualStatus: %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
+		approver, err := qtx.GetUserByIdWithRoles(ctx, session.UserID)
+		if err != nil {
+			log.Printf("getting user by id with roles for user in postManualStatus failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
+		booking, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{Column1: Unit, ID: int32(booking_id)})
+		if err != nil {
+			log.Printf("getting booking by id with join for booking_id in postManualStatus failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		isAdmin := slices.Contains(approver.RoleNames, RoleAdmin)
+		isCorrectUser := slices.Contains(approver.RoleNames, RoleUser) && (approver.ID == booking.UserID)
+
+		if !isAdmin && !isCorrectUser {
+			log.Printf("user %d has requested to post a manual status and doesnt have permission to", approver.ID)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		err = qtx.UpdateBookingStatus(ctx, db.UpdateBookingStatusParams{
+			ID:              int32(booking_id),
+			Status:          newStatus,
+			StatusUpdatedBy: approver.Email,
+		})
+		if err != nil {
+			log.Printf("updating booking status failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		bookingRow, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{
+			Column1: Unit,
+			ID:      int32(booking_id),
+		})
+
+		if err != nil {
+			log.Printf("getting booking data in post manual status with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
+			BookingID:       bookingRow.ID,
+			EmployeeID:      bookingRow.EmployeeID,
+			EmployeeName:    bookingRow.EmployeeName,
+			EmployeeSurname: bookingRow.EmployeeSurname,
+			EmployeeEmail:   bookingRow.EmployeeEmail,
+			StartTime:       bookingRow.StartTime,
+			EndTime:         bookingRow.EndTime,
+			Status:          newStatus,
+			ChangedByEmail:  bookingRow.StatusUpdatedBy,
+		})
+		if err != nil {
+			log.Printf("creating booking history in post manual status with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if newStatus == db.BookingStatusCancelled {
+			err = qtx.FreeAvailabilitySlot(ctx, int32(booking_id))
+			if err != nil {
+				log.Printf("freeing availability slots failed with %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+		err = tx.Commit(ctx)
+		if err != nil {
+			log.Printf("error commiting tx in postManualStatus: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		return
 	}
 }

@@ -5,9 +5,10 @@ CREATE TABLE IF NOT EXISTS employees (
   email VARCHAR(255) NOT NULL,
   title VARCHAR(40) NOT NULL,
   description TEXT NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (name, surname, title)
+  UNIQUE (name, surname, title, email, active)
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS booking_types (
   fixed BOOL NOT NULL,
   cost INT NOT NULL,
   duration INT NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (title, description)

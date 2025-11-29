@@ -505,7 +505,8 @@ SELECT
 FROM
   availability a
 WHERE
-  NOT EXISTS (
+  a.datetime > now()
+  AND NOT EXISTS (
     SELECT
       1
     FROM
@@ -518,7 +519,9 @@ WHERE
 SELECT
   *
 FROM
-  booking_types;
+  booking_types
+WHERE
+  active = true;
 
 -- name: GetBookingTypeById :one
 SELECT
@@ -715,10 +718,21 @@ SET
 WHERE
   id = $1
 RETURNING
-  id;
+  *;
+
+-- name: GetEmployeeBookingsCount :one
+SELECT
+  COUNT(*)
+FROM
+  booking_slots bs
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+WHERE
+  a.employee_id = $1;
 
 -- name: DeleteEmployee :one
-DELETE FROM employees
+UPDATE employees
+SET
+  active = false
 WHERE
   id = $1
 RETURNING
@@ -737,8 +751,7 @@ UPDATE availability
 SET
   id = $1,
   employee_id = $2,
-  datetime = $3,
-  type_id = $4,
+  type_id = $3,
   created_at = DEFAULT,
   last_edited = DEFAULT
 WHERE
@@ -761,6 +774,15 @@ VALUES
 RETURNING
   id;
 
+-- name: GetBookingTypeBookingsCount :one
+SELECT
+  COUNT(*)
+FROM
+  booking_slots bs
+  LEFT JOIN availability a ON bs.availability_slot_id = a.id
+WHERE
+  a.type_id = $1;
+
 -- name: UpdateBookingType :one
 UPDATE booking_types
 SET
@@ -778,7 +800,9 @@ RETURNING
   id;
 
 -- name: DeleteBookingType :one
-DELETE FROM booking_types
+UPDATE booking_types
+SET
+  active = false
 WHERE
   id = $1
 RETURNING

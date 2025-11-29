@@ -18,29 +18,6 @@ type HealthResponse struct {
 	Status string `json:"status"`
 }
 
-func jsonContentTypeMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
-}
-
-func corsMiddleware(next http.Handler, appUrl string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", appUrl)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-
-}
-
 func liveHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	err := json.NewEncoder(w).Encode(HealthResponse{Status: "alive"})
@@ -124,55 +101,60 @@ func SetupServer() {
 	mux.HandleFunc("GET /readyz", readyHandler(baseConn, ctx))
 	mux.HandleFunc("GET /livez", liveHandler)
 
-	mux.HandleFunc("POST /booking", postBooking(pool, ctx))
-	mux.HandleFunc("GET /booking", getBooking(pool, ctx))
-	mux.HandleFunc("GET /booking/user", getBookingUser(pool, ctx, a))
-	mux.HandleFunc("GET /booking/{booking_id}", getBooking(pool, ctx))
-	mux.HandleFunc("PUT /booking/{booking_id}", putBooking(pool, ctx))
-	mux.HandleFunc("DELETE /booking/{booking_id}", deleteBooking(pool, ctx))
-	mux.HandleFunc("POST /booking/{booking_id}/payment/manual", postManualPayment(pool, ctx, a))
-	mux.HandleFunc("POST /booking/{booking_id}/cancel", postManualStatus(pool, ctx, a, db.BookingStatusCancelled))
-	mux.HandleFunc("POST /booking/{booking_id}/confirm", postManualStatus(pool, ctx, a, db.BookingStatusConfirmed))
+	mux.HandleFunc("POST /booking", authMiddleware(postBooking(pool, ctx), ctx, pool, a, "USER"))
+	mux.HandleFunc("GET /booking", authMiddleware(getBooking(pool, ctx), ctx, pool, a, "USER"))
+	mux.HandleFunc("GET /booking/user", authMiddleware(getBookingUser(pool, ctx, a), ctx, pool, a, "USER"))
+	mux.HandleFunc("GET /booking/{booking_id}", authMiddleware(getBooking(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("PUT /booking/{booking_id}", authMiddleware(putBooking(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("DELETE /booking/{booking_id}", authMiddleware(deleteBooking(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("POST /booking/{booking_id}/payment/manual", authMiddleware(postManualPayment(pool, ctx, a), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("POST /booking/{booking_id}/cancel", authMiddleware(postManualStatus(pool, ctx, a, db.BookingStatusCancelled), ctx, pool, a, "USER"))
+	mux.HandleFunc("POST /booking/{booking_id}/confirm", authMiddleware(postManualStatus(pool, ctx, a, db.BookingStatusConfirmed), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("POST /booking/{booking_id}/complete", postManualStatus(pool, ctx, a, db.BookingStatusCompleted))
 
-	mux.HandleFunc("POST /user", postUser(pool, ctx))
-	mux.HandleFunc("GET /user/{user_id}", getUser(pool, ctx))
-	mux.HandleFunc("PUT /user/{user_id}", putUser(pool, ctx))
-	mux.HandleFunc("DELETE /user/{user_id}", deleteUser(pool, ctx))
+	mux.HandleFunc("POST /user", authMiddleware(postUser(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /user/{user_id}", authMiddleware(getUser(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("PUT /user/{user_id}", authMiddleware(putUser(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("DELETE /user/{user_id}", authMiddleware(deleteUser(pool, ctx), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("GET /userByEmail", getUserByEmail(pool, ctx))
 
 	mux.HandleFunc("POST /auth/login", postLogin(pool, ctx, a))
 	mux.HandleFunc("POST /auth/logout", postLogout(pool, ctx, a))
 	mux.HandleFunc("POST /auth/register", postRegister(pool, ctx, a))
 	mux.HandleFunc("GET /auth/session/status", getSessionStatus(pool, ctx, a))
-	mux.HandleFunc("POST /auth/session/refresh", postSessionRefresh(pool, ctx, a))
-	mux.HandleFunc("POST /auth/raise", postRaise(pool, ctx, a))
-	mux.HandleFunc("GET /auth/requests", getAllRequests(pool, ctx, a))
-	mux.HandleFunc("POST /auth/request/approve/{request_id}", postApproveRequest(pool, ctx, a))
-	mux.HandleFunc("POST /auth/request/reject/{request_id}", postRejectRequest(pool, ctx, a))
+	mux.HandleFunc("POST /auth/raise", authMiddleware(postRaise(pool, ctx, a), ctx, pool, a, "USER"))
+	mux.HandleFunc("GET /auth/requests", authMiddleware(getAllRequests(pool, ctx, a), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("POST /auth/request/approve/{request_id}", authMiddleware(postApproveRequest(pool, ctx, a), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("POST /auth/request/reject/{request_id}", authMiddleware(postRejectRequest(pool, ctx, a), ctx, pool, a, "ADMIN"))
 	// mux.HandleFunc("POST /auth/change-password", postChangePassword())
 	// mux.HandleFunc("POST /auth/reset-password", postResetPassword())
 	// mux.HandleFunc("POST /auth/forgot-password", postForgotPassword())
 
-	mux.HandleFunc("POST /employee", postEmployee(pool, ctx))
-	mux.HandleFunc("GET /employee/{employee_id}", getEmployee(pool, ctx))
-	mux.HandleFunc("GET /employee/", getEmployee(pool, ctx))
-	mux.HandleFunc("PUT /employee/{employee_id}", putEmployee(pool, ctx))
-	mux.HandleFunc("DELETE /employee/{employee_id}", deleteEmployee(pool, ctx))
+	mux.HandleFunc("POST /employee", authMiddleware(postEmployee(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /employee/{employee_id}", authMiddleware(getEmployee(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /employee", authMiddleware(getEmployee(pool, ctx), ctx, pool, a, "USER"))
+	mux.HandleFunc("PUT /employee/{employee_id}", authMiddleware(putEmployee(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("DELETE /employee/{employee_id}", authMiddleware(deleteEmployee(pool, ctx), ctx, pool, a, "ADMIN"))
 
-	mux.HandleFunc("POST /booking_type", postBookingType(pool, ctx))
-	mux.HandleFunc("GET /booking_type/{type_id}", getBookingType(pool, ctx))
-	mux.HandleFunc("GET /booking_type/", getBookingType(pool, ctx))
-	mux.HandleFunc("PUT /booking_type/{type_id}", putBookingType(pool, ctx))
-	mux.HandleFunc("DELETE /booking_type/{type_id}", deleteBookingType(pool, ctx))
+	mux.HandleFunc("POST /booking_type", authMiddleware(postBookingType(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /booking_type/{type_id}", authMiddleware(getBookingType(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /booking_type/", authMiddleware(getBookingType(pool, ctx), ctx, pool, a, "USER"))
+	mux.HandleFunc("PUT /booking_type/{type_id}", authMiddleware(putBookingType(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("DELETE /booking_type/{type_id}", authMiddleware(deleteBookingType(pool, ctx), ctx, pool, a, "ADMIN"))
 
-	mux.HandleFunc("POST /availability", postAvailabilitySlot(pool, ctx))
-	mux.HandleFunc("GET /availability/{availability_slot_id}", getAvailabilitySlot(pool, ctx))
-	mux.HandleFunc("GET /availability/free", getFreeAvailabilitySlots(pool, ctx, a))
-	mux.HandleFunc("GET /availability/", getAvailabilitySlot(pool, ctx))
-	mux.HandleFunc("PUT /availability/", putAvailabilitySlot(pool, ctx))
-	mux.HandleFunc("DELETE /availability/{availability_slot_id}", deleteAvailabilitySlot(pool, ctx, a, false))
-	mux.HandleFunc("DELETE /availability/", deleteAvailabilitySlot(pool, ctx, a, false))
+	mux.HandleFunc("POST /availability", authMiddleware(postAvailabilitySlot(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /availability/{availability_slot_id}", authMiddleware(getAvailabilitySlot(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /availability/free", authMiddleware(getFreeAvailabilitySlots(pool, ctx, a), ctx, pool, a, "USER"))
+	mux.HandleFunc("GET /availability/", authMiddleware(getAvailabilitySlot(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("PUT /availability/", authMiddleware(putAvailabilitySlot(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("DELETE /availability/{availability_slot_id}", authMiddleware(deleteAvailabilitySlot(pool, ctx, a, false), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("DELETE /availability/", authMiddleware(deleteAvailabilitySlot(pool, ctx, a, false), ctx, pool, a, "ADMIN"))
+
+	mux.HandleFunc("GET /stats/hour", authMiddleware(getStats(pool, ctx, "hour"), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /stats/day", authMiddleware(getStats(pool, ctx, "day"), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /stats/week", authMiddleware(getStats(pool, ctx, "week"), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /stats/month", authMiddleware(getStats(pool, ctx, "month"), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /stats/year", authMiddleware(getStats(pool, ctx, "year"), ctx, pool, a, "ADMIN"))
 
 	err = http.ListenAndServe(":8000", corsMiddleware(jsonContentTypeMiddleware(mux), appUrl))
 	if err != nil {

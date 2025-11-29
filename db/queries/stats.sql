@@ -402,6 +402,90 @@ SELECT
       prev
   ) as delta;
 
+-- name: MonthlyConfirmedDelta :one
+with
+  curr as (
+    SELECT
+      b.id
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.status = 'confirmed'
+      and (a.datetime > now() - interval '30 day')
+    GROUP BY
+      b.id
+  ),
+  prev as (
+    SELECT
+      b.id
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.status = 'confirmed'
+      and (a.datetime < now() - interval '30 day')
+      and (a.datetime > now() - interval '60 day')
+    GROUP BY
+      b.id
+  )
+SELECT
+  (
+    SELECT
+      COUNT(*)
+    FROM
+      curr
+  ) - (
+    SELECT
+      COUNT(*)
+    FROM
+      prev
+  ) as delta;
+
+-- name: MonthlyCompletedDelta :one
+with
+  curr as (
+    SELECT
+      b.id
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.status = 'completed'
+      and (a.datetime > now() - interval '30 day')
+    GROUP BY
+      b.id
+  ),
+  prev as (
+    SELECT
+      b.id
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.status = 'completed'
+      and (a.datetime < now() - interval '30 day')
+      and (a.datetime > now() - interval '60 day')
+    GROUP BY
+      b.id
+  )
+SELECT
+  (
+    SELECT
+      COUNT(*)
+    FROM
+      curr
+  ) - (
+    SELECT
+      COUNT(*)
+    FROM
+      prev
+  ) as delta;
+
 -- name: MonthlyUserDelta :one
 SELECT
   COUNT(*)

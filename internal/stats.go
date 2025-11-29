@@ -141,6 +141,20 @@ func statsQuery(query *db.Queries, ctx context.Context, t string) (QueryResponse
 	}
 	qr.MetaData.MonthlyUnpaidDelta = int64(monthlyUnpaidDelta)
 
+	monthlyCompletedDelta, err := query.MonthlyCompletedDelta(ctx)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("error getting monthly completed delta in statsQuery")
+		return QueryResponse{}, err
+	}
+	qr.MetaData.MonthlyCompletedDelta = int64(monthlyCompletedDelta)
+
+	monthlyConfirmedDelta, err := query.MonthlyConfirmedDelta(ctx)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("error getting monthly confirmed delta in statsQuery")
+		return QueryResponse{}, err
+	}
+	qr.MetaData.MonthlyConfirmedDelta = int64(monthlyConfirmedDelta)
+
 	allBookings, err := query.TotalBookings(ctx)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		log.Printf("error getting all bookings in statsQuery")

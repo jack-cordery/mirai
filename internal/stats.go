@@ -16,10 +16,6 @@ import (
 
 func getStats(pool *pgxpool.Pool, ctx context.Context, t string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// ok so in here we need to get various stats which will be
-		// some kind of sequence of SQL queries
-		// we will begin a tx just for best pracitce
-
 		conn, err := pool.Acquire(ctx)
 		if err != nil {
 			log.Printf("error aquiring connection in getStats: %v", err)
@@ -69,9 +65,6 @@ func getStats(pool *pgxpool.Pool, ctx context.Context, t string) http.HandlerFun
 	}
 }
 
-// i also want data that looks like {date: "", total, cancelled, confirmed, ...}}
-// write queires for date stuff, and call it below
-
 type DataByDate struct {
 	Date pgtype.Timestamp `json:"date"`
 	Data Data             `json:"data"`
@@ -90,7 +83,7 @@ type Data struct {
 }
 
 type Meta struct {
-	Users                 int64 `json:"users"`                   // total users not admins
+	Users                 int64 `json:"users"`                   // total users including
 	MonthlyPaidDelta      int64 `json:"paid_monthly_delta"`      // last 30 days vs prev 30 days
 	MonthlyUnpaidDelta    int64 `json:"unpaid_monthly_delta"`    // last 30 days vs prev 30 days
 	MonthlyUserDelta      int64 `json:"user_monthly_delta"`      // how many accerued in last 30 days
@@ -109,7 +102,7 @@ type QueryResponse struct {
 	MetaData Meta         `json:"meta"`
 }
 
-// / statsQuery queries the db and returns the stats required by the client
+// statsQuery queries the db and returns the stats required by the client
 func statsQuery(query *db.Queries, ctx context.Context, t string) (QueryResponse, error) {
 	var qr QueryResponse
 

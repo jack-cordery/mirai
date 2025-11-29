@@ -89,20 +89,36 @@ type Data struct {
 	TotalPaidBookings      TotalPair `json:"paid"`
 }
 
+type Meta struct {
+	Users                 int64 `json:"users"`                   // total users not admins
+	MonthlyPaidDelta      int64 `json:"paid_monthly_delta"`      // last 30 days vs prev 30 days
+	MonthlyUnPaidDelta    int64 `json:"unpaid_monthly_delta"`    // last 30 days vs prev 30 days
+	MonthlyUserDelta      int64 `json:"user_monthly_delta"`      // how many accerued in last 30 days
+	MonthlyCompletedDelta int64 `json:"completed_monthly_delta"` // last 30 days vs prev 30 days
+	MonthlyConfirmedDelta int64 `json:"confirmed_monthly_delta"` // last 30 days vs prev 30 days
+}
+
 type TotalPair struct {
 	Frequency int64 `json:"frequency"`
 	Cost      int32 `json:"cost"`
 }
 
 type QueryResponse struct {
-	Totals Data         `json:"totals"`
-	ByDate []DataByDate `json:"by_date"`
+	Totals   Data         `json:"totals"`
+	ByDate   []DataByDate `json:"by_date"`
+	MetaData Meta         `json:"meta"`
 }
 
 // / statsQuery queries the db and returns the stats required by the client
 func statsQuery(query *db.Queries, ctx context.Context, t string) (QueryResponse, error) {
-	// TODO: use concurrency
 	var qr QueryResponse
+
+	userCount, err := query.TotalUsers(ctx)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("error getting user count in statsQuery")
+		return QueryResponse{}, err
+	}
+	qr.MetaData.Users = userCount
 
 	allBookings, err := query.TotalBookings(ctx)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {

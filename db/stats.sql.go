@@ -680,3 +680,16 @@ func (q *Queries) TotalPaidBookingsBy(ctx context.Context, dollar_1 string) ([]T
 	}
 	return items, nil
 }
+
+const totalUsers = `-- name: TotalUsers :one
+SELECT 
+  COUNT(*) as count
+  FROM users
+`
+
+func (q *Queries) TotalUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, totalUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}

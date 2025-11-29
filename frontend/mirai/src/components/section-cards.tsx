@@ -1,4 +1,4 @@
-import { IconTrendingUp } from "@tabler/icons-react"
+import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -24,34 +24,48 @@ export function SectionCards() {
                                         </CardTitle>
                                         <CardAction>
                                                 <Badge variant="outline">
-                                                        <IconTrendingUp />
-                                                        +12.5%
+                                                        {((statsData?.meta.paid_monthly_delta ?? 0) >= 0) ? <IconTrendingUp className="text-green-500" /> : <IconTrendingDown className="text-red-500" />}
+                                                        {((statsData?.meta.paid_monthly_delta ?? 0) >= 0) ? "+" : "-"}
+                                                        £{((statsData?.meta.paid_monthly_delta ?? 0) / 100).toFixed(2)}
                                                 </Badge>
                                         </CardAction>
                                 </CardHeader>
                                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                                        <div className="line-clamp-1 flex gap-2 font-medium">
-                                                Trending up this month <IconTrendingUp className="size-4" />
-                                        </div>
+                                        {(statsData?.meta.paid_monthly_delta ?? 0) >= 0 ? (
+                                                <div className="line-clamp-1 flex gap-2 font-medium">
+                                                        Trending up this month <IconTrendingUp className="size-4" />
+                                                </div>
+                                        ) : (
+                                                <div className="line-clamp-1 flex gap-2 font-medium">
+                                                        Trending down this month <IconTrendingDown className="size-4" />
+                                                </div>
+                                        )}
                                 </CardFooter>
                         </Card>
                         <Card className="@container/card">
                                 <CardHeader>
-                                        <CardDescription>Total Unpaid</CardDescription>
+                                        <CardDescription>Total Users</CardDescription>
                                         <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                                                £{((statsData?.totals.open_not_paid.cost ?? 0) / 100).toFixed(2)}
+                                                {(statsData?.meta.users ?? 0)}
                                         </CardTitle>
                                         <CardAction>
                                                 <Badge variant="outline">
-                                                        <IconTrendingUp />
-                                                        +12.5%
+                                                        {((statsData?.meta.user_monthly_delta ?? 0) >= 0) ? <IconTrendingUp className="text-green-500" /> : <IconTrendingDown className="text-red-500" />}
+                                                        {((statsData?.meta.user_monthly_delta ?? 0) >= 0) ? "+" : "-"}
+                                                        {(statsData?.meta.user_monthly_delta ?? 0)}
                                                 </Badge>
                                         </CardAction>
                                 </CardHeader>
                                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                                        <div className="line-clamp-1 flex gap-2 font-medium">
-                                                Trending up this month <IconTrendingUp className="size-4" />
-                                        </div>
+                                        {(statsData?.meta.user_monthly_delta ?? 0) >= 0 ? (
+                                                <div className="line-clamp-1 flex gap-2 font-medium">
+                                                        Trending up this month <IconTrendingUp className="size-4" />
+                                                </div>
+                                        ) : (
+                                                <div className="line-clamp-1 flex gap-2 font-medium">
+                                                        Trending down this month <IconTrendingDown className="size-4" />
+                                                </div>
+                                        )}
                                 </CardFooter>
                         </Card>
                         <Card className="@container/card">
@@ -62,36 +76,50 @@ export function SectionCards() {
                                         </CardTitle>
                                         <CardAction>
                                                 <Badge variant="outline">
-                                                        <IconTrendingUp />
-                                                        +12.5%
+                                                        {((statsData?.meta.completed_monthly_delta ?? 0) >= 0) ? <IconTrendingUp className="text-green-500" /> : <IconTrendingDown className="text-red-500" />}
+                                                        {((statsData?.meta.completed_monthly_delta ?? 0) >= 0) ? "+" : "-"}
+                                                        {(statsData?.meta.completed_monthly_delta ?? 0)}
                                                 </Badge>
                                         </CardAction>
                                 </CardHeader>
                                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                                        <div className="line-clamp-1 flex gap-2 font-medium">
-                                                Trending up this month <IconTrendingUp className="size-4" />
-                                        </div>
+                                        {(statsData?.meta.completed_monthly_delta ?? 0) >= 0 ? (
+                                                <div className="line-clamp-1 flex gap-2 font-medium">
+                                                        Trending up this month <IconTrendingUp className="size-4" />
+                                                </div>
+                                        ) : (
+                                                <div className="line-clamp-1 flex gap-2 font-medium">
+                                                        Trending down this month <IconTrendingDown className="size-4" />
+                                                </div>
+                                        )}
                                 </CardFooter>
                         </Card>
                         <Card className="@container/card">
                                 <CardHeader>
-                                        <CardDescription>Total Comfirmed Bookings</CardDescription>
+                                        <CardDescription>Total Confirmed Bookings</CardDescription>
                                         <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
                                                 {(statsData?.totals.confirmed.frequency ?? 0)}
                                         </CardTitle>
                                         <CardAction>
                                                 <Badge variant="outline">
-                                                        <IconTrendingUp />
-                                                        +12.5%
+                                                        {((statsData?.meta.confirmed_monthly_delta ?? 0) >= 0) ? <IconTrendingUp className="text-green-500" /> : <IconTrendingDown className="text-red-500" />}
+                                                        {((statsData?.meta.confirmed_monthly_delta ?? 0) >= 0) ? "+" : "-"}
+                                                        {(statsData?.meta.confirmed_monthly_delta ?? 0)}
                                                 </Badge>
                                         </CardAction>
                                 </CardHeader>
                                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
-                                        <div className="line-clamp-1 flex gap-2 font-medium">
-                                                Trending up this month <IconTrendingUp className="size-4" />
-                                        </div>
+                                        {(statsData?.meta.confirmed_monthly_delta ?? 0) >= 0 ? (
+                                                <div className="line-clamp-1 flex gap-2 font-medium">
+                                                        Trending up this month <IconTrendingUp className="size-4" />
+                                                </div>
+                                        ) : (
+                                                <div className="line-clamp-1 flex gap-2 font-medium">
+                                                        Trending down this month <IconTrendingDown className="size-4" />
+                                                </div>
+                                        )}
                                 </CardFooter>
                         </Card>
-                </div>
+                </div >
         )
 }

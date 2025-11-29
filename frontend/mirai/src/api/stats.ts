@@ -37,7 +37,17 @@ export type DataByDate = {
   data: Data;
 };
 
+export type MetaData = {
+  users: number;
+  paid_monthly_delta: number;
+  unpaid_monthly_delta: number;
+  user_monthly_delta: number;
+  completed_monthly_delta: number;
+  confirmed_monthly_delta: number;
+};
+
 export type GetStatsResponse = {
   totals: Data;
   by_date: DataByDate[];
+  meta: MetaData;
 };

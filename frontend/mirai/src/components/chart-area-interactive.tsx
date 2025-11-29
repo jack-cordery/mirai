@@ -27,8 +27,8 @@ import {
         ToggleGroup,
         ToggleGroupItem,
 } from "@/components/ui/toggle-group"
-import { getStats, type GetStatsResponse, type ByDate, type DataByDate, type Data } from "@/api/stats"
-import { toast } from "sonner"
+import { useTableContext } from "@/contexts/table-context"
+import type { DataByDate } from "@/api/stats"
 
 export const description = "An interactive area chart"
 
@@ -45,30 +45,14 @@ const chartConfig = {
 
 export function ChartAreaInteractive() {
         const isMobile = useIsMobile()
+        const { statsData } = useTableContext()
         const [timeRange, setTimeRange] = React.useState("90d")
-        const [chartData, setChartData] = React.useState<DataByDate[]>([])
-        const [statsData, setStatsData] = React.useState<Data | null>(null)
         const [filteredData, setFilteredData] = React.useState<DataByDate[]>([])
 
-
         React.useEffect(() => {
-                async function fetchData() {
-                        try {
-                                const res: GetStatsResponse = await getStats("day");
-                                setChartData(res.by_date);
-                                setStatsData(res.totals);
-                        } catch {
-                                toast("failed to fetch stats");
-                        }
-                }
+                if (!statsData?.by_date.length) return;
 
-                fetchData();
-        }, []);
-
-        React.useEffect(() => {
-                if (!chartData.length) return;
-
-                const filtered = chartData.filter((item) => {
+                const filtered = statsData.by_date.filter((item) => {
                         const date = new Date(item.date);
                         const referenceDate = new Date();
 
@@ -83,7 +67,7 @@ export function ChartAreaInteractive() {
                 });
 
                 setFilteredData(filtered);
-        }, [chartData, timeRange]);
+        }, [statsData, timeRange]);
 
         React.useEffect(() => {
                 if (isMobile) {
@@ -243,14 +227,14 @@ export function ChartAreaInteractive() {
                                                 />
                                                 <Area
                                                         dataKey="data.open_paid.cost"
-                                                        type="natural"
+                                                        type="linear"
                                                         fill="url(#fillPaid)"
                                                         stroke="var(--color-paid)"
                                                         stackId="a"
                                                 />
                                                 <Area
                                                         dataKey="data.open_not_paid.cost"
-                                                        type="natural"
+                                                        type="linear"
                                                         fill="url(#fillNotPaid)"
                                                         stroke="var(--color-notPaid)"
                                                         stackId="a"

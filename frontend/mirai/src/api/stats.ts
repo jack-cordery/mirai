@@ -21,14 +21,15 @@ type TotalPair = {
 };
 
 export type Data = {
-  total: TotalPair;
+  all: TotalPair;
   cancelled: TotalPair;
   completed: TotalPair;
   created: TotalPair;
+  confirmed: TotalPair;
   open: TotalPair;
   open_not_paid: TotalPair;
   open_paid: TotalPair;
-  total_paid: TotalPair;
+  paid: TotalPair;
 };
 
 export type DataByDate = {

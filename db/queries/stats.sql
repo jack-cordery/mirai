@@ -1,3 +1,9 @@
+-- name: TotalUsers :one
+SELECT
+  COUNT(*) as count
+FROM
+  users;
+
 -- name: TotalBookings :one
 SELECT
   COUNT(*) as total_count,

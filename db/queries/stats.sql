@@ -313,3 +313,47 @@ FROM
     GROUP BY
       date_trunc($1::text, bh.start_time)::timestamp
   ) as c on o.date = c.date;
+
+-- name: MonthlyPaidDelta :one
+with
+  curr as (
+    SELECT
+      b.id,
+      b.cost as cost
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.paid = true
+      and (a.datetime > now() - interval '30 day')
+    GROUP BY
+      b.id
+  ),
+  prev as (
+    SELECT
+      b.id,
+      b.cost as cost
+    FROM
+      bookings as b
+      LEFT JOIN booking_slots as bs on b.id = bs.booking_id
+      LEFT JOIN availability as a on bs.availability_slot_id = a.id
+    WHERE
+      b.paid = true
+      and (a.datetime < now() - interval '30 day')
+      and (a.datetime > now() - interval '60 day')
+    GROUP BY
+      b.id
+  )
+SELECT
+  (
+    SELECT
+      COALESCE(sum(cost), 0)
+    FROM
+      curr
+  ) - (
+    SELECT
+      COALESCE(sum(cost), 0)
+    FROM
+      prev
+  ) as delta;

@@ -120,6 +120,13 @@ func statsQuery(query *db.Queries, ctx context.Context, t string) (QueryResponse
 	}
 	qr.MetaData.Users = userCount
 
+	userDelta, err := query.MonthlyUserDelta(ctx)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("error getting user delta in statsQuery")
+		return QueryResponse{}, err
+	}
+	qr.MetaData.MonthlyUserDelta = userDelta
+
 	monthlyPaidDelta, err := query.MonthlyPaidDelta(ctx)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		log.Printf("error getting monthly paid delta in statsQuery")

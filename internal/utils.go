@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"errors"
+	"log"
 	"math/big"
 	"slices"
 	"time"

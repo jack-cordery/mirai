@@ -401,3 +401,11 @@ SELECT
     FROM
       prev
   ) as delta;
+
+-- name: MonthlyUserDelta :one
+SELECT
+  COUNT(*)
+FROM
+  users
+WHERE
+  created_at > now() - interval '30 day';

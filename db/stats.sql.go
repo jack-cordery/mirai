@@ -115,6 +115,17 @@ func (q *Queries) MonthlyUnpaidDelta(ctx context.Context) (int32, error) {
 	return delta, err
 }
 
+const monthlyUserDelta = `-- name: MonthlyUserDelta :one
+   SELECT COUNT(*) FROM users WHERE created_at > now() - interval '30 day'
+`
+
+func (q *Queries) MonthlyUserDelta(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, monthlyUserDelta)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const totalBookings = `-- name: TotalBookings :one
 SELECT
   COUNT(*) as total_count,

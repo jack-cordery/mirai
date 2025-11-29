@@ -336,7 +336,6 @@ func putAvailabilitySlot(pool *pgxpool.Pool, ctx context.Context) http.HandlerFu
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		log.Printf("put request with %v", availabilitySlotRequest)
 
 		conn, err := pool.Acquire(ctx)
 		if err != nil {

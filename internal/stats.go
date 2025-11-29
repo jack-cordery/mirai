@@ -92,7 +92,7 @@ type Data struct {
 type Meta struct {
 	Users                 int64 `json:"users"`                   // total users not admins
 	MonthlyPaidDelta      int64 `json:"paid_monthly_delta"`      // last 30 days vs prev 30 days
-	MonthlyUnPaidDelta    int64 `json:"unpaid_monthly_delta"`    // last 30 days vs prev 30 days
+	MonthlyUnpaidDelta    int64 `json:"unpaid_monthly_delta"`    // last 30 days vs prev 30 days
 	MonthlyUserDelta      int64 `json:"user_monthly_delta"`      // how many accerued in last 30 days
 	MonthlyCompletedDelta int64 `json:"completed_monthly_delta"` // last 30 days vs prev 30 days
 	MonthlyConfirmedDelta int64 `json:"confirmed_monthly_delta"` // last 30 days vs prev 30 days
@@ -126,6 +126,13 @@ func statsQuery(query *db.Queries, ctx context.Context, t string) (QueryResponse
 		return QueryResponse{}, err
 	}
 	qr.MetaData.MonthlyPaidDelta = int64(monthlyPaidDelta)
+
+	monthlyUnpaidDelta, err := query.MonthlyUnpaidDelta(ctx)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("error getting monthly unpaid delta in statsQuery")
+		return QueryResponse{}, err
+	}
+	qr.MetaData.MonthlyUnpaidDelta = int64(monthlyUnpaidDelta)
 
 	allBookings, err := query.TotalBookings(ctx)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {

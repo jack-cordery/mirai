@@ -2,6 +2,7 @@ import { getAllRequests } from "@/api/auth";
 import { getAllBookingTypes, type GetBookingTypeResponse } from "@/api/booking-type";
 import { getAllBookings, type GetAllBookingsResponse } from "@/api/bookings";
 import { getAllEmployees, type GetEmployeeResponse } from "@/api/employee";
+import { getStats, type GetStatsResponse } from "@/api/stats";
 import type { GetAllRequestsResponse } from "@/types/user";
 import React, { createContext, useContext, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -17,6 +18,8 @@ type TableContextType = {
         setEmployeeData: React.Dispatch<React.SetStateAction<GetEmployeeResponse[]>>;
         bookingTypeData: GetBookingTypeResponse[];
         setBookingTypeData: React.Dispatch<React.SetStateAction<GetBookingTypeResponse[]>>;
+        statsData: GetStatsResponse | null;
+        setStatsData: React.Dispatch<React.SetStateAction<GetStatsResponse | null>>;
         isPaidModalOpen: boolean;
         setIsPaidModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
         isCancelModalOpen: boolean;
@@ -64,6 +67,7 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
         const [bookingData, setBookingData] = React.useState<GetAllBookingsResponse[]>([]);
         const [employeeData, setEmployeeData] = React.useState<GetEmployeeResponse[]>([]);
         const [bookingTypeData, setBookingTypeData] = React.useState<GetBookingTypeResponse[]>([]);
+        const [statsData, setStatsData] = React.useState<GetStatsResponse | null>(null);
         const [isPaidModalOpen, setIsPaidModalOpen] = React.useState<boolean>(false);
         const [isCancelModalOpen, setIsCancelModalOpen] = React.useState<boolean>(false);
         const [isConfirmModalOpen, setIsConfirmModalOpen] = React.useState<boolean>(false);
@@ -83,15 +87,16 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
 
         const fetchTableData = async () => {
                 try {
-                        const [requestRes, bookingRes, employeeRes, bookingTypeRes]: [GetAllRequestsResponse[], GetAllBookingsResponse[], GetEmployeeResponse[], GetBookingTypeResponse[]]
+                        const [requestRes, bookingRes, employeeRes, bookingTypeRes, statsRes]: [GetAllRequestsResponse[], GetAllBookingsResponse[], GetEmployeeResponse[], GetBookingTypeResponse[], GetStatsResponse]
                                 = await Promise.all(
-                                        [getAllRequests(), getAllBookings(), getAllEmployees(), getAllBookingTypes()]
+                                        [getAllRequests(), getAllBookings(), getAllEmployees(), getAllBookingTypes(), getStats("day")]
                                 );
                         setRequestData(requestRes ?? []);
                         setNumPending(requestData.filter(r => r.status === "PENDING").length);
                         setBookingData(bookingRes ?? []);
                         setEmployeeData(employeeRes ?? []);
                         setBookingTypeData(bookingTypeRes ?? []);
+                        setStatsData(statsRes)
                 } catch (err) {
                         toast("data fetch failed, please try again later")
                 }
@@ -110,6 +115,8 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                         setEmployeeData,
                         bookingTypeData,
                         setBookingTypeData,
+                        statsData,
+                        setStatsData,
                         isPaidModalOpen,
                         setIsPaidModalOpen,
                         isCancelModalOpen,

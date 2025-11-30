@@ -74,7 +74,6 @@ import {
         TabsContent,
 } from "@/components/ui/tabs"
 import { useTableContext } from "@/contexts/table-context"
-import { DraggableRow } from "./data-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CancelModal, CompleteModal, ConfirmModal, PaidModal } from "./booking-table-modals"
 import { ArrowUpDown } from "lucide-react"
@@ -434,7 +433,16 @@ export function BookingsTable() {
                                                                         strategy={verticalListSortingStrategy}
                                                                 >
                                                                         {table.getRowModel().rows.map((row) => (
-                                                                                <DraggableRow key={row.id} row={row} />
+
+                                                                                <TableRow
+                                                                                        data-state={row.getIsSelected() && "selected"}
+                                                                                >
+                                                                                        {row.getVisibleCells().map((cell) => (
+                                                                                                <TableCell key={cell.id}>
+                                                                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                                                                </TableCell>
+                                                                                        ))}
+                                                                                </TableRow>
                                                                         ))}
                                                                 </SortableContext>
                                                         ) : (

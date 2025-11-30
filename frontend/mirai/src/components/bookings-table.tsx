@@ -93,6 +93,7 @@ export const BookingDataSchema = z.object({
         employee_title: z.string(),
         type_id: z.number(),
         type_title: z.string(),
+        type_duration: z.number(),
         paid: z.boolean(),
         cost: z.number(),
         status: z.string(),

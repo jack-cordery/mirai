@@ -409,15 +409,6 @@ func putBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		// TODO:
-		// ok so update only changes the fields in the booking table and does nothing with the slots
-		// lol - we need to add a record to history and we need to delete the booking slots
-		// associated with the booking and we need to add the new requested slots
-		// ok so all i need to do is delete the entries in booking_slots and then recreate
-		// with the new start_time / end_time
-
-		// TODO: this is failed because of some kind of null in employee id
-		// but when i run the query i dont get an error
 		bookingRow, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{
 			Column1: Unit,
 			ID:      int32(id),
@@ -473,14 +464,6 @@ func putBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			Status:          db.BookingStatusRescheduled,
 			ChangedByEmail:  bookingRow.StatusUpdatedBy,
 		})
-
-		// TODO: ok so now all i need to do is create a booking slot entry
-		// linking to availability slot, being careful that the availabiliity
-		// is the correct type and employee
-		// ok so lets convert start time and endtitme to 30min intervals
-		// and get the availability slot ids and the just slap them into
-		// the booking slots table
-		// i also need to recalcylate the cost because the time can change
 
 		slots, err := spanToSlots(bookingRequest.StartTime, bookingRequest.EndTime, Unit)
 		if err != nil {

@@ -485,6 +485,14 @@ WHERE
 LIMIT
   1;
 
+-- name: GetAvailabilitySlotsFromSpanSlots :many
+SELECT
+  *
+FROM
+  availability
+WHERE
+  datetime = ANY($1::timestamp[]) and type_id = $2 and employee_id = $3;
+
 -- name: GetAvailabilitySlotByIds :many
 SELECT
   *
@@ -618,12 +626,11 @@ FROM
 -- name: UpdateBooking :one
 UPDATE bookings
 SET
-  user_id = $2,
-  type_id = $3,
-  paid = $4,
-  cost = $5,
-  notes = $6,
-  status_updated_by = $7,
+  type_id = $2,
+  paid = $3,
+  cost = $4,
+  notes = $5,
+  status_updated_by = $6,
   last_edited = DEFAULT
 WHERE
   id = $1
@@ -674,6 +681,11 @@ DELETE FROM booking_slots
 WHERE
   booking_id = $1
   AND availability_slot_id = $2;
+
+-- name: ClearBookingSlots :exec
+DELETE FROM booking_slots
+WHERE
+  booking_id = $1;
 
 -- name: CreateBookingHistory :exec
 INSERT INTO

@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const clearBookingSlots = `-- name: ClearBookingSlots :exec
+DELETE FROM booking_slots
+WHERE
+  booking_id = $1
+`
+
+func (q *Queries) ClearBookingSlots(ctx context.Context, bookingID int32) error {
+	_, err := q.db.Exec(ctx, clearBookingSlots, bookingID)
+	return err
+}
+
 const createAvailabilitySlot = `-- name: CreateAvailabilitySlot :one
 INSERT INTO
   availability (employee_id, datetime, type_id)
@@ -1022,6 +1033,48 @@ func (q *Queries) GetAvailabilitySlotByIds(ctx context.Context, dollar_1 []int32
 	return items, nil
 }
 
+const getAvailabilitySlotsFromSpanSlots = `-- name: GetAvailabilitySlotsFromSpanSlots :many
+SELECT
+  id, employee_id, datetime, type_id, created_at, last_edited
+FROM
+  availability
+WHERE
+  datetime = ANY($1::timestamp[]) and type_id = $2 and employee_id = $3
+`
+
+type GetAvailabilitySlotsFromSpanSlotsParams struct {
+	Column1    []pgtype.Timestamp `json:"column_1"`
+	TypeID     int32              `json:"type_id"`
+	EmployeeID int32              `json:"employee_id"`
+}
+
+func (q *Queries) GetAvailabilitySlotsFromSpanSlots(ctx context.Context, arg GetAvailabilitySlotsFromSpanSlotsParams) ([]Availability, error) {
+	rows, err := q.db.Query(ctx, getAvailabilitySlotsFromSpanSlots, arg.Column1, arg.TypeID, arg.EmployeeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Availability
+	for rows.Next() {
+		var i Availability
+		if err := rows.Scan(
+			&i.ID,
+			&i.EmployeeID,
+			&i.Datetime,
+			&i.TypeID,
+			&i.CreatedAt,
+			&i.LastEdited,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getBookingById = `-- name: GetBookingById :one
 SELECT
   b.id,
@@ -1429,12 +1482,11 @@ func (q *Queries) UpdateAvailabilitySlot(ctx context.Context, arg UpdateAvailabi
 const updateBooking = `-- name: UpdateBooking :one
 UPDATE bookings
 SET
-  user_id = $2,
-  type_id = $3,
-  paid = $4,
-  cost = $5,
-  notes = $6,
-  status_updated_by = $7,
+  type_id = $2,
+  paid = $3,
+  cost = $4,
+  notes = $5,
+  status_updated_by = $6,
   last_edited = DEFAULT
 WHERE
   id = $1
@@ -1444,7 +1496,6 @@ RETURNING
 
 type UpdateBookingParams struct {
 	ID              int32       `json:"id"`
-	UserID          int32       `json:"user_id"`
 	TypeID          int32       `json:"type_id"`
 	Paid            bool        `json:"paid"`
 	Cost            int32       `json:"cost"`
@@ -1455,7 +1506,6 @@ type UpdateBookingParams struct {
 func (q *Queries) UpdateBooking(ctx context.Context, arg UpdateBookingParams) (int32, error) {
 	row := q.db.QueryRow(ctx, updateBooking,
 		arg.ID,
-		arg.UserID,
 		arg.TypeID,
 		arg.Paid,
 		arg.Cost,

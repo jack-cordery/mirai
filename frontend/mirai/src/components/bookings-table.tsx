@@ -77,6 +77,10 @@ import { useTableContext } from "@/contexts/table-context"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CancelModal, CompleteModal, ConfirmModal, PaidModal } from "./booking-table-modals"
 import { ArrowUpDown } from "lucide-react"
+import { useScheduler } from "@/providers/schedular-provider"
+import { useModal } from "@/providers/modal-context"
+import CustomModal from "./ui/custom-modal"
+import { EditEventModal } from "./schedule/_modals/add-event-modal"
 
 export const BookingDataSchema = z.object({
         id: z.number(),
@@ -118,6 +122,26 @@ export function BookingsTable() {
                 setCompleteModalRow,
                 setIsCompleteModalOpen,
         } = useTableContext();
+
+
+        const { setOpen } = useModal();
+        const { events } = useScheduler();
+        // const { employeeOptions, typeOptions } = useScheduler();
+        // const typeLabel = typeOptions.find((t) => t.id === event?.typeId)?.label;
+        // const employeeLabel = employeeOptions.find((e) => e.id === event?.employeeId)?.label;
+        // events.events.
+
+
+        // Modal handler
+        function handleEditEvent(event: Event) {
+                setOpen(
+                        <CustomModal title="Edit Event">
+                                <EditEventModal />
+                        </CustomModal>,
+                        async () => ({ ...event })
+                );
+        }
+
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =
                 React.useState<VisibilityState>({})
@@ -327,7 +351,9 @@ export function BookingsTable() {
                                                         }
                                                         }>Payment</DropdownMenuItem>
                                                 }
-                                                <DropdownMenuItem >Reschedule</DropdownMenuItem>
+                                                {(row.original.status !== "cancelled")
+                                                        && (row.original.status !== "completed")
+                                                        && <DropdownMenuItem  >Reschedule</DropdownMenuItem>}
                                                 {!(row.original.status === "cancelled") &&
                                                         < DropdownMenuItem onClick={async () => {
                                                                 setIsCancelModalOpen(true);
@@ -436,6 +462,7 @@ export function BookingsTable() {
 
                                                                                 <TableRow
                                                                                         data-state={row.getIsSelected() && "selected"}
+                                                                                        key={row.id}
                                                                                 >
                                                                                         {row.getVisibleCells().map((cell) => (
                                                                                                 <TableCell key={cell.id}>

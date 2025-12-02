@@ -1,5 +1,6 @@
 import BookingCalendar from "@/components/booking-calendar";
 import { SparklesCore } from "@/components/ui/sparkles";
+import { BookingCalendarProvider } from "@/contexts/booking-calendar-context";
 
 export default function Booking() {
         return (
@@ -18,7 +19,9 @@ export default function Booking() {
                         </div>
 
                         <div className="relative z-20">
-                                <BookingCalendar />
+                                <BookingCalendarProvider>
+                                        <BookingCalendar />
+                                </BookingCalendarProvider>
                         </div>
                 </div>
         )

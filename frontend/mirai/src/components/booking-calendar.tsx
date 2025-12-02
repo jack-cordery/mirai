@@ -17,30 +17,32 @@ import { postBooking } from "@/api/bookings"
 import { useAuth } from "@/contexts/auth-context"
 import { useNavigate } from "react-router-dom"
 import { getAllEmployees } from "@/api/employee"
+import { useBookingCalendarContext } from "@/contexts/booking-calendar-context"
 
-export default function BookingCalendar() {
+export default function BookingCalendar({ reschedule }: { reschedule?: boolean }) {
 
+        // TODO: create a context that allows us to track the below selections 
+        // so that i can use it outside of the calendar too i.e. when using it as a modal
         const { slotDuration, startTime, endTime } = loadWorkingDayTimes()
         const unit = slotDuration
+
+
 
         const { user } = useAuth();
         const today = new Date()
 
-        const [date, setDate] = React.useState<Date | undefined>(
-                new Date()
-        );
-        const [selectedTime, setSelectedTime] = React.useState<SlotTimeOfDay | null>(null)
-        const [selectedTimes, setSelectedTimes] = React.useState<SelectedTimes>({
-                startTime: null,
-                endTime: null
-        });
-        const [bookingTypes, setBookingTypes] = React.useState<BookingType[]>([])
-        const [employees, setEmployees] = React.useState<Employee[]>([])
-        const [availabilitySlots, setAvailabilitySlots] = React.useState<AvailabilitySlot[]>([])
-        const [selectedBookingType, setSelectedBookingType] = React.useState<BookingType | null>(null)
-        const [selectedEmployee, setSelectedEmployee] = React.useState<Employee | null>(null)
-
-        const [isBookingModalOpen, setIsBookingModalOpen] = React.useState<boolean>(false);
+        const { date, setDate,
+                selectedTime, setSelectedTime,
+                selectedTimes, setSelectedTimes,
+                bookingTypes,
+                employees,
+                availabilitySlots,
+                selectedBookingType, setSelectedBookingType,
+                selectedEmployee, setSelectedEmployee,
+                isBookingModalOpen, setIsBookingModalOpen,
+                rescheduleModalRow,
+                handleRescheduleBooking
+        } = useBookingCalendarContext();
 
         const handleChange = (times: SelectedTimes) => { setSelectedTimes(times) }
         const navigate = useNavigate();
@@ -103,24 +105,7 @@ export default function BookingCalendar() {
                 return booked
         }, [availabilitySlots, selectedTimes, selectedBookingType])
 
-        React.useEffect(() => {
-                const fetchData = async () => {
-                        try {
-                                const [resBookingTypes, resAvailabilitySlots, resEmployees] = await Promise.all([getAllBookingTypes(), getAllFreeAvailability(), getAllEmployees()])
-                                setBookingTypes(resBookingTypes)
-                                setEmployees(resEmployees)
-                                setAvailabilitySlots(resAvailabilitySlots)
-                                setSelectedBookingType(resBookingTypes[0])
-                                setSelectedEmployee(resEmployees[0])
-                        } catch (err) {
-                                toast(`error fetching data ${err}`)
-                        }
-                }
-                fetchData()
-        }, [])
-
-
-        const handleConfirmBooking = async () => {
+        const handleConfirmBooking: () => Promise<void> = (reschedule === false || reschedule === undefined) ? async () => {
                 const userId = user?.id;
                 const slotId = selectedTime?.id;
                 const otherIds = selectedTime?.slotIDs ?? [];
@@ -143,7 +128,7 @@ export default function BookingCalendar() {
                 } catch (err) {
                         toast("failed to confirm booking, please try again");
                 }
-        }
+        } : async () => handleRescheduleBooking()
 
         return (
                 <Card className="gap-0 p-4">
@@ -273,7 +258,7 @@ export default function BookingCalendar() {
                                                                 })}{" "}
                                                         </span>
                                                         at <span className="font-medium">{timeToValue(selectedTime)}</span> {" "}
-                                                        for a {selectedBookingType?.title}
+                                                        for a {selectedBookingType?.title + " "}
                                                         with {
                                                                 (selectedEmployee?.name[0].toUpperCase() || "")
                                                                 + selectedEmployee?.name.substring(1).toLowerCase()

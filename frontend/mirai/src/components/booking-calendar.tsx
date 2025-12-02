@@ -5,10 +5,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import TimeSelection from "@/components/time-selection"
 import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/components/ui/select"
-import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, datetimeToTime, type SlotTimeOfDay, type Employee } from "@/types/booking"
+import { displayTime, timeToValue, type SelectedTimes, datetimeToTime } from "@/types/booking"
 import { generateOptionsFromSlots, getCost, loadWorkingDayTimes } from "@/lib/utils"
-import { getAllBookingTypes } from "@/api/booking-type"
-import { getAllFreeAvailability } from "@/api/availability"
 import { toast } from "sonner"
 import { Dialog, DialogClose } from "@radix-ui/react-dialog"
 import { DialogContent, DialogFooter, DialogHeader, DialogOverlay, DialogTitle } from "./ui/dialog"
@@ -16,18 +14,12 @@ import { format } from "date-fns"
 import { postBooking } from "@/api/bookings"
 import { useAuth } from "@/contexts/auth-context"
 import { useNavigate } from "react-router-dom"
-import { getAllEmployees } from "@/api/employee"
 import { useBookingCalendarContext } from "@/contexts/booking-calendar-context"
 
 export default function BookingCalendar({ reschedule }: { reschedule?: boolean }) {
 
-        // TODO: create a context that allows us to track the below selections 
-        // so that i can use it outside of the calendar too i.e. when using it as a modal
         const { slotDuration, startTime, endTime } = loadWorkingDayTimes()
         const unit = slotDuration
-
-
-
         const { user } = useAuth();
         const today = new Date()
 
@@ -40,7 +32,6 @@ export default function BookingCalendar({ reschedule }: { reschedule?: boolean }
                 selectedBookingType, setSelectedBookingType,
                 selectedEmployee, setSelectedEmployee,
                 isBookingModalOpen, setIsBookingModalOpen,
-                rescheduleModalRow,
                 handleRescheduleBooking
         } = useBookingCalendarContext();
 

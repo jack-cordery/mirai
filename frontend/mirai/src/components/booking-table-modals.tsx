@@ -280,8 +280,6 @@ export function CompleteModal() {
         )
 }
 
-// TODO: booking calendar needs to be abstracted so that i can have a reschedule version
-// all that would be different is the confirm logic     
 export function RescheduleModal() {
         const { isRescheduleModalOpen, setIsRescheduleModalOpen, rescheduleModalRow } = useBookingCalendarContext();
         const { date, selectedEmployee, selectedBookingType, selectedTime, setIsBookingModalOpen } = useBookingCalendarContext();

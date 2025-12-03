@@ -28,6 +28,12 @@ WHERE
 RETURNING
   id;
 
+-- name: GetAllUsers :many
+SELECT
+  *
+FROM
+  users;
+
 -- name: GetUserById :one
 SELECT
   *

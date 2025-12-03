@@ -318,6 +318,41 @@ func (q *Queries) GetAllRoleRequestsWithJoin(ctx context.Context) ([]GetAllRoleR
 	return items, nil
 }
 
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT
+  id, name, surname, email, hashed_password, created_at, last_login
+FROM
+  users
+`
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Surname,
+			&i.Email,
+			&i.HashedPassword,
+			&i.CreatedAt,
+			&i.LastLogin,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEmployeeById = `-- name: GetEmployeeById :one
 SELECT
   id, name, surname, email, title, description, active, created_at, last_login

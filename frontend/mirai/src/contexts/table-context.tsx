@@ -100,7 +100,6 @@ export const TableProvider: React.FC<TableProviderProps> = ({ children }) => {
                 } catch (err) {
                         toast("data fetch failed, please try again later")
                 }
-
         }
 
         return (

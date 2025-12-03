@@ -282,7 +282,6 @@ export function CompleteModal() {
 
 export function RescheduleModal() {
         const { isRescheduleModalOpen, setIsRescheduleModalOpen, rescheduleModalRow } = useBookingCalendarContext();
-        const { date, selectedEmployee, selectedBookingType, selectedTime, setIsBookingModalOpen } = useBookingCalendarContext();
 
         return (
                 <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>

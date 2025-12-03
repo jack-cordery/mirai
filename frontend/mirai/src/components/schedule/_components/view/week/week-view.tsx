@@ -13,6 +13,9 @@ import CustomModal from "@/components/ui/custom-modal";
 import { getNearest30MinuteBlock, loadWorkingDayTimes, maximiseTimes, minimiseTimes } from "@/lib/utils";
 import { uuidv4 } from "zod";
 import { format } from "date-fns";
+import AddBookingModal from "@/components/schedule/_modals/add-booking-modal";
+import { BookingCalendarProvider } from "@/contexts/booking-calendar-context";
+import { TableProvider } from "@/contexts/table-context";
 
 const { startTime, endTime } = loadWorkingDayTimes();
 
@@ -131,22 +134,43 @@ export default function WeeklyView({
                 const endDate = event?.endDate || new Date();
 
                 // Open the modal with the content
-                setOpen(
-                        <CustomModal title="Add Event">
-                                <AddEventModal
-                                        CustomAddEventModal={
-                                                CustomEventModal?.CustomAddEventModal?.CustomForm
-                                        }
-                                />
-                        </CustomModal>,
-                        async () => {
-                                return {
-                                        ...event,
-                                        startDate,
-                                        endDate,
-                                };
-                        }
-                );
+                if (event?.isBooking) {
+                        setOpen(
+                                <CustomModal title="Add Booking" contentClass="sm:max-w-[90vh] overflow-y-auto max-h-[90vh]">
+                                        <AddBookingModal
+                                                CustomAddEventModal={
+                                                        CustomEventModal?.CustomAddEventModal?.CustomForm
+                                                }
+                                        />
+                                </CustomModal >,
+                                async () => {
+                                        return {
+                                                ...event,
+                                                startDate,
+                                                endDate,
+                                        };
+                                }
+                        );
+                }
+                else {
+
+                        setOpen(
+                                <CustomModal title="Add Event">
+                                        <AddEventModal
+                                                CustomAddEventModal={
+                                                        CustomEventModal?.CustomAddEventModal?.CustomForm
+                                                }
+                                        />
+                                </CustomModal>,
+                                async () => {
+                                        return {
+                                                ...event,
+                                                startDate,
+                                                endDate,
+                                        };
+                                }
+                        );
+                }
         }
 
         const handleNextWeek = useCallback(() => {

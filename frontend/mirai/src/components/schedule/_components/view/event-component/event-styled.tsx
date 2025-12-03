@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { deleteAvailabilitySlot } from "@/api/availability";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@radix-ui/react-hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { EditBookingModal } from "@/components/schedule/_modals/add-booking-modal";
+import { TableProvider } from "@/contexts/table-context";
+import { BookingCalendarProvider } from "@/contexts/booking-calendar-context";
 
 // Formatters
 const formatDate = (date: Date) =>
@@ -66,12 +69,23 @@ export default function EventStyled({
 
         // Modal handler
         function handleEditEvent(event: Event) {
-                setOpen(
-                        <CustomModal title="Edit Event">
-                                <EditEventModal CustomAddEventModal={CustomEventModal?.CustomAddEventModal?.CustomForm} />
-                        </CustomModal>,
-                        async () => ({ ...event })
-                );
+                if (event?.isBooking) {
+
+                        setOpen(
+                                <CustomModal title="Edit Booking" contentClass="sm:max-w-[90vh] overflow-y-auto max-h-[90vh]">
+                                        <EditBookingModal bookingID={event?.bookingId ?? -1} />
+                                </CustomModal>,
+                                async () => ({ ...event })
+                        );
+                } else {
+
+                        setOpen(
+                                <CustomModal title="Edit Event">
+                                        <EditEventModal CustomAddEventModal={CustomEventModal?.CustomAddEventModal?.CustomForm} />
+                                </CustomModal>,
+                                async () => ({ ...event })
+                        );
+                }
         }
 
         // Modal handler

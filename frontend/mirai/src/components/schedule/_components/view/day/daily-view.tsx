@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import CustomModal from "@/components/ui/custom-modal";
 import { getNearest30MinuteBlock, loadWorkingDayTimes, maximiseTimes, minimiseTimes } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
+import AddBookingModal from "@/components/schedule/_modals/add-booking-modal";
+import { BookingCalendarProvider } from "@/contexts/booking-calendar-context";
+import { TableProvider } from "@/contexts/table-context";
 
 const { startTime, endTime } = loadWorkingDayTimes();
 // Generate hours in 12-hour format
@@ -230,23 +233,44 @@ export default function DailyView({
 
                 // Open the modal with the content
 
-                setOpen(
-                        <CustomModal title="Add Event">
-                                <AddEventModal
-                                        CustomAddEventModal={
-                                                CustomEventModal?.CustomAddEventModal?.CustomForm
-                                        }
-                                        selectedDate={startDate}
-                                />
-                        </CustomModal>,
-                        async () => {
-                                return {
-                                        ...event,
-                                        startDate,
-                                        endDate,
-                                };
-                        }
-                );
+                if (event?.isBooking) {
+                        setOpen(
+                                <CustomModal title="Add Booking">
+                                        <AddBookingModal
+                                                CustomAddEventModal={
+                                                        CustomEventModal?.CustomAddEventModal?.CustomForm
+                                                }
+                                                selectedDate={startDate}
+                                        />
+                                </CustomModal>,
+                                async () => {
+                                        return {
+                                                ...event,
+                                                startDate,
+                                                endDate,
+                                        };
+                                }
+                        );
+                } else {
+                        setOpen(
+                                <CustomModal title="Add Event">
+                                        <AddEventModal
+                                                CustomAddEventModal={
+                                                        CustomEventModal?.CustomAddEventModal?.CustomForm
+                                                }
+                                                selectedDate={startDate}
+                                        />
+                                </CustomModal>,
+                                async () => {
+                                        return {
+                                                ...event,
+                                                startDate,
+                                                endDate,
+                                        };
+                                }
+                        );
+                }
+
         }
 
         function handleAddEventDay(detailedHour: string) {

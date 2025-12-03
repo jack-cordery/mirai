@@ -59,7 +59,6 @@ export const BookingCalendarProvider: React.FC<BookingCalendarProviderProps> = (
         const [rescheduleModalRow, setRescheduleModalRow] = React.useState<GetAllBookingsResponse | null>(null);
         const [isRescheduleModalOpen, setIsRescheduleModalOpen] = React.useState<boolean>(false);
         const [isBookingModalOpen, setIsBookingModalOpen] = React.useState<boolean>(false);
-
         const { fetchTableData } = useTableContext();
 
         const handleRescheduleBooking = async () => {
@@ -81,7 +80,7 @@ export const BookingCalendarProvider: React.FC<BookingCalendarProviderProps> = (
                         )
                         setIsRescheduleModalOpen(false)
                         setIsBookingModalOpen(false)
-                        fetchTableData();
+                        fetchTableData()
                         toast("booking rescheduled!")
                 } catch (err) {
                         toast("failed to reschedule booking, please try again");

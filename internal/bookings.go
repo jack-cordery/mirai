@@ -73,27 +73,16 @@ func (r PostBookingRequest) ToDBParams(cost int32, paid bool) db.CreateBookingPa
 }
 
 type PutBookingRequest struct {
-	UserID int32       `json:"user_id"`
-	TypeID int32       `json:"type_id"`
-	Notes  pgtype.Text `json:"notes"`
-	Cost   int32       `json:"cost"`
-	Paid   bool        `json:"bool"`
-	Slots  []int32     `json:"availability_slots"`
+	EmployeeID int32       `json:"employee_id"`
+	TypeID     int32       `json:"type_id"`
+	Notes      pgtype.Text `json:"notes"`
+	Paid       bool        `json:"bool"`
+	StartTime  time.Time   `json:"start_time"` // this expects RFC 3339 format, just need to sure it is encoded like this
+	EndTime    time.Time   `json:"end_time"`   // this expects RFC 3339 format, just need to sure it is encoded like this
 }
 
 type PutBookingResponse struct {
 	BookingID int32 `json:"booking_id"`
-}
-
-func (r PutBookingRequest) ToDBParams(bookingID int32) db.UpdateBookingParams {
-	return db.UpdateBookingParams{
-		ID:     bookingID,
-		UserID: r.UserID,
-		TypeID: r.TypeID,
-		Notes:  r.Notes,
-		Cost:   r.Cost,
-		Paid:   r.Paid,
-	}
 }
 
 func postBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
@@ -364,7 +353,6 @@ func getBookingUser(pool *pgxpool.Pool, ctx context.Context, a *AuthParams) http
 
 func putBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		bookingId := r.PathValue("booking_id")
 		id, err := strconv.ParseInt(bookingId, 10, 32)
 		if err != nil {
@@ -407,54 +395,118 @@ func putBooking(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 		queries := db.New(conn)
 		qtx := queries.WithTx(tx)
 
-		sequentialCheckSlots, err := qtx.GetAvailabilitySlotByIds(ctx, bookingRequest.Slots)
+		duration := bookingRequest.EndTime.Sub(bookingRequest.StartTime).Nanoseconds()
+		if duration%(30*1e9) != 0 {
+			log.Println("duration is not in unit intervals")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		duration = duration / (30 * 1e9)
+		cost, err := getAndCalculateCost(queries, ctx, bookingRequest.TypeID, int32(duration))
 		if err != nil {
-			log.Printf("getting slots for sequential check failed in putBooking: %v", err)
+			log.Printf("error getting cost in putBooking: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		sequentialCheckTimes := []time.Time{}
-		for _, s := range sequentialCheckSlots {
-			sequentialCheckTimes = append(sequentialCheckTimes, s.Datetime.Time)
+		bookingRow, err := qtx.GetBookingWithJoin(ctx, db.GetBookingWithJoinParams{
+			Column1: Unit,
+			ID:      int32(id),
+		})
+		if err != nil {
+			log.Printf("getting booking data in putBooking failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
-		if !isSequential(sequentialCheckTimes, Unit) {
-			log.Printf("slot request is not sequential in putBooking")
+		err = qtx.ClearBookingSlots(ctx, int32(id))
+		if err != nil {
+			log.Printf("error clearing booking slots in putBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		log.Printf("putBooking with %v and %v ", int32(id), Unit)
+		bookingID, err := qtx.UpdateBooking(ctx, db.UpdateBookingParams{
+			ID:              int32(id),
+			TypeID:          bookingRequest.TypeID,
+			Paid:            bookingRequest.Paid,
+			Cost:            cost,
+			Notes:           bookingRequest.Notes,
+			StatusUpdatedBy: bookingRow.StatusUpdatedBy,
+		})
+		if err != nil {
+			log.Printf("updating booking data in putBooking failed with %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		startTimestamp, err := timeToTimeStamp(bookingRequest.StartTime)
+		if err != nil {
+			log.Printf("converting startTime to timestamp failed with: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		endTimestamp, err := timeToTimeStamp(bookingRequest.EndTime)
+		if err != nil {
+			log.Printf("converting endTime to timestamp failed with: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		err = qtx.CreateBookingHistory(ctx, db.CreateBookingHistoryParams{
+			BookingID:       bookingRow.ID,
+			EmployeeID:      bookingRequest.EmployeeID,
+			EmployeeName:    bookingRow.EmployeeName,
+			EmployeeSurname: bookingRow.EmployeeSurname,
+			EmployeeEmail:   bookingRow.EmployeeEmail,
+			StartTime:       startTimestamp,
+			EndTime:         endTimestamp,
+			Status:          db.BookingStatusRescheduled,
+			ChangedByEmail:  bookingRow.StatusUpdatedBy,
+		})
+
+		slots, err := spanToSlots(bookingRequest.StartTime, bookingRequest.EndTime, Unit)
+		if err != nil {
+			log.Printf("creating slots from span in putBooking failed with %v:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		slotsAsTimestamp := []pgtype.Timestamp{}
+		for _, s := range slots {
+			t, err := timeToTimeStamp(s)
+			if err != nil {
+				log.Printf("error converting slot time to timestamp in putBooking")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			slotsAsTimestamp = append(slotsAsTimestamp, t)
+		}
+
+		slotIDs, err := qtx.GetAvailabilitySlotsFromSpanSlots(ctx, db.GetAvailabilitySlotsFromSpanSlotsParams{
+			Column1:    slotsAsTimestamp,
+			TypeID:     bookingRequest.TypeID,
+			EmployeeID: bookingRequest.EmployeeID,
+		})
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			log.Printf("error getting availability slots from span in putBooking: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if len(slotIDs) != len(slots) {
+			log.Printf("user requested a new slot that is not available for that employee/type")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-
-		bookingID, err := qtx.UpdateBooking(ctx, bookingRequest.ToDBParams(int32(id)))
-		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				log.Printf("booking id: %d, which does not exist, was attemped to be updated by putBooking", id)
-				w.WriteHeader(http.StatusNotFound)
+		for _, s := range slotIDs {
+			err := qtx.CreateBookingSlot(ctx, db.CreateBookingSlotParams{
+				BookingID:          int32(id),
+				AvailabilitySlotID: s.ID,
+			})
+			if err != nil {
+				log.Printf("error creating booking slot in putBooking: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) {
-				if pgErr.Code == "23505" {
-					log.Printf("uniqueness constraint violated in putBooking. userID: %d availabilitySlot: %v",
-						bookingRequest.UserID,
-						bookingRequest.Slots,
-					)
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-				if pgErr.Code == "23503" {
-					log.Printf("putBooking: either the booking type id: %d or user id: %d, or availabilitySlotID %v does not exist",
-						bookingRequest.TypeID,
-						bookingRequest.UserID,
-						bookingRequest.Slots,
-					)
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-			}
-			log.Printf("general error when trying to update booking in putBooking: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
 		}
 
 		err = tx.Commit(ctx)
@@ -741,6 +793,5 @@ func postManualStatus(pool *pgxpool.Pool, ctx context.Context, a *AuthParams, ne
 			return
 		}
 
-		return
 	}
 }

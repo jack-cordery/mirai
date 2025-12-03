@@ -106,6 +106,7 @@ func SetupServer() {
 	mux.HandleFunc("GET /booking/user", authMiddleware(getBookingUser(pool, ctx, a), ctx, pool, a, "USER"))
 	mux.HandleFunc("GET /booking/{booking_id}", authMiddleware(getBooking(pool, ctx), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("PUT /booking/{booking_id}", authMiddleware(putBooking(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("POST /booking/{booking_id}/reschedule", authMiddleware(putBooking(pool, ctx), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("DELETE /booking/{booking_id}", authMiddleware(deleteBooking(pool, ctx), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("POST /booking/{booking_id}/payment/manual", authMiddleware(postManualPayment(pool, ctx, a), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("POST /booking/{booking_id}/cancel", authMiddleware(postManualStatus(pool, ctx, a, db.BookingStatusCancelled), ctx, pool, a, "USER"))
@@ -113,6 +114,7 @@ func SetupServer() {
 	mux.HandleFunc("POST /booking/{booking_id}/complete", postManualStatus(pool, ctx, a, db.BookingStatusCompleted))
 
 	mux.HandleFunc("POST /user", authMiddleware(postUser(pool, ctx), ctx, pool, a, "ADMIN"))
+	mux.HandleFunc("GET /user", authMiddleware(getUser(pool, ctx), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("GET /user/{user_id}", authMiddleware(getUser(pool, ctx), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("PUT /user/{user_id}", authMiddleware(putUser(pool, ctx), ctx, pool, a, "ADMIN"))
 	mux.HandleFunc("DELETE /user/{user_id}", authMiddleware(deleteUser(pool, ctx), ctx, pool, a, "ADMIN"))

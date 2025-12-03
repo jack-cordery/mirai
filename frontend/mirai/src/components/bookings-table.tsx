@@ -74,10 +74,14 @@ import {
         TabsContent,
 } from "@/components/ui/tabs"
 import { useTableContext } from "@/contexts/table-context"
-import { DraggableRow } from "./data-table"
 import { Checkbox } from "@/components/ui/checkbox"
-import { CancelModal, CompleteModal, ConfirmModal, PaidModal } from "./booking-table-modals"
+import { CancelModal, CompleteModal, ConfirmModal, PaidModal, RescheduleModal } from "./booking-table-modals"
 import { ArrowUpDown } from "lucide-react"
+import { useScheduler } from "@/providers/schedular-provider"
+import { useModal } from "@/providers/modal-context"
+import CustomModal from "./ui/custom-modal"
+import { EditEventModal } from "./schedule/_modals/add-event-modal"
+import { useBookingCalendarContext } from "@/contexts/booking-calendar-context"
 
 export const BookingDataSchema = z.object({
         id: z.number(),
@@ -93,6 +97,7 @@ export const BookingDataSchema = z.object({
         employee_title: z.string(),
         type_id: z.number(),
         type_title: z.string(),
+        type_duration: z.number(),
         paid: z.boolean(),
         cost: z.number(),
         status: z.string(),
@@ -117,7 +122,12 @@ export function BookingsTable() {
                 setIsConfirmModalOpen,
                 setCompleteModalRow,
                 setIsCompleteModalOpen,
+                fetchTableData,
         } = useTableContext();
+        const { setRescheduleModalRow, setIsRescheduleModalOpen } = useBookingCalendarContext();
+
+        React.useEffect(() => { fetchTableData() }, [])
+
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =
                 React.useState<VisibilityState>({})
@@ -327,7 +337,13 @@ export function BookingsTable() {
                                                         }
                                                         }>Payment</DropdownMenuItem>
                                                 }
-                                                <DropdownMenuItem >Reschedule</DropdownMenuItem>
+                                                {(row.original.status !== "cancelled")
+                                                        && (row.original.status !== "completed")
+                                                        && <DropdownMenuItem onClick={() => {
+                                                                setIsRescheduleModalOpen(true);
+                                                                setRescheduleModalRow(row.original);
+                                                        }
+                                                        } >Reschedule</DropdownMenuItem>}
                                                 {!(row.original.status === "cancelled") &&
                                                         < DropdownMenuItem onClick={async () => {
                                                                 setIsCancelModalOpen(true);
@@ -433,7 +449,17 @@ export function BookingsTable() {
                                                                         strategy={verticalListSortingStrategy}
                                                                 >
                                                                         {table.getRowModel().rows.map((row) => (
-                                                                                <DraggableRow key={row.id} row={row} />
+
+                                                                                <TableRow
+                                                                                        data-state={row.getIsSelected() && "selected"}
+                                                                                        key={row.id}
+                                                                                >
+                                                                                        {row.getVisibleCells().map((cell) => (
+                                                                                                <TableCell key={cell.id}>
+                                                                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                                                                </TableCell>
+                                                                                        ))}
+                                                                                </TableRow>
                                                                         ))}
                                                                 </SortableContext>
                                                         ) : (
@@ -531,6 +557,7 @@ export function BookingsTable() {
                         <CancelModal />
                         <ConfirmModal />
                         <CompleteModal />
+                        <RescheduleModal />
 
                 </TabsContent>
         )

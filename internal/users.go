@@ -148,12 +148,6 @@ func postUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 func getUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := r.PathValue("user_id")
-		id, err := strconv.ParseInt(userID, 10, 32)
-		if err != nil {
-			log.Printf("error: %v converting user id to int in getUser: %s", err, userID)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 
 		conn, err := pool.Acquire(ctx)
 		if err != nil {
@@ -165,6 +159,40 @@ func getUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 
 		queries := db.New(conn)
 
+		if userID == "" {
+			users, err := queries.GetAllUsers(ctx)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("error querying users table in getAllUsers: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Println("there are no users")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			resp := []GetUserResponse{}
+
+			for _, b := range users {
+				resp = append(resp, responseFromDBUser(b))
+			}
+
+			err = json.NewEncoder(w).Encode(resp)
+			if err != nil {
+				log.Printf("error encoding json in getAllUsers: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+
+		}
+		id, err := strconv.ParseInt(userID, 10, 32)
+		if err != nil {
+			log.Printf("error: %v converting user id to int in getUser: %s", err, userID)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		user, err := queries.GetUserById(ctx, int32(id))
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			log.Printf("error querying users table in getUser: %v", err)

@@ -17,6 +17,8 @@ import type {
         startOfWeek,
 } from "@/types/index";
 import ModalProvider from "./modal-context";
+import { TableProvider } from "@/contexts/table-context";
+import { BookingCalendarProvider } from "@/contexts/booking-calendar-context";
 // Define event and state types
 
 interface SchedulerState {
@@ -320,7 +322,13 @@ export const SchedulerProvider = ({
                 <SchedulerContext.Provider
                         value={{ events: state, dispatch, getters, handlers, weekStartsOn, typeOptions, setTypeOptions, employeeOptions, setEmployeeOptions, selectedEmployee, setSelectedEmployee, selectedType, setSelectedType, selectedEmployeeAvailability, setSelectedEmployeeAvailability, currentDate, setCurrentDate }}
                 >
-                        <ModalProvider>{children}</ModalProvider>
+                        <TableProvider>
+                                <BookingCalendarProvider>
+                                        <ModalProvider>
+                                                {children}
+                                        </ModalProvider>
+                                </BookingCalendarProvider>
+                        </TableProvider>
                 </SchedulerContext.Provider>
         );
 };

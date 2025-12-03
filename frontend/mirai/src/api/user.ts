@@ -20,6 +20,19 @@ export async function postUser(postRequest: {
   return res.json();
 }
 
+export async function getAllUsers() {
+  const res = await fetch(`${apiUrl}/user`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    throw new Error(`All users fetch failed with ${res.status}`);
+  }
+  return res.json();
+}
+
 // get user by email and return details
 export async function checkUser(postRequest: {
   email: string;

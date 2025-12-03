@@ -1,4 +1,4 @@
-import { postCancellation, postComplete, postConfirm, postManualPayment } from "@/api/bookings";
+import { postCancellation, postComplete, postConfirm, postManualPayment, postReschedule } from "@/api/bookings";
 import { Button } from "@/components/ui/button"
 import {
         Dialog,
@@ -15,6 +15,22 @@ import { Label } from "@/components/ui/label"
 import { useTableContext } from "@/contexts/table-context";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import BookingCalendar from "./booking-calendar";
+import { Card, CardContent, CardFooter } from "./ui/card";
+import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/components/ui/select"
+import { generateOptionsFromSlots, getCost, loadWorkingDayTimes } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
+import React from "react";
+import { datetimeToTime, displayTime, timeToValue, type AvailabilitySlot, type BookingType, type Employee, type SelectedTimes, type SlotTimeOfDay } from "@/types/booking";
+import { useNavigate } from "react-router-dom";
+import { getAllBookingTypes } from "@/api/booking-type";
+import { getAllFreeAvailability } from "@/api/availability";
+import { getAllEmployees } from "@/api/employee";
+import TimeSelection from "./time-selection";
+import { Calendar } from "@/components/ui/calendar"
+import CustomModal from "./ui/custom-modal";
+import AddEventModal from "./schedule/_modals/add-event-modal";
+import { BookingCalendarProvider, useBookingCalendarContext } from "@/contexts/booking-calendar-context";
 
 export function PaidModal() {
         const { isPaidModalOpen, setIsPaidModalOpen, paidModalRow, fetchTableData } = useTableContext();
@@ -258,6 +274,61 @@ export function CompleteModal() {
                                                 <Button variant="outline">Cancel</Button>
                                         </DialogClose>
                                         <Button type="button" onClick={handleComplete}>Confirm</Button>
+                                </DialogFooter>
+                        </DialogContent>
+                </Dialog>
+        )
+}
+
+export function RescheduleModal() {
+        const { isRescheduleModalOpen, setIsRescheduleModalOpen, rescheduleModalRow } = useBookingCalendarContext();
+
+        return (
+                <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>
+                        <DialogOverlay className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                        <DialogContent className="sm:max-w-[90vh] overflow-y-auto max-h-[90vh]">
+                                <DialogHeader>
+                                        <DialogTitle>Reschedule Booking</DialogTitle>
+                                </DialogHeader>
+
+                                <div className="grid gap-6 py-2">
+
+                                        {/* 📋 CURRENT BOOKING SUMMARY CARD */}
+                                        <div className="bg-muted/50 rounded-xl p-6 border border-muted-foreground/10 flex flex-col gap-0">
+                                                <h3 className="text-base font-semibold text-foreground mb-4 border-b pb-2 border-muted-foreground/20">
+                                                        Current Booking Details
+                                                </h3>
+
+                                                {/* Booking Type Row */}
+                                                <div className="flex justify-between items-center text-sm py-2 border-b border-muted-foreground/10">
+                                                        <span className="text-muted-foreground">Booking Type</span>
+                                                        <span className="font-medium text-foreground">{rescheduleModalRow?.type_title}</span>
+                                                </div>
+
+                                                {/* Employee Row */}
+                                                <div className="flex justify-between items-center text-sm py-2 border-b border-muted-foreground/10">
+                                                        <span className="text-muted-foreground">Employee</span>
+                                                        <span className="font-medium text-foreground">
+                                                                {rescheduleModalRow?.employee_name} {rescheduleModalRow?.employee_surname}
+                                                        </span>
+                                                </div>
+
+                                                {/* Date & Time Row (Highlighted) */}
+                                                <div className="flex justify-between items-center text-sm pt-2">
+                                                        <span className="text-muted-foreground">Date & Time</span>
+                                                        <span className="font-medium text-primary">
+                                                                {format(new Date(rescheduleModalRow?.start_time ?? 0), "dd MMM yyyy HH:mm")}
+                                                        </span>
+                                                </div>
+                                        </div>
+                                        {/* END CARD */}
+                                        <BookingCalendar reschedule={true} />
+                                </div>
+
+                                <DialogFooter>
+                                        <DialogClose asChild>
+                                                <Button variant="outline">Cancel</Button>
+                                        </DialogClose>
                                 </DialogFooter>
                         </DialogContent>
                 </Dialog>

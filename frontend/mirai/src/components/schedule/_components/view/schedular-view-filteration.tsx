@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import CustomModal from "@/components/ui/custom-modal";
 import { Select, SelectContent, SelectGroup, SelectLabel, SelectTrigger, SelectValue, SelectItem } from "@/components/ui/select";
 import { useScheduler } from "@/providers/schedular-provider";
+import AddBookingModal from "../../_modals/add-booking-modal";
 
 // Animation settings for Framer Motion
 const animationConfig: MotionProps = {
@@ -42,8 +43,6 @@ export default function SchedulerViewFilteration({
         const { employeeOptions, selectedEmployeeAvailability, setSelectedEmployeeAvailability } = useScheduler();
         const [activeView, setActiveView] = useState<string>("day");
         const [clientSide, setClientSide] = useState(false);
-
-
 
         useEffect(() => {
                 setClientSide(true);
@@ -115,6 +114,16 @@ export default function SchedulerViewFilteration({
                         </CustomModal>
                 );
         }
+
+        function handleAddBooking() {
+                setOpen(
+                        <CustomModal title="Add Booking" contentClass="sm:max-w-[90vh] overflow-y-auto max-h-[90vh]">
+                                <AddBookingModal
+                                />
+                        </CustomModal>
+                );
+        }
+
 
         const viewsSelector = isMobile ? views?.mobileViews : views?.views;
 
@@ -210,20 +219,37 @@ export default function SchedulerViewFilteration({
                                                         </Select>
 
                                                         {/* Add Event Button */}
-                                                        {CustomComponents?.customButtons?.CustomAddEventButton ? (
-                                                                <div onClick={() => handleAddEvent()}>
-                                                                        {CustomComponents?.customButtons.CustomAddEventButton}
-                                                                </div>
-                                                        ) : (
-                                                                <Button
-                                                                        onClick={() => handleAddEvent()}
-                                                                        className={classNames?.buttons?.addEvent}
-                                                                        variant="default"
-                                                                >
-                                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                                        Add Event
-                                                                </Button>
-                                                        )}
+                                                        <div className="flex space-x-1">
+                                                                {CustomComponents?.customButtons?.CustomAddEventButton ? (
+                                                                        <div onClick={() => handleAddEvent()}>
+                                                                                {CustomComponents?.customButtons.CustomAddEventButton}
+                                                                        </div>
+                                                                ) : (
+                                                                        <Button
+                                                                                onClick={() => handleAddEvent()}
+                                                                                className={classNames?.buttons?.addEvent}
+                                                                                variant="default"
+                                                                        >
+                                                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                                                Add Availability
+                                                                        </Button>
+                                                                )}
+                                                                {CustomComponents?.customButtons?.CustomAddEventButton ? (
+                                                                        <div onClick={() => handleAddEvent()}>
+                                                                                {CustomComponents?.customButtons.CustomAddEventButton}
+                                                                        </div>
+                                                                ) : (
+                                                                        <Button
+                                                                                onClick={() => handleAddBooking()}
+                                                                                className={classNames?.buttons?.addEvent}
+                                                                                variant="default"
+                                                                        >
+                                                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                                                Add Booking
+                                                                        </Button>
+                                                                )}
+                                                        </div>
+
                                                 </div>
 
                                                 {viewsSelector?.includes("day") && (

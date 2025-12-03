@@ -152,3 +152,31 @@ export async function postComplete(id: number) {
     throw new Error(`post manual completion failed iwth ${res.status}`);
   }
 }
+
+export async function postReschedule(
+  id: number,
+  employeeId: number,
+  typeId: number,
+  notes: string,
+  paid: boolean,
+  startTime: string,
+  endTime: string,
+) {
+  const res = await fetch(`${apiUrl}/booking/${id}/reschedule`, {
+    method: "POST",
+    body: JSON.stringify({
+      employee_id: employeeId,
+      type_id: typeId,
+      notes: notes,
+      paid: paid,
+      start_time: startTime,
+      end_time: endTime,
+    }),
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`post reschedule failed iwth ${res.status}`);
+  }
+}

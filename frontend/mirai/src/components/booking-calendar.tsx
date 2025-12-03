@@ -5,10 +5,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import TimeSelection from "@/components/time-selection"
 import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/components/ui/select"
-import { type AvailabilitySlot, displayTime, timeToValue, type BookingType, type SelectedTimes, datetimeToTime, type SlotTimeOfDay, type Employee } from "@/types/booking"
+import { displayTime, timeToValue, type SelectedTimes, datetimeToTime } from "@/types/booking"
 import { generateOptionsFromSlots, getCost, loadWorkingDayTimes } from "@/lib/utils"
-import { getAllBookingTypes } from "@/api/booking-type"
-import { getAllFreeAvailability } from "@/api/availability"
 import { toast } from "sonner"
 import { Dialog, DialogClose } from "@radix-ui/react-dialog"
 import { DialogContent, DialogFooter, DialogHeader, DialogOverlay, DialogTitle } from "./ui/dialog"
@@ -16,34 +14,36 @@ import { format } from "date-fns"
 import { postBooking } from "@/api/bookings"
 import { useAuth } from "@/contexts/auth-context"
 import { useNavigate } from "react-router-dom"
-import { getAllEmployees } from "@/api/employee"
+import { useBookingCalendarContext } from "@/contexts/booking-calendar-context"
+import { useModal } from "@/providers/modal-context"
 
-export default function BookingCalendar() {
-
+export default function BookingCalendar({ reschedule, userID, skipNav }: { reschedule?: boolean, userID?: number, skipNav?: boolean }) {
         const { slotDuration, startTime, endTime } = loadWorkingDayTimes()
         const unit = slotDuration
-
         const { user } = useAuth();
+        const { setClose } = useModal();
+        const userId = userID ? userID : user?.id;
         const today = new Date()
 
-        const [date, setDate] = React.useState<Date | undefined>(
-                new Date()
-        );
-        const [selectedTime, setSelectedTime] = React.useState<SlotTimeOfDay | null>(null)
-        const [selectedTimes, setSelectedTimes] = React.useState<SelectedTimes>({
-                startTime: null,
-                endTime: null
-        });
-        const [bookingTypes, setBookingTypes] = React.useState<BookingType[]>([])
-        const [employees, setEmployees] = React.useState<Employee[]>([])
-        const [availabilitySlots, setAvailabilitySlots] = React.useState<AvailabilitySlot[]>([])
-        const [selectedBookingType, setSelectedBookingType] = React.useState<BookingType | null>(null)
-        const [selectedEmployee, setSelectedEmployee] = React.useState<Employee | null>(null)
-
-        const [isBookingModalOpen, setIsBookingModalOpen] = React.useState<boolean>(false);
+        const { date, setDate,
+                selectedTime, setSelectedTime,
+                selectedTimes, setSelectedTimes,
+                bookingTypes,
+                employees,
+                availabilitySlots,
+                selectedBookingType, setSelectedBookingType,
+                selectedEmployee, setSelectedEmployee,
+                isBookingModalOpen, setIsBookingModalOpen,
+                handleRescheduleBooking,
+                fetchData,
+        } = useBookingCalendarContext();
 
         const handleChange = (times: SelectedTimes) => { setSelectedTimes(times) }
         const navigate = useNavigate();
+
+        React.useEffect(() => {
+                fetchData();
+        }, [])
 
 
         const timeSlots = React.useMemo(() => {
@@ -103,25 +103,7 @@ export default function BookingCalendar() {
                 return booked
         }, [availabilitySlots, selectedTimes, selectedBookingType])
 
-        React.useEffect(() => {
-                const fetchData = async () => {
-                        try {
-                                const [resBookingTypes, resAvailabilitySlots, resEmployees] = await Promise.all([getAllBookingTypes(), getAllFreeAvailability(), getAllEmployees()])
-                                setBookingTypes(resBookingTypes)
-                                setEmployees(resEmployees)
-                                setAvailabilitySlots(resAvailabilitySlots)
-                                setSelectedBookingType(resBookingTypes[0])
-                                setSelectedEmployee(resEmployees[0])
-                        } catch (err) {
-                                toast(`error fetching data ${err}`)
-                        }
-                }
-                fetchData()
-        }, [])
-
-
-        const handleConfirmBooking = async () => {
-                const userId = user?.id;
+        const handleConfirmBooking: () => Promise<void> = (reschedule === false || reschedule === undefined) ? async () => {
                 const slotId = selectedTime?.id;
                 const otherIds = selectedTime?.slotIDs ?? [];
                 const typeId = selectedBookingType?.type_id;
@@ -139,11 +121,16 @@ export default function BookingCalendar() {
                         setSelectedTime(null);
                         toast("booking created!")
                         setIsBookingModalOpen(false)
-                        navigate("/user/bookings")
+                        if (!skipNav) {
+                                navigate("/user/bookings")
+                        } else {
+                                setClose()
+                        }
+
                 } catch (err) {
                         toast("failed to confirm booking, please try again");
                 }
-        }
+        } : async () => handleRescheduleBooking()
 
         return (
                 <Card className="gap-0 p-4">
@@ -273,7 +260,7 @@ export default function BookingCalendar() {
                                                                 })}{" "}
                                                         </span>
                                                         at <span className="font-medium">{timeToValue(selectedTime)}</span> {" "}
-                                                        for a {selectedBookingType?.title}
+                                                        for a {selectedBookingType?.title + " "}
                                                         with {
                                                                 (selectedEmployee?.name[0].toUpperCase() || "")
                                                                 + selectedEmployee?.name.substring(1).toLowerCase()

@@ -5,13 +5,15 @@ import { getAllBookingsUser } from "@/api/bookings"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
-import { IconCircleCheck, IconCircleCheckFilled, IconCircleXFilled, IconLoader, IconRefresh, IconX } from "@tabler/icons-react"
+import { IconCircleCheck, IconCircleCheckFilled, IconCircleXFilled, IconClock, IconLoader, IconRefresh, IconX } from "@tabler/icons-react"
 import { Button } from "./ui/button"
-import { CancelModal } from "./booking-table-modals"
+import { CancelModal, RescheduleModal } from "./booking-table-modals"
 import { useTableContext } from "@/contexts/table-context"
+import { useBookingCalendarContext } from "@/contexts/booking-calendar-context"
 
 export default function UserBookings() {
         const { setIsCancelModalOpen, setCancelModalRow, bookingData, setBookingData } = useTableContext();
+        const { setIsRescheduleModalOpen, setRescheduleModalRow } = useBookingCalendarContext();
 
         async function fetchData() {
                 try {
@@ -47,6 +49,7 @@ export default function UserBookings() {
                                                         <TableHead>Status</TableHead>
                                                         <TableHead>Amount</TableHead>
                                                         <TableHead>Cancel</TableHead>
+                                                        <TableHead>Reschedule</TableHead>
                                                 </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -107,12 +110,26 @@ export default function UserBookings() {
                                                                                 }
                                                                         </TableCell>
 
+                                                                        <TableCell align="center">
+                                                                                {(b.status == "created" || b.status == "confirmed") &&
+                                                                                        <Button
+                                                                                                className="p-1 h-6 w-6 flex items-center justify-center cursor-pointer"
+                                                                                                onClick={() => {
+                                                                                                        setIsRescheduleModalOpen(true)
+                                                                                                        setRescheduleModalRow(b)
+                                                                                                }}
+                                                                                        >
+                                                                                                <IconClock size={16} />
+                                                                                        </Button>
+                                                                                }
+                                                                        </TableCell>
                                                                 </TableRow>
                                                         ))
                                                 )}
                                         </TableBody>
                                 </Table>
                                 <CancelModal />
+                                <RescheduleModal />
                         </CardContent>
                 </Card >
 

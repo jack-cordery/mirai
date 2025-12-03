@@ -42,6 +42,8 @@ import { BookingsTable } from "./bookings-table"
 import { RequestDataSchema, RequestDataTable } from "./requests-table"
 import { EmployeesTable } from "./employees-table"
 import { BookingTypeTable } from "./booking-type-table"
+import { SchedulerProvider } from "@/providers/schedular-provider"
+import { BookingCalendarProvider } from "@/contexts/booking-calendar-context"
 
 // Create a separate component for the drag handle
 export function DragHandle({ id }: { id: number }) {
@@ -184,7 +186,11 @@ export function DataTable() {
                                 <RequestDataTable />
                         </TabsContent>
                         <TabsContent value="bookings" className="flex flex-col px-4 lg:px-6">
-                                <BookingsTable />
+                                <SchedulerProvider>
+                                        <BookingCalendarProvider>
+                                                <BookingsTable />
+                                        </BookingCalendarProvider>
+                                </SchedulerProvider >
                         </TabsContent>
                         <TabsContent
                                 value="employees"

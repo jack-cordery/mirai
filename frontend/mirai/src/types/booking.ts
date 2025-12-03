@@ -38,6 +38,15 @@ export type Employee = {
   last_login: string;
 };
 
+export type User = {
+  user_id: number;
+  name: string;
+  surname: string;
+  email: string;
+  created_at: string;
+  last_login: string;
+};
+
 export type AvailabilitySlot = {
   availability_slot_id: number;
   employee_id: number;

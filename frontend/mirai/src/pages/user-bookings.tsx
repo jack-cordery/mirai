@@ -1,5 +1,6 @@
 import { SparklesCore } from "@/components/ui/sparkles";
 import UserBookings from "@/components/user-bookings";
+import { BookingCalendarProvider } from "@/contexts/booking-calendar-context";
 import { TableProvider } from "@/contexts/table-context";
 
 export default function Booking() {
@@ -20,7 +21,9 @@ export default function Booking() {
 
                         <div className="relative z-20">
                                 <TableProvider>
-                                        <UserBookings />
+                                        <BookingCalendarProvider>
+                                                <UserBookings />
+                                        </BookingCalendarProvider>
                                 </TableProvider >
                         </div>
                 </div>

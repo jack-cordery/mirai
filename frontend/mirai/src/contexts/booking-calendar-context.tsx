@@ -3,11 +3,12 @@ import { getAllBookingTypes } from "@/api/booking-type";
 import { postReschedule, type GetAllBookingsResponse } from "@/api/bookings";
 import { getAllEmployees } from "@/api/employee";
 import { loadWorkingDayTimes } from "@/lib/utils";
-import type { AvailabilitySlot, BookingType, Employee, SelectedTimes, SlotTimeOfDay } from "@/types/booking";
+import type { AvailabilitySlot, BookingType, Employee, SelectedTimes, SlotTimeOfDay, User } from "@/types/booking";
 import React, { useContext, type ReactNode } from "react";
 import { createContext } from "react";
 import { toast } from "sonner";
 import { useTableContext } from "./table-context";
+import { getAllUsers } from "@/api/user";
 
 type BookingCalendarContextType = {
         date: Date | undefined,
@@ -16,6 +17,8 @@ type BookingCalendarContextType = {
         setBookingTypes: React.Dispatch<React.SetStateAction<BookingType[]>>,
         employees: Employee[],
         setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>,
+        users: User[],
+        setUsers: React.Dispatch<React.SetStateAction<User[]>>,
         availabilitySlots: AvailabilitySlot[],
         setAvailabilitySlots: React.Dispatch<React.SetStateAction<AvailabilitySlot[]>>,
         selectedTime: SlotTimeOfDay | null,
@@ -33,6 +36,7 @@ type BookingCalendarContextType = {
         rescheduleModalRow: GetAllBookingsResponse | null
         setRescheduleModalRow: React.Dispatch<React.SetStateAction<GetAllBookingsResponse | null>>;
         handleRescheduleBooking: () => Promise<void>;
+        fetchData: () => Promise<void>;
 }
 
 const BookingCalendarContext = createContext<BookingCalendarContextType | undefined>(undefined);
@@ -53,6 +57,7 @@ export const BookingCalendarProvider: React.FC<BookingCalendarProviderProps> = (
         });
         const [bookingTypes, setBookingTypes] = React.useState<BookingType[]>([])
         const [employees, setEmployees] = React.useState<Employee[]>([])
+        const [users, setUsers] = React.useState<User[]>([])
         const [availabilitySlots, setAvailabilitySlots] = React.useState<AvailabilitySlot[]>([])
         const [selectedBookingType, setSelectedBookingType] = React.useState<BookingType | null>(null)
         const [selectedEmployee, setSelectedEmployee] = React.useState<Employee | null>(null)
@@ -86,20 +91,22 @@ export const BookingCalendarProvider: React.FC<BookingCalendarProviderProps> = (
                         toast("failed to reschedule booking, please try again");
                 }
         }
+        const fetchData = async () => {
+
+                try {
+                        const [resBookingTypes, resAvailabilitySlots, resEmployees, resUsers] = await Promise.all([getAllBookingTypes(), getAllFreeAvailability(), getAllEmployees(), getAllUsers()])
+                        setBookingTypes(resBookingTypes)
+                        setEmployees(resEmployees)
+                        setUsers(resUsers)
+                        setAvailabilitySlots(resAvailabilitySlots)
+                        setSelectedBookingType(resBookingTypes[0])
+                        setSelectedEmployee(resEmployees[0])
+                } catch (err) {
+                        toast(`error fetching data ${err}`)
+                }
+        }
 
         React.useEffect(() => {
-                const fetchData = async () => {
-                        try {
-                                const [resBookingTypes, resAvailabilitySlots, resEmployees] = await Promise.all([getAllBookingTypes(), getAllFreeAvailability(), getAllEmployees()])
-                                setBookingTypes(resBookingTypes)
-                                setEmployees(resEmployees)
-                                setAvailabilitySlots(resAvailabilitySlots)
-                                setSelectedBookingType(resBookingTypes[0])
-                                setSelectedEmployee(resEmployees[0])
-                        } catch (err) {
-                                toast(`error fetching data ${err}`)
-                        }
-                }
                 fetchData()
         }, [])
 
@@ -111,6 +118,8 @@ export const BookingCalendarProvider: React.FC<BookingCalendarProviderProps> = (
                         setBookingTypes,
                         employees,
                         setEmployees,
+                        users,
+                        setUsers,
                         availabilitySlots,
                         setAvailabilitySlots,
                         selectedTime,
@@ -128,6 +137,7 @@ export const BookingCalendarProvider: React.FC<BookingCalendarProviderProps> = (
                         rescheduleModalRow,
                         setRescheduleModalRow,
                         handleRescheduleBooking,
+                        fetchData,
                 }} >
                         {children}
                 </BookingCalendarContext.Provider >

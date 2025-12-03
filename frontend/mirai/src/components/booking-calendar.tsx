@@ -15,12 +15,14 @@ import { postBooking } from "@/api/bookings"
 import { useAuth } from "@/contexts/auth-context"
 import { useNavigate } from "react-router-dom"
 import { useBookingCalendarContext } from "@/contexts/booking-calendar-context"
+import { useModal } from "@/providers/modal-context"
 
-export default function BookingCalendar({ reschedule }: { reschedule?: boolean }) {
-
+export default function BookingCalendar({ reschedule, userID, skipNav }: { reschedule?: boolean, userID?: number, skipNav?: boolean }) {
         const { slotDuration, startTime, endTime } = loadWorkingDayTimes()
         const unit = slotDuration
         const { user } = useAuth();
+        const { setClose } = useModal();
+        const userId = userID ? userID : user?.id;
         const today = new Date()
 
         const { date, setDate,
@@ -32,11 +34,16 @@ export default function BookingCalendar({ reschedule }: { reschedule?: boolean }
                 selectedBookingType, setSelectedBookingType,
                 selectedEmployee, setSelectedEmployee,
                 isBookingModalOpen, setIsBookingModalOpen,
-                handleRescheduleBooking
+                handleRescheduleBooking,
+                fetchData,
         } = useBookingCalendarContext();
 
         const handleChange = (times: SelectedTimes) => { setSelectedTimes(times) }
         const navigate = useNavigate();
+
+        React.useEffect(() => {
+                fetchData();
+        }, [])
 
 
         const timeSlots = React.useMemo(() => {
@@ -97,7 +104,6 @@ export default function BookingCalendar({ reschedule }: { reschedule?: boolean }
         }, [availabilitySlots, selectedTimes, selectedBookingType])
 
         const handleConfirmBooking: () => Promise<void> = (reschedule === false || reschedule === undefined) ? async () => {
-                const userId = user?.id;
                 const slotId = selectedTime?.id;
                 const otherIds = selectedTime?.slotIDs ?? [];
                 const typeId = selectedBookingType?.type_id;
@@ -115,7 +121,12 @@ export default function BookingCalendar({ reschedule }: { reschedule?: boolean }
                         setSelectedTime(null);
                         toast("booking created!")
                         setIsBookingModalOpen(false)
-                        navigate("/user/bookings")
+                        if (!skipNav) {
+                                navigate("/user/bookings")
+                        } else {
+                                setClose()
+                        }
+
                 } catch (err) {
                         toast("failed to confirm booking, please try again");
                 }

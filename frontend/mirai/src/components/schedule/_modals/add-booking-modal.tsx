@@ -1,176 +1,45 @@
-import React, { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuItem,
-        DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import { getNearest30MinuteBlock, toLocalISOString } from "@/lib/utils";
-import { useModal } from "@/providers/modal-context";
-import SelectDate from "@/components/schedule/_components/add-event-components/select-date";
-import { type SubmitHandler, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { type EventFormData, eventSchema, type Event } from "@/types/index";
+import React, { useEffect, useState } from "react";
 import { useScheduler } from "@/providers/schedular-provider";
-import { v4 as uuidv4 } from 'uuid';
-import { postAvailabilitySlot, putAvailabilitySlot } from "@/api/availability";
-import { toast } from "sonner";
-import type { PostAvailabilitySlotResponse, PutAvailabilitySlotResponse } from "@/types/booking";
+import type { User } from "@/types/booking";
 import BookingCalendar from "@/components/booking-calendar";
 import { useBookingCalendarContext } from "@/contexts/booking-calendar-context";
 import { format } from "date-fns";
 
-
-export default function AddBookingModal({
-        CustomAddEventModal,
-        selectedDate,
-}: {
-        CustomAddEventModal?: React.FC<{ register: any; errors: any }>;
-        selectedDate?: Date;
-}) {
-        const { setClose, data } = useModal();
-        const { handlers, typeOptions, employeeOptions, currentDate, selectedEmployeeAvailability } = useScheduler();
-
-        const {
-                register,
-                handleSubmit,
-                formState: { errors },
-                setValue,
-                watch,
-        } = useForm<EventFormData>({
-                resolver: zodResolver(eventSchema),
-                defaultValues: {
-                        startDate: getNearest30MinuteBlock(selectedDate) ?? getNearest30MinuteBlock(currentDate),
-                        endDate: getNearest30MinuteBlock(selectedDate) ?? getNearest30MinuteBlock(currentDate),
-                        type: typeOptions[0],
-                        employee: selectedEmployeeAvailability || employeeOptions[0],
-                },
-        });
-        const typedData = data as { default: Event };
-        const selectedType = watch("type");
-        const selectedEmployee = watch("employee");
-
-        // Reset the form on initialization
-
-        const onSubmit: SubmitHandler<EventFormData> = async (formData) => {
-                try {
-                        const res: PostAvailabilitySlotResponse = await postAvailabilitySlot({
-                                employee_id: formData.employee.id,
-                                start_time: toLocalISOString(formData.startDate),
-                                end_time: toLocalISOString(formData.endDate),
-                                type_id: formData.type.id,
-                        })
-
-                        const newEvent: Event = {
-                                id: uuidv4().toString(),
-                                startDate: formData.startDate,
-                                endDate: formData.endDate,
-                                employeeId: formData.employee.id,
-                                typeId: formData.type.id,
-                                isBooking: false,
-                                bookingId: null,
-                                bookingEmail: null,
-                                availability_slot_ids: res.availability_slot_ids,
-                        }
-                        handlers.handleAddEvent(newEvent);
-                        setClose(); // Close the modal after submission
-                } catch (error) {
-                        toast(`creation failed: ${error}`)
-
-                }
+export default function AddBookingModal() {
+        const { users } = useBookingCalendarContext();
+        const [user, setUser] = useState<User | null>(null);
+        const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+                const selectedId = e.target.value;
+                const selectedUser = users.find(u => u.user_id.toString() === selectedId) ?? null;
+                setUser(selectedUser);
         };
 
         return (
-                <form className="flex flex-col gap-4 p-4" onSubmit={handleSubmit(onSubmit)}>
-                        {CustomAddEventModal ? (
-                                <CustomAddEventModal register={register} errors={errors} />
-                        ) : (
-                                <>
-                                        <SelectDate
-                                                data={{
-                                                        startDate: (typedData.default?.startDate ?? getNearest30MinuteBlock(new Date())),
-                                                        endDate: (typedData.default?.endDate ?? getNearest30MinuteBlock(new Date())),
-                                                }}
-                                                setValue={setValue}
-                                        />
+                <div className="grid gap-6 py-2">
+                        {/* 📋 User Selection Dropdown */}
+                        <div className="bg-muted/50 rounded-xl p-4 border border-muted-foreground/10">
+                                <label className="block text-sm text-muted-foreground mb-1">
+                                        Select User
+                                </label>
+                                <select
+                                        className="w-full p-2 rounded-md bg-neutral-900 text-foreground"
+                                        value={user?.user_id ?? ""}
+                                        onChange={handleChange}
+                                >
+                                        <option value="" disabled>
+                                                Choose a User
+                                        </option>
+                                        {users.map(u => (
+                                                <option key={u.user_id} value={u.user_id}>
+                                                        {u.name} {u.surname} ({u.email})
+                                                </option>
+                                        ))}
+                                </select>
+                        </div>
 
-                                        <div className="grid gap-2">
-                                                <Label>Booking Type</Label>
-                                                <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                                <Button
-                                                                        className="w-fit my-2"
-                                                                >
-                                                                        {
-                                                                                typeOptions.find((type) => type.id === (selectedType?.id ?? 0))
-                                                                                        ?.label
-                                                                        }
-                                                                </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent>
-                                                                {typeOptions.map((type) => (
-                                                                        <DropdownMenuItem
-                                                                                key={type.id}
-                                                                                onClick={() => {
-                                                                                        setValue("type", type)
-                                                                                }}
-                                                                        >
-                                                                                <div className="flex items-center">
-                                                                                        <div
-                                                                                                className={`w-4 h-4 rounded-full mr-2`}
-                                                                                        />
-                                                                                        {type.label}
-                                                                                </div>
-                                                                        </DropdownMenuItem>
-                                                                ))}
-                                                        </DropdownMenuContent>
-                                                </DropdownMenu>
-                                        </div>
-                                        <div className="grid gap-2">
-                                                <Label>Employee</Label>
-                                                <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                                <Button
-                                                                        className="w-fit my-2"
-                                                                >
-                                                                        {
-                                                                                employeeOptions.find((type) => type.id === (selectedEmployee?.id ?? 0))
-                                                                                        ?.label
-                                                                        }
-                                                                </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent>
-                                                                {employeeOptions.map((employee) => (
-                                                                        <DropdownMenuItem
-                                                                                key={employee.id}
-                                                                                onClick={() => {
-                                                                                        setValue("employee", employee)
-                                                                                }}
-                                                                        >
-                                                                                <div className="flex items-center">
-                                                                                        <div
-                                                                                                className={`w-4 h-4 rounded-full mr-2`}
-                                                                                        />
-                                                                                        {employee.label}
-                                                                                </div>
-                                                                        </DropdownMenuItem>
-                                                                ))}
-                                                        </DropdownMenuContent>
-                                                </DropdownMenu>
-                                        </div>
-
-
-                                        <div className="flex justify-end space-x-2 mt-4 pt-2 border-t">
-                                                <Button variant="outline" type="button" onClick={() => setClose()}>
-                                                        Cancel
-                                                </Button>
-                                                <Button type="submit">Save Event</Button>
-                                        </div>
-                                </>
-                        )}
-                </form>
+                        {/* 📅 Booking Calendar */}
+                        <BookingCalendar userID={user?.user_id ?? undefined} skipNav={true} />
+                </div>
         );
 }
 
@@ -179,15 +48,6 @@ export function EditBookingModal({
 }: {
         bookingID: number;
 }) {
-
-        // TODO: so here we need to replace the fact that it isnt from selection but an event 
-        // so i want to reschedule a booking - so take the booking values from the event (type=booking) and populate the form
-        // and then send a putBooking request
-        // lets do something like the foloowing 
-        // take in eventID as input 
-        // get the event from useScheduler which is a booking 
-        // use the booking details to fill form and then 
-        // send putBooking dont need useModal??
 
         const { setDate, employees, bookingTypes, setSelectedEmployee, setSelectedBookingType } = useBookingCalendarContext();
         const { events } = useScheduler();

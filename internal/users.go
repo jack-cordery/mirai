@@ -148,12 +148,6 @@ func postUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 func getUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := r.PathValue("user_id")
-		id, err := strconv.ParseInt(userID, 10, 32)
-		if err != nil {
-			log.Printf("error: %v converting user id to int in getUser: %s", err, userID)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 
 		conn, err := pool.Acquire(ctx)
 		if err != nil {
@@ -192,6 +186,12 @@ func getUser(pool *pgxpool.Pool, ctx context.Context) http.HandlerFunc {
 			}
 			return
 
+		}
+		id, err := strconv.ParseInt(userID, 10, 32)
+		if err != nil {
+			log.Printf("error: %v converting user id to int in getUser: %s", err, userID)
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 		user, err := queries.GetUserById(ctx, int32(id))
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {

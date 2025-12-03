@@ -122,8 +122,11 @@ export function BookingsTable() {
                 setIsConfirmModalOpen,
                 setCompleteModalRow,
                 setIsCompleteModalOpen,
+                fetchTableData,
         } = useTableContext();
         const { setRescheduleModalRow, rescheduleModalRow, setIsRescheduleModalOpen } = useBookingCalendarContext();
+
+        React.useEffect(() => { fetchTableData() }, [])
 
         const [rowSelection, setRowSelection] = React.useState({})
         const [columnVisibility, setColumnVisibility] =

@@ -16,7 +16,6 @@ import CustomModal from "@/components/ui/custom-modal";
 import { Select, SelectContent, SelectGroup, SelectLabel, SelectTrigger, SelectValue, SelectItem } from "@/components/ui/select";
 import { useScheduler } from "@/providers/schedular-provider";
 import AddBookingModal from "../../_modals/add-booking-modal";
-import { useTableContext } from "@/contexts/table-context";
 
 // Animation settings for Framer Motion
 const animationConfig: MotionProps = {
@@ -44,8 +43,6 @@ export default function SchedulerViewFilteration({
         const { employeeOptions, selectedEmployeeAvailability, setSelectedEmployeeAvailability } = useScheduler();
         const [activeView, setActiveView] = useState<string>("day");
         const [clientSide, setClientSide] = useState(false);
-
-
 
         useEffect(() => {
                 setClientSide(true);
